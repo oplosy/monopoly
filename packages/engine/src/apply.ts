@@ -1,4 +1,7 @@
-import { handlePlayBirthday, handlePlayDebtCollector, handlePlayRent } from './actions';
+import {
+  handlePlayBirthday, handlePlayDealBreaker, handlePlayDebtCollector, handlePlayForcedDeal,
+  handlePlayHotel, handlePlayHouse, handlePlayRent, handlePlaySlyDeal,
+} from './actions';
 import { cloneState } from './clone';
 import { handleAcceptAction, handlePay, handleRespondJustSayNo } from './respond';
 import { RuleError } from './errors';
@@ -22,6 +25,11 @@ const HANDLERS: HandlerMap = {
   respondJustSayNo: handleRespondJustSayNo,
   acceptAction: handleAcceptAction,
   pay: handlePay,
+  playSlyDeal: handlePlaySlyDeal,
+  playForcedDeal: handlePlayForcedDeal,
+  playDealBreaker: handlePlayDealBreaker,
+  playHouse: handlePlayHouse,
+  playHotel: handlePlayHotel,
 };
 
 export type ApplyResult =
