@@ -1,5 +1,6 @@
 import { CARDS, CARD_BY_ID, type Color } from '../src/cards';
 import { applyIntent } from '../src/apply';
+import { rngFromSeed } from '../src/rng';
 import type { GameState, Intent, Phase, PropertyGroup } from '../src/types';
 
 export interface GroupSpec { color: Color; cards: string[]; house?: string; hotel?: string }
@@ -51,7 +52,7 @@ export function makeState(spec: StateSpec): GameState {
     turn: { playerId: spec.turn ?? players[0]!.id, playsLeft: spec.playsLeft ?? 3, phase: spec.phase ?? 'play' },
     pending: null,
     winner: null,
-    rngState: 42,
+    rngState: rngFromSeed(42),
     version: 0,
     nextGroupId: gid,
   };

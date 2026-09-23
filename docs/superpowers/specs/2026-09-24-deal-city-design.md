@@ -321,7 +321,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
   - opponents' hands as counts only;
   - the deck as a count only;
   - the whole discard pile and all tables in full.
-- **`rng.ts`** — the mulberry32 PRNG. Its state is stored in `GameState`, so any game can be replayed.
+- **`rng.ts`** — a ChaCha20 (RFC 8439) PRNG keyed by a 256-bit seed. The server seeds each game with 8 crypto-random 32-bit words, because a 32-bit seed could be brute-forced from an opening hand to reveal the whole deck. Its state is stored in `GameState` (never sent to clients), so any game can be replayed.
 
 **Intents**
 

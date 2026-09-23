@@ -1,12 +1,13 @@
 import { CARDS } from './cards';
-import { nextRandom, shuffle } from './rng';
+import { nextRandom, rngFromSeed, shuffle } from './rng';
 import { startTurn } from './turn';
 import type { Ctx, GameEvent, GameState } from './types';
 
-export function createGame(playerIds: readonly string[], seed: number): { state: GameState; events: GameEvent[] } {
+/** `seed`: 8 crypto-random 32-bit words in production; a number in tests. */
+export function createGame(playerIds: readonly string[], seed: number | readonly number[]): { state: GameState; events: GameEvent[] } {
   if (playerIds.length < 2 || playerIds.length > 5) throw new Error('createGame needs 2-5 players');
   if (new Set(playerIds).size !== playerIds.length) throw new Error('createGame needs unique player ids');
-  const [deck, afterShuffle] = shuffle(CARDS.map((c) => c.id), seed >>> 0);
+  const [deck, afterShuffle] = shuffle(CARDS.map((c) => c.id), rngFromSeed(seed));
   const [r, rngState] = nextRandom(afterShuffle);
   const s: GameState = {
     players: playerIds.map((id) => ({ id, hand: [], bank: [], groups: [] })),

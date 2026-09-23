@@ -1,4 +1,5 @@
 import type { Color } from './cards';
+import type { RngState } from './rng';
 
 export interface PropertyGroup {
   id: string;
@@ -50,7 +51,7 @@ export interface GameState {
   turn: TurnState;
   pending: Pending | null;
   winner: string | null;
-  rngState: number;
+  rngState: RngState;
   version: number;
   nextGroupId: number;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { shuffle } from '../src/rng';
+import { rngFromSeed, shuffle } from '../src/rng';
 import { bestRent, groupRent, hasWon, isComplete, isRentable, cardColors } from '../src/sets';
 import type { Player, PropertyGroup } from '../src/types';
 import type { Color } from '../src/cards';
@@ -12,9 +12,9 @@ const p = (groups: PropertyGroup[]): Player => ({ id: 'p', hand: [], bank: [], g
 describe('rng', () => {
   it('shuffles deterministically for a seed and keeps all items', () => {
     const items = Array.from({ length: 20 }, (_, i) => i);
-    const [a] = shuffle(items, 7);
-    const [b] = shuffle(items, 7);
-    const [c] = shuffle(items, 8);
+    const [a] = shuffle(items, rngFromSeed(7));
+    const [b] = shuffle(items, rngFromSeed(7));
+    const [c] = shuffle(items, rngFromSeed(8));
     expect(a).toEqual(b);
     expect(a).not.toEqual(c);
     expect([...a].sort((x, y) => x - y)).toEqual(items);

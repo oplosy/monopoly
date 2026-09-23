@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { applyIntent } from '../src/apply';
 import { COLORS } from '../src/cards';
 import { candidateIntents, waitingOn } from '../src/legal';
-import { nextRandom, shuffle } from '../src/rng';
+import { nextRandom, rngFromSeed, shuffle } from '../src/rng';
 import { cardColors, isComplete } from '../src/sets';
 import { createGame } from '../src/setup';
 import type { GameState, Intent } from '../src/types';
@@ -42,7 +42,7 @@ describe('fuzz: random bots', () => {
     let finished = 0;
     for (let seed = 1; seed <= GAMES; seed++) {
       let state = createGame(seed % 2 ? ['a', 'b', 'c'] : ['a', 'b'], seed).state;
-      let rng = seed * 7919;
+      let rng = rngFromSeed(seed * 7919);
       for (let steps = 0; !state.winner && steps < CAP; steps++) {
         const actors = waitingOn(state);
         invariant(actors.length > 0, `seed ${seed}: nobody to act`);
