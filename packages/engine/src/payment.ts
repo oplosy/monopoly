@@ -2,8 +2,9 @@ import { getCard, isAnyWild, isComplete } from './sets';
 import { findGroup, placeProperty, removeProperty } from './zones';
 import type { Ctx, Player } from './types';
 
+/** Hotel before House, so a partial payment never strands a Hotel without its House. */
 function buildingCards(p: Player): string[] {
-  return p.groups.flatMap((g) => [g.house, g.hotel]).filter((c): c is string => c !== null);
+  return p.groups.flatMap((g) => [g.hotel, g.house]).filter((c): c is string => c !== null);
 }
 
 export function payableAssets(p: Player): string[] {
@@ -19,6 +20,7 @@ export function validatePayment(p: Player, cards: readonly string[], amount: num
   if (new Set(cards).size !== cards.length) return 'duplicateCard';
   const payable = new Set(payableAssets(p));
   if (cards.some((id) => !payable.has(id))) return 'notPayable';
+  if (p.groups.some((g) => g.house && g.hotel && cards.includes(g.house) && !cards.includes(g.hotel))) return 'hotelFirst';
   if (totalValue(cards) >= amount) return null;
   if (cards.length === payable.size) return null;
   return 'insufficientPayment';

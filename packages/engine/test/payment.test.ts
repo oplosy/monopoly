@@ -81,3 +81,26 @@ describe('transferPayment', () => {
     expect(player(s, 'b').groups.find((g) => g.color === 'brown')!.house).toBeNull();
   });
 });
+
+describe('buildings in payment', () => {
+  const built = () =>
+    makeState({
+      players: [
+        { id: 'b', groups: [{ color: 'brown', cards: ['prop-brown-1', 'prop-brown-2'], house: 'act-house-1', hotel: 'act-hotel-1' }] },
+        { id: 'a' },
+      ],
+    });
+  it('refuses to pay a House while its Hotel stays on the set', () => {
+    const b = player(built(), 'b');
+    expect(validatePayment(b, ['act-house-1'], 3)).toBe('hotelFirst');
+    expect(validatePayment(b, ['act-hotel-1'], 3)).toBeNull();
+    expect(validatePayment(b, ['act-hotel-1', 'act-house-1'], 3)).toBeNull();
+  });
+  it('auto-payment gives the Hotel before the House', () => {
+    const b = player(built(), 'b');
+    const pay = autoPayment(b, 4);
+    expect(pay).toContain('act-hotel-1');
+    expect(pay).not.toContain('act-house-1');
+    expect(validatePayment(b, pay, 4)).toBeNull();
+  });
+});

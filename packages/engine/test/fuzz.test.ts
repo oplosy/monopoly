@@ -22,6 +22,7 @@ function checkInvariants(s: GameState, seed: number): void {
       invariant(g.cards.length > 0 && g.cards.length <= COLORS[g.color].setSize, `seed ${seed}: bad group size`);
       invariant(g.cards.every((c) => cardColors(c).includes(g.color)), `seed ${seed}: card in wrong color group`);
       invariant(!(g.house || g.hotel) || isComplete(g), `seed ${seed}: building on incomplete group`);
+      invariant(!g.hotel || g.house !== null, `seed ${seed}: hotel without house`);
     }
   }
 }
