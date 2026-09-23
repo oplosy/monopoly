@@ -224,7 +224,7 @@ export class Room {
     if (g.turn.phase === 'play' || g.turn.phase === 'discard') {
       const active = g.turn.playerId;
       this.turnDeadline = now + this.turnRemaining;
-      this.turnTimer = setTimeout(() => this.expire(active), this.turnRemaining);
+      this.turnTimer = setTimeout(() => this.expire(active, 'turn'), this.turnRemaining);
     }
     const waiting = g.turn.phase === 'awaitingResponses' ? waitingOn(g) : [];
     for (const [id, clock] of this.responses) {
@@ -238,17 +238,21 @@ export class Room {
       this.responses.set(id, {
         key: waitKey(g, id),
         at: now + this.config.responseMs,
-        timer: setTimeout(() => this.expire(id), this.config.responseMs),
+        timer: setTimeout(() => this.expire(id, 'response'), this.config.responseMs),
       });
     }
   }
 
-  /** Timer ran out: apply the engine's default action(s) for this player. */
-  private expire(playerId: string): void {
+  /**
+   * Timer ran out: apply the engine's default action(s) for this player. A response timeout
+   * only settles the pending action; it never spends the actor's remaining turn.
+   */
+  private expire(playerId: string, clock: 'turn' | 'response'): void {
     const events: GameEvent[] = [];
     for (let i = 0; i < 4; i++) {
       const g = this.game;
       if (!g || g.winner || !waitingOn(g).includes(playerId)) break;
+      if (clock === 'response' && g.turn.phase !== 'awaitingResponses') break;
       const intent = autoIntent(g, playerId);
       if (!intent) break;
       const result = applyIntent(g, playerId, intent);

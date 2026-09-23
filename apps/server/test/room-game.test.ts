@@ -136,4 +136,20 @@ describe('Room game flow', () => {
     room.attach('p1', again.conn);
     expect(again.lastGame()).toMatchObject({ view: { me: 'p1', hand: ['money-1-1'] }, events: [] });
   });
+
+  it("keeps the actor's turn when their Just Say No counter window expires", () => {
+    const { room, conns } = roomWith({
+      players: [
+        { id: 'p1', hand: ['act-debtCollector-1', 'act-justSayNo-1'] },
+        { id: 'p2', hand: ['act-justSayNo-2'], bank: ['money-5-1'] },
+      ],
+    });
+    vi.advanceTimersByTime(5_000);
+    expect(room.intent('p1', { type: 'playDebtCollector', card: 'act-debtCollector-1', target: 'p2' }, 0)).toEqual({ ok: true });
+    expect(room.intent('p2', { type: 'respondJustSayNo', card: 'act-justSayNo-2' }, 1)).toEqual({ ok: true });
+    vi.advanceTimersByTime(config.responseMs);
+    expect(room.game!.pending).toBeNull();
+    expect(room.game!.turn).toMatchObject({ playerId: 'p1', phase: 'play', playsLeft: 2 });
+    expect(conns[0]!.lastGame().deadlines.turnEndsAt).toBe(Date.now() + 55_000);
+  });
 });
