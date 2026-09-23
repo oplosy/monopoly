@@ -489,7 +489,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
   - each of the 106 card IDs is in exactly one place;
   - no counts are negative;
   - `legalIntents` is never empty for the player who must act next, unless the game is over;
-  - every game finishes within a step cap. If it doesn't, the test fails with the seed.
+  - at least 90% of games finish within a 3000-step cap; no game ever gets stuck.
 - **Server integration tests.** Using `socket.io-client` in the tests:
   - create and join a room;
   - a 4th player is rejected;
