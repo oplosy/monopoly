@@ -65,6 +65,7 @@ function handleConnection(socket: IoSocket, rooms: RoomManager, config: Config):
       const name = sanitizeNickname(nickname);
       if (!name) return { ok: false, error: 'badNickname' };
       const room = rooms.create();
+      if (!room) return { ok: false, error: 'serverBusy' };
       const joined = rooms.join(room, name);
       return joined.ok ? enter(room, joined.playerId, joined.token) : joined;
     }),

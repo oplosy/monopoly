@@ -16,10 +16,15 @@ export class RoomManager {
     return this.rooms.size;
   }
 
-  create(): Room {
+  /** Returns null when the server already holds maxRooms rooms. */
+  create(): Room | null {
+    if (this.rooms.size >= this.config.maxRooms) return null;
     let code = roomCode();
     while (this.rooms.has(code)) code = roomCode();
-    const room = new Room(code, this.config, this.deps, { onSeatRemoved: (token) => this.tokens.delete(token) });
+    const room: Room = new Room(code, this.config, this.deps, {
+      onSeatRemoved: (token) => this.tokens.delete(token),
+      onEmpty: () => this.remove(room),
+    });
     this.rooms.set(code, room);
     return room;
   }
@@ -43,14 +48,18 @@ export class RoomManager {
   /** Deletes rooms nobody has been connected to for emptyRoomMs. */
   sweep(now: number): number {
     let removed = 0;
-    for (const [code, room] of this.rooms) {
+    for (const room of [...this.rooms.values()]) {
       if (room.idleSince === null || now - room.idleSince < this.config.emptyRoomMs) continue;
-      room.dispose();
-      for (const token of room.tokens()) this.tokens.delete(token);
-      this.rooms.delete(code);
+      this.remove(room);
       removed++;
     }
     return removed;
+  }
+
+  private remove(room: Room): void {
+    room.dispose();
+    for (const token of room.tokens()) this.tokens.delete(token);
+    this.rooms.delete(room.code);
   }
 
   dispose(): void {

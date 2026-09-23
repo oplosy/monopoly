@@ -8,7 +8,7 @@ describe('loadConfig', () => {
   it('uses defaults and reads overrides', () => {
     expect(loadConfig({})).toMatchObject({
       port: 3000, turnMs: 60_000, responseMs: 20_000, graceMs: 120_000,
-      emptyRoomMs: 600_000, rateLimitPerSec: 20, allowTestSeed: false, webDist: null,
+      emptyRoomMs: 600_000, rateLimitPerSec: 20, maxRooms: 1000, allowTestSeed: false, webDist: null,
     });
     expect(loadConfig({ PORT: '8080', TURN_MS: '5000', NODE_ENV: 'test', WEB_DIST: '/srv/web' })).toMatchObject({
       port: 8080, turnMs: 5000, allowTestSeed: true, webDist: '/srv/web',

@@ -5,6 +5,8 @@ export interface Config {
   graceMs: number;
   emptyRoomMs: number;
   rateLimitPerSec: number;
+  /** Global cap on live rooms; room:create answers serverBusy beyond it. */
+  maxRooms: number;
   /** Honor client-supplied deterministic seeds (end-to-end tests only). */
   allowTestSeed: boolean;
   /** Directory with the built web app (index.html), or null to serve only the API. */
@@ -23,6 +25,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     graceMs: num('GRACE_MS', 120_000),
     emptyRoomMs: num('EMPTY_ROOM_MS', 600_000),
     rateLimitPerSec: num('RATE_LIMIT', 20),
+    maxRooms: num('MAX_ROOMS', 1000),
     allowTestSeed: env.NODE_ENV === 'test',
     webDist: env.WEB_DIST ?? null,
   };

@@ -12,8 +12,8 @@ afterEach(() => vi.useRealTimers());
 describe('RoomManager', () => {
   it('creates rooms with unique codes and finds them case-insensitively', () => {
     const rooms = new RoomManager(config);
-    const a = rooms.create();
-    const b = rooms.create();
+    const a = rooms.create()!;
+    const b = rooms.create()!;
     expect(a.code).not.toBe(b.code);
     expect(rooms.get(a.code.toLowerCase())).toBe(a);
     expect(rooms.get('ZZZZZZ')).toBeUndefined();
@@ -22,7 +22,7 @@ describe('RoomManager', () => {
 
   it('indexes session tokens and forgets them when a seat is removed', () => {
     const rooms = new RoomManager(config);
-    const room = rooms.create();
+    const room = rooms.create()!;
     const r = rooms.join(room, 'Ann');
     if (!r.ok) throw new Error(r.error);
     expect(rooms.byToken(r.token)).toEqual({ room, playerId: 'p1' });
@@ -33,8 +33,8 @@ describe('RoomManager', () => {
 
   it('sweeps rooms idle for longer than emptyRoomMs and keeps active ones', () => {
     const rooms = new RoomManager(config);
-    const idle = rooms.create();
-    const active = rooms.create();
+    const idle = rooms.create()!;
+    const active = rooms.create()!;
     const r = rooms.join(active, 'Ann');
     if (!r.ok) throw new Error(r.error);
     active.attach(r.playerId, noop);
@@ -44,4 +44,22 @@ describe('RoomManager', () => {
     expect(rooms.get(active.code)).toBe(active);
     expect(rooms.byToken(r.token)).toEqual({ room: active, playerId: 'p1' });
   });
+
+  it('deletes a room as soon as its last seat is gone', () => {
+    const rooms = new RoomManager(config);
+    const room = rooms.create()!;
+    const r = rooms.join(room, 'Ann');
+    if (!r.ok) throw new Error(r.error);
+    room.leave('p1');
+    expect(rooms.get(room.code)).toBeUndefined();
+    expect(rooms.size).toBe(0);
+  });
+
+  it('refuses new rooms beyond maxRooms', () => {
+    const rooms = new RoomManager({ ...config, maxRooms: 2 });
+    expect(rooms.create()).not.toBeNull();
+    expect(rooms.create()).not.toBeNull();
+    expect(rooms.create()).toBeNull();
+  });
 });
+

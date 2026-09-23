@@ -28,6 +28,8 @@ export const defaultRoomDeps: RoomDeps = { newGame: createGame, seed: gameSeed }
 
 export interface RoomHooks {
   onSeatRemoved(token: string): void;
+  /** The last seat left; the room can be discarded. */
+  onEmpty?(): void;
 }
 
 interface Seat {
@@ -193,6 +195,7 @@ export class Room {
       this.afterChange(result.events);
     }
     this.broadcastRoom();
+    if (this.seats.length === 0) this.hooks.onEmpty?.();
   }
 
   /** Runs after every game-state change: turn clock, win status, timers, broadcast. */

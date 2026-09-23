@@ -364,7 +364,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 
 - `game:intent` is rejected if `expectedVersion` does not match, so stale clicks are ignored.
 - Every change sends one `game:state` message holding the full redacted snapshot **and** the events that produced it (empty on attach/resume), so state and animation cues arrive atomically. The state is small, and sending all of it avoids diffing bugs.
-- Every client→server event is acknowledged with `{ ok: true, ... }` or `{ ok: false, error }`. Server error codes: `badRequest`, `rateLimited`, `internal`, `badNickname`, `roomNotFound`, `roomFull`, `gameInProgress`, `sessionNotFound`, `noSession`, `alreadyInRoom`, `notHost`, `notEnoughPlayers`, `notPlaying`, `notFinished`, `staleVersion`, plus every engine rule error code.
+- Every client→server event is acknowledged with `{ ok: true, ... }` or `{ ok: false, error }`. Server error codes: `badRequest`, `rateLimited`, `internal`, `serverBusy`, `badNickname`, `roomNotFound`, `roomFull`, `gameInProgress`, `sessionNotFound`, `noSession`, `alreadyInRoom`, `notHost`, `notEnoughPlayers`, `notPlaying`, `notFinished`, `staleVersion`, plus every engine rule error code.
 
 ### 4.3 `apps/server`
 
