@@ -77,7 +77,7 @@ export class Room {
     if (this.status !== 'lobby') return { ok: false, error: 'gameInProgress' };
     if (this.seats.length >= MAX_SEATS) return { ok: false, error: 'roomFull' };
     const seat: Seat = { playerId: `p${this.nextSeat++}`, nickname, token: sessionToken(), conn: null, graceTimer: null };
-    seat.graceTimer = setTimeout(() => this.dropSeat(seat.playerId), this.config.graceMs);
+    seat.graceTimer = setTimeout(() => this.safely(() => this.dropSeat(seat.playerId)), this.config.graceMs);
     this.seats.push(seat);
     this.hostId ??= seat.playerId;
     this.broadcastRoom();
@@ -100,7 +100,7 @@ export class Room {
     const seat = this.seat(playerId);
     if (!seat || seat.conn !== conn) return;
     seat.conn = null;
-    seat.graceTimer = setTimeout(() => this.dropSeat(playerId), this.config.graceMs);
+    seat.graceTimer = setTimeout(() => this.safely(() => this.dropSeat(playerId)), this.config.graceMs);
     if (this.seats.every((s) => !s.conn)) this.idleSince = Date.now();
     this.broadcastRoom();
   }
@@ -224,7 +224,7 @@ export class Room {
     if (g.turn.phase === 'play' || g.turn.phase === 'discard') {
       const active = g.turn.playerId;
       this.turnDeadline = now + this.turnRemaining;
-      this.turnTimer = setTimeout(() => this.expire(active, 'turn'), this.turnRemaining);
+      this.turnTimer = setTimeout(() => this.safely(() => this.expire(active, 'turn')), this.turnRemaining);
     }
     const waiting = g.turn.phase === 'awaitingResponses' ? waitingOn(g) : [];
     for (const [id, clock] of this.responses) {
@@ -238,7 +238,7 @@ export class Room {
       this.responses.set(id, {
         key: waitKey(g, id),
         at: now + this.config.responseMs,
-        timer: setTimeout(() => this.expire(id, 'response'), this.config.responseMs),
+        timer: setTimeout(() => this.safely(() => this.expire(id, 'response')), this.config.responseMs),
       });
     }
   }
@@ -249,18 +249,32 @@ export class Room {
    */
   private expire(playerId: string, clock: 'turn' | 'response'): void {
     const events: GameEvent[] = [];
-    for (let i = 0; i < 4; i++) {
-      const g = this.game;
-      if (!g || g.winner || !waitingOn(g).includes(playerId)) break;
-      if (clock === 'response' && g.turn.phase !== 'awaitingResponses') break;
-      const intent = autoIntent(g, playerId);
-      if (!intent) break;
-      const result = applyIntent(g, playerId, intent);
-      if (!result.ok) break;
-      this.game = result.state;
-      events.push(...result.events);
+    try {
+      for (let i = 0; i < 4; i++) {
+        const g = this.game;
+        if (!g || g.winner || !waitingOn(g).includes(playerId)) break;
+        if (clock === 'response' && g.turn.phase !== 'awaitingResponses') break;
+        const intent = autoIntent(g, playerId);
+        if (!intent) break;
+        const result = applyIntent(g, playerId, intent);
+        if (!result.ok) break;
+        this.game = result.state;
+        events.push(...result.events);
+      }
+    } catch (err) {
+      console.error(`room ${this.code}: automatic action for ${playerId} failed`, err);
     }
+    // Publish whatever was applied before a failure so clients and clocks stay in sync.
     if (events.length > 0) this.afterChange(events);
+  }
+
+  /** Timer callbacks run outside any request; an exception there must not take the process down. */
+  private safely(fn: () => void): void {
+    try {
+      fn();
+    } catch (err) {
+      console.error(`room ${this.code}: timer callback failed`, err);
+    }
   }
 
   private payloadFor(playerId: string, events: GameEvent[]): GameStatePayload {

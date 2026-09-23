@@ -152,4 +152,23 @@ describe('Room game flow', () => {
     expect(room.game!.turn).toMatchObject({ playerId: 'p1', phase: 'play', playsLeft: 2 });
     expect(conns[0]!.lastGame().deadlines.turnEndsAt).toBe(Date.now() + 55_000);
   });
+
+  it('survives an exception inside a timer callback', () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const hand = ['money-1-1', 'money-1-2', 'money-1-3', 'money-1-4', 'money-1-5', 'money-1-6', 'money-2-1', 'money-2-2'];
+    const state = makeState({ players: [{ id: 'p1', hand }, { id: 'p2' }] });
+    state.players[0]!.hand.push('corrupt-card'); // makes autoIntent's auto-discard throw
+    const deps: RoomDeps = { newGame: () => ({ state, events: [{ type: 'turnStarted', playerId: 'p1' }] }), seed: () => [1, 2, 3, 4, 5, 6, 7, 8] };
+    const room = new Room('ABCDEF', config, deps);
+    for (const name of ['A', 'B']) {
+      const r = room.join(name);
+      if (r.ok) room.attach(r.playerId, fakeConn().conn);
+    }
+    room.start('p1');
+    expect(() => vi.advanceTimersByTime(config.turnMs)).not.toThrow();
+    expect(room.game!.turn).toMatchObject({ playerId: 'p1', phase: 'discard' });
+    expect(errors).toHaveBeenCalled();
+    errors.mockRestore();
+  });
 });
+
