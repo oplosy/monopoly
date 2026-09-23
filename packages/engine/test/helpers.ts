@@ -1,4 +1,5 @@
 import { CARDS, CARD_BY_ID, type Color } from '../src/cards';
+import { applyIntent } from '../src/apply';
 import type { GameState, Intent, Phase, PropertyGroup } from '../src/types';
 
 export interface GroupSpec { color: Color; cards: string[]; house?: string; hotel?: string }
@@ -81,5 +82,9 @@ export function player(s: GameState, id: string) {
   return p;
 }
 
-// `step` is added in Task 3 once applyIntent exists.
-export type { Intent };
+/** Applies an intent that must succeed; returns the new state. */
+export function step(s: GameState, playerId: string, intent: Intent): GameState {
+  const r = applyIntent(s, playerId, intent);
+  if (!r.ok) throw new Error(`expected ${intent.type} by ${playerId} to succeed, got ${r.error}`);
+  return r.state;
+}
