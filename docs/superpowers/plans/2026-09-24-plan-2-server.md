@@ -68,6 +68,7 @@ apps/server/
   src/app.ts                      buildServer (Fastify + Socket.IO + static web)
   src/main.ts                     entry point
   test/basics.test.ts             config, ids, nickname, rate limiter
+  test/fakes.ts                   fakeConn (recording Connection)
   test/room-lobby.test.ts
   test/room-game.test.ts
   test/room-manager.test.ts
@@ -690,7 +691,7 @@ git commit -m "feat(server): add config, ids, nickname sanitizing and rate limit
 
 **Files:**
 - Create: `apps/server/src/room.ts`
-- Test: `apps/server/test/room-lobby.test.ts`, `apps/server/test/room-game.test.ts`
+- Test: `apps/server/test/fakes.ts`, `apps/server/test/room-lobby.test.ts`, `apps/server/test/room-game.test.ts`
 
 **Interfaces:**
 - Consumes:
@@ -717,23 +718,30 @@ git commit -m "feat(server): add config, ids, nickname sanitizing and rate limit
       - `deadlines(): Deadlines`
       - `dispose(): void`
 
-- [ ] **Step 1: Write the failing lobby tests**
+- [ ] **Step 1: Write the fake connection and the failing lobby tests**
 
-`apps/server/test/room-lobby.test.ts`:
+`apps/server/test/fakes.ts` (kept out of `*.test.ts` files so importing it doesn't re-register tests):
 ```ts
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GameStatePayload, RoomState } from '@deal-city/protocol';
-import { loadConfig } from '../src/config';
-import { Room, type Connection } from '../src/room';
+import type { Connection } from '../src/room';
 
-const config = loadConfig({});
-
+/** A Connection that records everything a room sends to it. */
 export function fakeConn() {
   const rooms: RoomState[] = [];
   const games: GameStatePayload[] = [];
   const conn: Connection = { roomState: (s) => rooms.push(s), gameState: (p) => games.push(p) };
   return { conn, rooms, games, lastRoom: () => rooms.at(-1)!, lastGame: () => games.at(-1)! };
 }
+```
+
+`apps/server/test/room-lobby.test.ts`:
+```ts
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { loadConfig } from '../src/config';
+import { Room } from '../src/room';
+import { fakeConn } from './fakes';
+
+const config = loadConfig({});
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
@@ -837,7 +845,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { allCards, makeState, type StateSpec } from '@deal-city/engine/testing';
 import { loadConfig } from '../src/config';
 import { Room, type RoomDeps } from '../src/room';
-import { fakeConn } from './room-lobby.test';
+import { fakeConn } from './fakes';
 
 const config = loadConfig({});
 
@@ -1498,8 +1506,16 @@ function nextGame(c: Client): Promise<GameStatePayload> {
   return new Promise((resolve) => c.once('game:state', resolve));
 }
 
-function nextRoom(c: Client): Promise<RoomState> {
-  return new Promise((resolve) => c.once('room:state', resolve));
+/** Resolves with the first room:state that satisfies `pred` (earlier broadcasts may still be in flight). */
+function waitRoom(c: Client, pred: (s: RoomState) => boolean): Promise<RoomState> {
+  return new Promise((resolve) => {
+    const listener = (s: RoomState) => {
+      if (!pred(s)) return;
+      c.off('room:state', listener);
+      resolve(s);
+    };
+    c.on('room:state', listener);
+  });
 }
 
 async function threePlayerRoom() {
@@ -1573,9 +1589,9 @@ describe('server', () => {
     const started = nextGame(b);
     await a.emitWithAck('room:start', {});
     await started;
-    const seen = nextRoom(a);
+    const seen = waitRoom(a, (s) => s.seats.some((seat) => seat.playerId === 'p2' && !seat.connected));
     b.disconnect();
-    expect((await seen).seats.find((s) => s.playerId === 'p2')!.connected).toBe(false);
+    expect((await seen).status).toBe('playing');
     const b2 = await client();
     const resumedState = nextGame(b2);
     expect(await b2.emitWithAck('room:resume', { token: tokens.p2 })).toMatchObject({ ok: true, playerId: 'p2' });
@@ -1788,7 +1804,7 @@ console.log(`Deal City server listening on :${config.port}`);
 Run: `pnpm --filter @deal-city/server test; pnpm --filter @deal-city/server typecheck`
 Expected: all server tests pass, including the 7 integration tests, and there are no type errors.
 - If an integration test hangs, check that `afterEach` disconnects the clients before `app.close()`.
-- If the "resumes a seat" test flakes because a `room:state` broadcast arrives before the listener is attached, register `nextRoom(a)` before calling `b.disconnect()`, as the test already does.
+- The "resumes a seat" test waits with `waitRoom(a, predicate)` because earlier `room:state` broadcasts can still be in flight when the listener is registered.
 
 - [ ] **Step 6: Build and smoke-test the bundle**
 
