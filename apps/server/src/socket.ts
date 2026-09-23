@@ -23,11 +23,15 @@ export function registerSockets(io: IoServer, rooms: RoomManager, config: Config
 
 function handleConnection(socket: IoSocket, rooms: RoomManager, config: Config): void {
   const allow = createRateLimiter(config.rateLimitPerSec);
+  let session: Session | null = null;
   const conn: Connection = {
     roomState: (state) => socket.emit('room:state', state),
     gameState: (payload) => socket.emit('game:state', payload),
+    replaced: () => {
+      session = null;
+      socket.emit('room:replaced');
+    },
   };
-  let session: Session | null = null;
 
   /** Rate-limits, validates and acks every event; a handler bug never crashes the process. */
   const guard =

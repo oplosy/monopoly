@@ -136,4 +136,21 @@ describe('server', () => {
     (d as unknown as { emit(e: string, p: unknown): void }).emit('room:join', { code: 'ABCDEF' });
     expect(await d.emitWithAck('room:create', { nickname: 'Ann' })).toMatchObject({ ok: true });
   });
+
+  it('hands a seat to the newest socket and cuts the old one off', async () => {
+    const a = await client();
+    const ra = await a.emitWithAck('room:create', { nickname: 'Ann' });
+    if (!ra.ok) throw new Error(ra.error);
+    const replaced = new Promise<void>((resolve) => a.once('room:replaced', () => resolve()));
+    const a2 = await client();
+    expect(await a2.emitWithAck('room:resume', { token: ra.token })).toMatchObject({ ok: true, playerId: 'p1' });
+    await replaced;
+    expect(await a.emitWithAck('room:start', {})).toEqual({ ok: false, error: 'noSession' });
+    a.disconnect();
+    const seen = waitRoom(a2, (s) => s.seats.length === 2);
+    const b = await client();
+    await b.emitWithAck('room:join', { code: ra.code, nickname: 'Bob' });
+    expect((await seen).seats[0]).toMatchObject({ playerId: 'p1', connected: true });
+  });
 });
+

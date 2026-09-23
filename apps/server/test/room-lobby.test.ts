@@ -76,6 +76,7 @@ describe('Room lobby', () => {
     const a = joined(room, 'Ann');
     const a2 = fakeConn();
     room.attach('p1', a2.conn);
+    expect(a.replaced.count).toBe(1);
     room.detach('p1', a.conn);
     expect(a2.lastRoom().seats[0]!.connected).toBe(true);
   });

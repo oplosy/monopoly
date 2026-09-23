@@ -5,6 +5,13 @@ import type { Connection } from '../src/room';
 export function fakeConn() {
   const rooms: RoomState[] = [];
   const games: GameStatePayload[] = [];
-  const conn: Connection = { roomState: (s) => rooms.push(s), gameState: (p) => games.push(p) };
-  return { conn, rooms, games, lastRoom: () => rooms.at(-1)!, lastGame: () => games.at(-1)! };
+  const replaced = { count: 0 };
+  const conn: Connection = {
+    roomState: (s) => rooms.push(s),
+    gameState: (p) => games.push(p),
+    replaced: () => {
+      replaced.count += 1;
+    },
+  };
+  return { conn, rooms, games, replaced, lastRoom: () => rooms.at(-1)!, lastGame: () => games.at(-1)! };
 }

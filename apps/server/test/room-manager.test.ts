@@ -4,7 +4,7 @@ import { RoomManager } from '../src/room-manager';
 import type { Connection } from '../src/room';
 
 const config = loadConfig({});
-const noop: Connection = { roomState: () => undefined, gameState: () => undefined };
+const noop: Connection = { roomState: () => undefined, gameState: () => undefined, replaced: () => undefined };
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());

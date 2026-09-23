@@ -100,4 +100,6 @@ export interface ClientToServerEvents {
 export interface ServerToClientEvents {
   'room:state': (state: RoomState) => void;
   'game:state': (payload: GameStatePayload) => void;
+  /** Another socket resumed this seat; this socket no longer has a session. */
+  'room:replaced': () => void;
 }

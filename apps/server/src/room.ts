@@ -15,6 +15,8 @@ type Timer = ReturnType<typeof setTimeout>;
 export interface Connection {
   roomState(state: RoomState): void;
   gameState(payload: GameStatePayload): void;
+  /** Another connection took over this seat. */
+  replaced(): void;
 }
 
 export interface RoomDeps {
@@ -89,6 +91,7 @@ export class Room {
     if (!seat) return false;
     if (seat.graceTimer) clearTimeout(seat.graceTimer);
     seat.graceTimer = null;
+    if (seat.conn && seat.conn !== conn) seat.conn.replaced();
     seat.conn = conn;
     this.idleSince = null;
     this.broadcastRoom();
