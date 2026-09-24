@@ -40,7 +40,7 @@ export function handlePlayRent(ctx: Ctx, playerId: string, intent: IntentOf<'pla
   if (!card.colors.includes(intent.color)) throw new RuleError('invalidColor');
   const base = bestRent(p, intent.color);
   if (base <= 0) throw new RuleError('noPropertyOfColor');
-  const doubles = intent.doubles;
+  const doubles = intent.doubles ?? [];
   if (new Set([intent.card, ...doubles]).size !== doubles.length + 1) throw new RuleError('duplicateCard');
   for (const d of doubles) requireAction(d, 'doubleRent');
   let targets: string[];
