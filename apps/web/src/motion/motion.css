@@ -118,6 +118,11 @@
   }
 }
 
+/* ---------- Controls waiting for scenes to finish (spec §7.3) ---------- */
+/* They keep focus (aria-disabled, not disabled) but look like they are waiting. Cards keep their look. */
+.end-turn[aria-disabled='true'],
+.tray-actions button[aria-disabled='true'] { cursor: progress; opacity: 0.6; }
+
 /* ---------- Micro-interactions and table life (spec §6.1, §6.2, §4.1) ---------- */
 .popover.side-above { transform-origin: 50% 100%; }
 .popover.side-below { transform-origin: 50% 0%; }

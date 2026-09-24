@@ -42,4 +42,9 @@ describe('motion.css', () => {
   it('defines every keyframes it uses', () => {
     for (const [, name] of css.matchAll(/animation:\s*([\w-]+)/g)) expect(css, name).toContain(`@keyframes ${name}`);
   });
+
+  it('shows the controls that wait for scenes to finish as waiting', () => {
+    expect(reduced.outside).toMatch(/\.end-turn\[aria-disabled='true'\]/);
+    expect(reduced.outside).toMatch(/\.tray-actions button\[aria-disabled='true'\]/);
+  });
 });
