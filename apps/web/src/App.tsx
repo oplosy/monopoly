@@ -1,0 +1,18 @@
+import type { RouteObject } from 'react-router';
+import { Gallery } from './cards/Gallery';
+import { Home } from './pages/Home';
+import { NotFound } from './pages/NotFound';
+import { RoomPage } from './pages/RoomPage';
+import { Shell } from './pages/Shell';
+
+export const routes: RouteObject[] = [
+  {
+    element: <Shell />,
+    children: [
+      { path: '/', element: <Home /> },
+      { path: '/room/:code', element: <RoomPage /> },
+      { path: '/gallery', element: <Gallery /> },
+      { path: '*', element: <NotFound /> },
+    ],
+  },
+];

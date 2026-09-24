@@ -41,3 +41,43 @@ body {
   height: auto;
   filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.15));
 }
+
+button,
+.button {
+  font: inherit;
+  font-weight: 600;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button.primary,
+.button.primary { background: var(--ink); color: var(--paper); }
+button.link { border: none; background: none; text-decoration: underline; padding: 0.25rem; }
+button:focus-visible,
+.button:focus-visible,
+input:focus-visible { outline: 3px solid #1f4e9a; outline-offset: 2px; }
+input { font: inherit; padding: 0.5rem 0.7rem; border: 2px solid var(--ink); border-radius: 10px; background: #fff; width: 100%; }
+label { display: grid; gap: 0.3rem; font-weight: 600; }
+.stack { display: grid; gap: 0.9rem; margin: 1.5rem 0; }
+.row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; justify-content: center; }
+.lead { font-size: 1.15rem; color: var(--muted); }
+.small { font-size: 0.85rem; color: var(--muted); }
+.eyebrow { text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.75rem; color: var(--muted); margin: 0; }
+.form-error { color: #b3261e; font-weight: 600; }
+.join-row { display: grid; grid-template-columns: 1fr auto; gap: 0.75rem; align-items: end; }
+.room-code { font-family: var(--font-num); font-size: clamp(2.5rem, 10vw, 4rem); letter-spacing: 0.2em; margin: 0.2rem 0 1rem; }
+.lobby { max-width: 36rem; margin: 3rem auto; padding: 0 1rem; display: grid; gap: 1rem; }
+.share { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; }
+.seats { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; }
+.seats li { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 0.9rem; background: var(--paper); border: 2px solid var(--ink); border-radius: 12px; font-weight: 600; }
+.dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: #9a948a; }
+.dot.on { background: #2e7d4f; }
+.tag { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.1rem 0.45rem; border-radius: 999px; background: var(--ink); color: var(--paper); }
+.tag.warn { background: #b3261e; }
+.center-message { max-width: 32rem; margin: 5rem auto; padding: 0 1rem; text-align: center; display: grid; gap: 1rem; justify-items: center; }

@@ -1,19 +1,20 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Gallery } from './cards/Gallery';
+import { createBrowserRouter, RouterProvider } from 'react-router';
+import { routes } from './App';
+import { connectSocket, socketLike } from './net/socket';
+import { StoreProvider } from './store/context';
+import { createGameStore } from './store/game-store';
+import { browserStorage } from './store/storage';
 import './index.css';
 
-function Home() {
-  return (
-    <main className="home">
-      <h1>Deal City</h1>
-      <p>
-        The game table arrives in Plan 4. Meanwhile, <a href="/gallery">see the cards</a>.
-      </p>
-    </main>
-  );
-}
+const store = createGameStore(socketLike(connectSocket()), browserStorage());
+const router = createBrowserRouter(routes);
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>{window.location.pathname.startsWith('/gallery') ? <Gallery /> : <Home />}</StrictMode>,
+  <StrictMode>
+    <StoreProvider store={store}>
+      <RouterProvider router={router} />
+    </StoreProvider>
+  </StrictMode>,
 );
