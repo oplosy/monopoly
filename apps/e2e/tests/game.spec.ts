@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
-import { createRoom, hand, joinRoom, leaveRoom, log, newPlayer, playFromHand } from './players';
+import { attachScreenshot, createRoom, expectLog, hand, joinRoom, leaveRoom, newPlayer, playFromHand } from './players';
 
-test('three players play a seeded game through to a rematch', async ({ browser, baseURL }) => {
+test('three players play a seeded game through to a rematch', async ({ browser, baseURL }, testInfo) => {
   const [ann, bob, cy] = [await newPlayer(browser, baseURL), await newPlayer(browser, baseURL), await newPlayer(browser, baseURL)];
 
   const link = await createRoom(ann, 'Ann');
@@ -13,26 +13,27 @@ test('three players play a seeded game through to a rematch', async ({ browser, 
   // Loading the seeded address is also a reload, so the host's seat must resume.
   await ann.goto(`${link}?seed=18`);
   await ann.getByRole('button', { name: 'Start game' }).click();
-  for (const page of [ann, bob, cy]) await expect(log(page)).toContainText("Ann's turn");
+  for (const page of [ann, bob, cy]) await expectLog(page, "Ann's turn");
 
   // Ann: a property, a bank deposit, end of turn.
   await playFromHand(ann, 'Gull Street, Sky property, worth 1M', 'Play as a Sky property');
   await expect(bob.getByRole('region', { name: "Ann's area" }).getByRole('group', { name: 'Sky group, 1 of 3' })).toBeVisible();
+  await attachScreenshot(bob, testInfo, 'table-3p');
   await playFromHand(ann, '2M money', 'Bank it (+2M)');
   await expect(ann.getByRole('group', { name: 'Your bank, 2M' })).toBeVisible();
   await ann.getByRole('button', { name: 'End turn' }).click();
 
-  // Bob: bank 1M, then It's My Birthday; Ann pays from her bank, Cy has nothing to pay.
-  await expect(log(bob)).toContainText("Bob's turn");
+  // Bob: bank 1M, then It's My Birthday; Ann pays from her bank on the table, Cy has nothing to pay.
+  await expectLog(bob, "Bob's turn");
   await playFromHand(bob, '1M money', 'Bank it (+1M)');
   await playFromHand(bob, "It's My Birthday, action, worth 2M", "It's my birthday: everyone pays 2M");
-  await ann.getByRole('dialog', { name: 'You owe 2M' }).getByRole('button', { name: 'Pay 2M' }).click();
-  await expect(log(bob)).toContainText('Ann paid Bob 2M');
+  await ann.getByRole('region', { name: 'You owe Bob 2M' }).getByRole('button', { name: 'Pay 2M' }).click();
+  await expectLog(bob, 'Ann paid Bob 2M');
   await expect(bob.getByRole('group', { name: 'Your bank, 3M' })).toBeVisible();
   await bob.getByRole('button', { name: 'End turn' }).click();
 
   // Cy: a reload mid-turn keeps the seat and the hand.
-  await expect(log(cy)).toContainText("Cy's turn");
+  await expectLog(cy, "Cy's turn");
   await cy.reload();
   await expect(hand(cy).getByRole('button')).toHaveCount(7);
   await playFromHand(cy, '4M money', 'Bank it (+4M)');
