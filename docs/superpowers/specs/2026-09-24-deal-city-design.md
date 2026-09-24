@@ -390,6 +390,8 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
   - Each socket is limited to about 20 messages per second.
   - Nicknames are trimmed, limited to 1–16 characters, and stripped of control characters.
   - The client is never trusted.
+  - Socket messages are capped at 16 KiB.
+- **Shutdown:** `SIGTERM`/`SIGINT` close the server cleanly (rooms, timers and sockets), so `docker stop` returns at once.
 - **HTTP (Fastify)**
   - Serves the built web app.
   - Serves `/healthz`.
@@ -501,12 +503,14 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
   - a timeout triggers automatic payment;
   - removal after the grace period.
 - **End-to-end tests (Playwright)**
-  - 3 browser contexts play a scripted game on a fixed seed. The seed is allowed only when `NODE_ENV=test`.
-  - A screenshot is taken of `/gallery`.
+  - 3 browser contexts play a scripted game on seed 18 (the lobby forwards `?seed=<n>`; the server honours it only when `NODE_ENV=test`). The script covers a property, a bank deposit, a birthday payment, a reload mid-turn, leaving, game over and rematch.
+  - `/gallery` is checked for all 111 figures and a full-page screenshot is attached for review. It is not a pixel baseline.
+  - A smoke spec (health, create, join, start) runs against any deployment through `E2E_BASE_URL`.
 - **Docker**
   - `docker compose up` must succeed.
   - `/healthz` must return 200.
   - A manual 3-tab game must play through.
+  - `docker stop` returns in under 5 s.
 
 ---
 

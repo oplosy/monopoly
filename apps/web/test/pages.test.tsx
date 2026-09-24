@@ -138,6 +138,20 @@ describe('Lobby', () => {
     expect(screen.getByText('Waiting for the host to start.')).toBeInTheDocument();
   });
 
+  it('forwards a seed from the page address to the server', async () => {
+    const user = userEvent.setup();
+    const { socket } = renderApp('/room/ABCDEF?seed=18', { state: { session: savedSeat('p1'), room: roomOf(['p1', 'p2'], 'lobby') } });
+    await user.click(screen.getByRole('button', { name: 'Start game' }));
+    expect(socket.sentOf('room:start')).toEqual([{ seed: 18 }]);
+  });
+
+  it('ignores a seed that is not a whole number', async () => {
+    const user = userEvent.setup();
+    const { socket } = renderApp('/room/ABCDEF?seed=abc', { state: { session: savedSeat('p1'), room: roomOf(['p1', 'p2'], 'lobby') } });
+    await user.click(screen.getByRole('button', { name: 'Start game' }));
+    expect(socket.sentOf('room:start')).toEqual([{}]);
+  });
+
   it('copies the invite link', async () => {
     const user = userEvent.setup();
     lobby(['p1']);

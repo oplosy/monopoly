@@ -34,7 +34,7 @@ export interface AppState {
   joinRoom(code: string, nickname: string): Promise<Ack<JoinedRoom>>;
   resume(): Promise<Ack<JoinedRoom>>;
   forgetSession(): void;
-  start(): Promise<Ack>;
+  start(seed?: number): Promise<Ack>;
   leave(): Promise<Ack>;
   rematch(): Promise<Ack>;
   sendIntent(intent: Intent): Promise<Ack>;
@@ -128,8 +128,8 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
         reset();
         set({ replaced: false });
       },
-      async start() {
-        return offline() ?? toast(await call('room:start', {}));
+      async start(seed) {
+        return offline() ?? toast(await call('room:start', seed === undefined ? {} : { seed }));
       },
       async leave() {
         const res = await call('room:leave', {});

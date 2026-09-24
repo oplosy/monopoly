@@ -1,14 +1,23 @@
 import { MAX_SEATS, MIN_PLAYERS } from '@deal-city/protocol/constants';
 import type { RoomState } from '@deal-city/protocol';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { useGameStore } from '../store/context';
+
+/** `?seed=<n>` deals a fixed deck; the server honours it only in test mode (end-to-end tests). */
+function seedFrom(params: URLSearchParams): number | undefined {
+  const raw = params.get('seed');
+  if (!raw || !/^\d{1,10}$/.test(raw)) return undefined;
+  const seed = Number(raw);
+  return seed <= 0xffffffff ? seed : undefined;
+}
 
 export function Lobby({ room }: { room: RoomState }) {
   const session = useGameStore((s) => s.session);
   const start = useGameStore((s) => s.start);
   const leave = useGameStore((s) => s.leave);
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [copied, setCopied] = useState(false);
   const link = `${window.location.origin}/room/${room.code}`;
   const isHost = room.hostId === session?.playerId;
@@ -48,7 +57,7 @@ export function Lobby({ room }: { room: RoomState }) {
         ))}
       </ul>
       {isHost ? (
-        <button type="button" className="primary" disabled={!enough} onClick={() => void start()}>
+        <button type="button" className="primary" disabled={!enough} onClick={() => void start(seedFrom(params))}>
           {enough ? 'Start game' : 'Waiting for players…'}
         </button>
       ) : (
