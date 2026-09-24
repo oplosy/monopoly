@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MY_SEAT_UI } from '../src/scene/geometry';
 import { LINE_MS, MAX_QUEUE } from '../src/tabletop/narration';
-import { renderTabletop, sentIntents } from './dom';
+import { renderApp, renderTabletop, sentIntents } from './dom';
 import { atTable, payload, play, roomOf } from './fixtures';
 
 afterEach(() => vi.useRealTimers());
@@ -167,5 +167,43 @@ describe('the narrator', () => {
     const burst = Array.from({ length: 8 }, (_, i) => ({ id: i + 1, event: { type: 'drew' as const, playerId: 'p2', count: i + 1 } }));
     act(() => store.setState({ log: burst }));
     expect(screen.getByRole('status')).toHaveTextContent(`Bob drew ${8 - MAX_QUEUE + 1} cards`);
+  });
+});
+
+describe('game over', () => {
+  const won = () =>
+    play(
+      {
+        players: [
+          {
+            id: 'p1',
+            hand: ['prop-green-3'],
+            groups: [
+              { color: 'brown', cards: ['prop-brown-1', 'prop-brown-2'] },
+              { color: 'darkBlue', cards: ['prop-darkBlue-1', 'prop-darkBlue-2'] },
+              { color: 'green', cards: ['prop-green-1', 'prop-green-2'] },
+            ],
+          },
+          { id: 'p2' },
+        ],
+      },
+      [['p1', { type: 'playProperty', card: 'prop-green-3', color: 'green' }]],
+    );
+
+  it('celebrates the winner on the table with their sets', async () => {
+    const user = userEvent.setup();
+    const { socket } = renderTabletop({ state: atTable(won(), 'p1', { status: 'finished' }) });
+    const dialog = screen.getByRole('dialog', { name: 'You win!' });
+    expect(within(dialog).getAllByRole('img')).toHaveLength(7);
+    expect(within(dialog).getByRole('button', { name: 'Play again' })).toHaveFocus();
+    expect(screen.getByRole('heading', { level: 1, name: 'Ann won' })).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Play again' }));
+    expect(socket.sentOf('room:rematch')).toEqual([{}]);
+  });
+
+  it('is what the room page shows once the game has started', () => {
+    renderApp('/room/ABCDEF', { state: atTable(base(), 'p1') });
+    expect(screen.getByRole('heading', { level: 1, name: 'Your turn' })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Your hand, 2 cards' })).toBeInTheDocument();
   });
 });

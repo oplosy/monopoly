@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router';
 import { useGameStore } from '../store/context';
 import { LeaveButton } from './LeaveButton';
-import { Table } from '../table/Table';
+import { Tabletop } from '../tabletop/Tabletop';
 import { JoinForm } from './JoinForm';
 import { Lobby } from './Lobby';
 import { PaperPage } from './PaperPage';
@@ -19,7 +19,7 @@ export function RoomPage() {
   if (session?.code === code) {
     if (!room) return <PaperPage className="center-message"><p>Loading the room…</p></PaperPage>;
     if (room.status === 'lobby') return <Lobby room={room} />;
-    return <Table />;
+    return <Tabletop />;
   }
 
   if (session) {
