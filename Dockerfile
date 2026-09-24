@@ -25,6 +25,7 @@ COPY --from=build /app/apps/web/dist web
 USER node
 WORKDIR /app/apps/server
 EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+# Probe every second while starting, so Caddy (depends_on: service_healthy) starts sooner.
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --start-interval=1s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:3000/healthz').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
 CMD ["node", "dist/main.js"]
