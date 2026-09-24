@@ -274,6 +274,8 @@
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
+  /* clip, unlike hidden, cannot be scrolled by focus(): focusing a hand card never shifts the table. */
+  overflow: clip;
   --hand-w: clamp(84px, 8.5vw, 124px);
 }
 /* The whole table fits the screen: the far seats below the narrator, the near rim under my hand. */
@@ -404,4 +406,58 @@
 @media (prefers-reduced-motion: reduce) {
   .narrator,
   .end-turn { transition: none; }
+}
+
+/* ---------- Card popover ---------- */
+.popover { position: fixed; z-index: 30; width: max-content; max-width: min(22rem, calc(100vw - 16px)); }
+.popover-body { display: grid; gap: 0.45rem; }
+.pills { display: grid; gap: 0.45rem; }
+.pill {
+  border-radius: 999px;
+  padding: 0.55rem 1.1rem;
+  text-align: left;
+  background: #fffaf0;
+  box-shadow: 0 4px 10px rgb(0 0 0 / 0.25);
+  transition: transform 0.1s ease;
+}
+.pill.primary { background: #3b2a10; border-color: #3b2a10; color: #fff8ec; }
+.pill:active,
+.pill-back:active,
+.popover-close:active { transform: scale(0.97); }
+.popover-reason,
+.popover-note {
+  margin: 0;
+  padding: 0.5rem 0.8rem;
+  border-radius: 12px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  font-weight: 600;
+}
+.popover-note { font-weight: 500; font-size: 0.85rem; }
+.popover-close,
+.pill-back { justify-self: start; border-radius: 999px; padding: 0.3rem 0.9rem; font-size: 0.85rem; box-shadow: 0 3px 8px rgb(0 0 0 / 0.2); }
+.popover .chips,
+.popover .rent-form { background: var(--paper); border: 2px solid var(--ink); border-radius: 14px; padding: 0.7rem; box-shadow: 0 6px 16px rgb(0 0 0 / 0.25); }
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chip {
+  border: 2px solid var(--chip);
+  border-left-width: 10px;
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+  padding: 0.35rem 0.6rem;
+  border-radius: 10px;
+  font-weight: 600;
+  background: var(--paper);
+  cursor: pointer;
+}
+.rent-form { display: grid; gap: 0.6rem; }
+.rent-form fieldset { border: none; padding: 0; margin: 0; display: grid; gap: 0.3rem; }
+.rent-form legend { font-weight: 700; margin-bottom: 0.2rem; }
+.rent-form label { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500; }
+.rent-form input { width: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .pill,
+  .pill-back,
+  .popover-close { transition: none; }
 }
