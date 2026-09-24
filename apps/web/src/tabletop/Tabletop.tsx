@@ -13,6 +13,7 @@ import { CenterPiles } from './CenterPiles';
 import { Countdown } from './Countdown';
 import { CounterTray } from './CounterTray';
 import { DiscardTray } from './DiscardTray';
+import { GameOverStage } from './GameOverStage';
 import { HandFan } from './HandFan';
 import { Hud } from './Hud';
 import { InspectProvider, useInspect } from './inspect';
@@ -244,6 +245,15 @@ function TableScene({ game }: { game: GameStatePayload }) {
           {popover}
           <Hud code={room?.code ?? ''} logOpen={logOpen} onToggleLog={() => setLogOpen((open) => !open)} />
           {logOpen && <LogDrawer entries={log} names={names} onClose={() => setLogOpen(false)} />}
+          {view.winner && (
+            <GameOverStage
+              view={view}
+              winner={view.winner}
+              name={name}
+              avatarOf={(id) => seats.get(id)?.avatar ?? 0}
+              isHost={room?.hostId === view.me}
+            />
+          )}
         </div>
       </ProjectionProvider>
     </TableInteractionProvider>
