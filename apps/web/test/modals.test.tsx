@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import type { GameState, Intent } from '@deal-city/engine';
 import type { PlayerSpec } from '@deal-city/engine/testing';
 import type { Deadlines } from '@deal-city/protocol';
 import { renderApp, sentIntents } from './dom';
-import { atTable, play } from './fixtures';
+import { atTable, payload, play } from './fixtures';
 
 const dc: Intent = { type: 'playDebtCollector', card: 'act-debtCollector-1', target: 'p2' };
 
@@ -89,6 +89,27 @@ describe('pay', () => {
     await user.click(within(dialog).getByRole('button', { name: /^House/ }));
     expect(within(dialog).getByText('Pay the Hotel before its House.')).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: /^Pay / })).toBeDisabled();
+  });
+});
+
+describe('pay with several payers', () => {
+  it("keeps a payer's picks when another player pays first", async () => {
+    const spec = {
+      players: [
+        { id: 'p1', hand: ['act-birthday-1'] },
+        { id: 'p2', bank: ['money-2-1'] },
+        { id: 'p3', bank: ['money-1-1', 'money-1-2', 'money-2-2'] },
+      ],
+    };
+    const birthday: Intent = { type: 'playBirthday', card: 'act-birthday-1' };
+    const { user, store } = show(play(spec, [['p1', birthday]]), 'p3');
+    const dialog = () => screen.getByRole('dialog', { name: 'You owe 2M' });
+    await user.click(within(dialog()).getByRole('button', { name: /^2M money/ }));
+    for (const one of within(dialog()).getAllByRole('button', { name: '1M money' })) await user.click(one);
+    const afterBob = play(spec, [['p1', birthday], ['p2', { type: 'pay', cards: ['money-2-1'] }]]);
+    act(() => store.setState({ game: payload(afterBob, 'p3') }));
+    expect(within(dialog()).getAllByRole('button', { name: '1M money', pressed: true })).toHaveLength(2);
+    expect(within(dialog()).getByRole('button', { name: /^2M money/, pressed: false })).toBeInTheDocument();
   });
 });
 

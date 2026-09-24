@@ -26,7 +26,8 @@ export function Decisions({ view, legal, deadlines, name, onSend }: Props) {
     case 'counter':
       return <CounterModal pending={role.pending} targets={role.targets} legal={legal} name={name} deadline={responseDeadline} onSend={onSend} />;
     case 'pay':
-      return <PayModal key={view.version} view={view} amount={role.amount} name={name} deadline={responseDeadline} onSend={onSend} />;
+      // Keyed by the action, not the version: another payer finishing must not reset this player's picks.
+      return <PayModal key={`${role.pending.actorId}:${role.pending.cardIds.join(',')}`} view={view} amount={role.amount} name={name} deadline={responseDeadline} onSend={onSend} />;
     case 'discard':
       return <DiscardModal key={view.version} hand={view.hand} count={role.count} deadline={deadlines.turnEndsAt} onSend={onSend} />;
   }
