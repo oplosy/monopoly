@@ -27,7 +27,8 @@
   display: flex;
   align-items: flex-start;
   gap: calc(var(--card-w) * 0.35);
-  font-size: calc(var(--card-w) * 0.2);
+  /* Readable on the far side too, where perspective shrinks it to ≈0.7×. */
+  font-size: calc(var(--card-w) * 0.28);
 }
 .players-3 .tableau:not(.is-mine) { max-width: calc(var(--plane) * 0.4); }
 .tableau-groups { display: flex; flex-wrap: wrap; gap: calc(var(--card-w) * 0.18); max-width: calc(var(--card-w) * 6.2); }
@@ -335,10 +336,10 @@
 }
 .pending-wait { font-weight: 600; font-size: 0.85rem; }
 .my-clock {
+  /* Just above End turn, by the hand, so a lifted hand card never runs into it. */
   position: absolute;
-  left: 50%;
-  bottom: calc(var(--hand-w) * 1.12);
-  transform: translateX(-50%);
+  right: 3vw;
+  bottom: calc(4vh + 4.4rem);
   z-index: 11;
   font: 700 1.6rem var(--font-num);
   color: #fff;
@@ -401,6 +402,7 @@
   .tabletop { --hand-w: 68px; }
   .tabletop .scene { --plane: 100vw; --plane-shift: 4%; }
   .end-turn { right: 8px; bottom: calc(var(--hand-w) * 1.25); font-size: 1rem; padding: 0.6rem 1rem; }
+  .my-clock { right: 12px; bottom: calc(var(--hand-w) * 1.25 + 3.2rem); font-size: 1.3rem; }
   .hud { top: 6px; right: 6px; }
   .narrator { top: 3.5rem; }
   .pending-stage { top: 6.5rem; }
@@ -482,7 +484,12 @@
   box-shadow: 0 10px 24px rgb(0 0 0 / 0.35);
 }
 .tray.is-anchored { position: fixed; transform: none; bottom: auto; }
-.tray-title { margin: 0; font-weight: 700; }
+.tray-title { margin: 0; font-weight: 700; font-size: 0.9rem; }
+/* The pay tray is one compact strip (mockup 05): the meter and the buttons share a row. */
+.pay-tray { grid-template-columns: minmax(8rem, 1fr) auto; grid-auto-flow: row dense; column-gap: 0.9rem; align-items: center; }
+.pay-tray > * { grid-column: 1 / -1; }
+.pay-tray > .tray-meter { grid-row: 2; grid-column: 1; }
+.pay-tray > .tray-actions { grid-row: 2; grid-column: 2; }
 .tray-note { margin: 0; font-size: 0.85rem; opacity: 0.9; }
 .tray-warn { margin: 0; font-weight: 700; color: #ffb4a8; }
 .tray-meter { display: flex; align-items: center; gap: 0.6rem; }
@@ -495,6 +502,10 @@
 .counter-row + .counter-row { border-top: 1px solid rgb(255 255 255 / 0.2); padding-top: 0.45rem; }
 @media (max-width: 700px) {
   .tray { bottom: calc(var(--hand-w) * 1.3); max-width: calc(100vw - 1rem); }
+  .pay-tray { grid-template-columns: 1fr; }
+  .pay-tray > .tray-meter,
+  .pay-tray > .tray-actions { grid-row: auto; grid-column: 1; }
+  .tray-title { font-size: 0.8rem; }
 }
 
 /* ---------- Game over ---------- */
