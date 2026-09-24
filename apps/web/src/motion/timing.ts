@@ -21,6 +21,9 @@ export const EFFECT_MS: Record<Effect['type'], number> = {
   leave: 900,
   confetti: 50,
 };
+/** Effects that celebrate an arrival start once their scene's last flight has landed; the rest start with it. */
+const AT_LANDING: ReadonlySet<Effect['type']> = new Set(['confetti']);
+
 /** Sped-up flights never get shorter than this. */
 export const MIN_FLIGHT_MS = 90;
 
@@ -62,13 +65,15 @@ export function schedule(scenes: readonly Scene[], waiting: number): Timeline {
   let start = 0;
   let total = 0;
   for (const scene of scenes) {
-    for (const effect of scene.effects) effects.push({ effect, at: Math.round(start) });
+    let landed = start;
     scene.flights.forEach((flight, i) => {
       const delay = Math.round(start + i * scene.stagger * scale);
       const duration = Math.max(MIN_FLIGHT_MS, Math.round(STYLE_MS[flight.style] * scale));
       flights.push({ flight, delay, duration });
-      total = Math.max(total, delay + duration);
+      landed = Math.max(landed, delay + duration);
     });
+    total = Math.max(total, landed);
+    for (const effect of scene.effects) effects.push({ effect, at: Math.round(AT_LANDING.has(effect.type) ? landed : start) });
     start += sceneLength(scene) * advance;
   }
   return { flights, effects, total };

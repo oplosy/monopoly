@@ -45,4 +45,9 @@ describe('schedule', () => {
     expect(t.effects).toEqual([{ effect: { type: 'setComplete', groupId: 'g1' }, at: STYLE_MS.arc }]);
     expect(t.total).toBe(STYLE_MS.arc);
   });
+
+  it('throws confetti once the winning sets have landed', () => {
+    const t = schedule([scene([flight('arc', 0), flight('arc', 1)], 60, [{ type: 'confetti' }])], 0);
+    expect(t.effects).toEqual([{ effect: { type: 'confetti' }, at: t.total }]);
+  });
 });

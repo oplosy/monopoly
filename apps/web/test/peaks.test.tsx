@@ -137,8 +137,12 @@ describe('peak moments', () => {
       expect(cards()).toHaveLength(7);
       expect(cards().every((c) => c.style.visibility === 'hidden')).toBe(true);
       act(() => vi.advanceTimersByTime(STYLE_MS.arc));
-      expect(celebrate).toHaveBeenCalledTimes(1);
-      act(() => vi.advanceTimersByTime(1000));
+      expect(celebrate).not.toHaveBeenCalled();
+      // The sets land in the banner (seven cards, 60 ms apart), then the confetti flies (plan decision 9).
+      act(() => vi.advanceTimersByTime(6 * 60 + STYLE_MS.arc - 1));
+      expect(celebrate).not.toHaveBeenCalled();
+      act(() => vi.advanceTimersByTime(1));
       expect(cards().some((c) => c.style.visibility === 'hidden')).toBe(false);
+      expect(celebrate).toHaveBeenCalledTimes(1);
     }));
 });
