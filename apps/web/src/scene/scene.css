@@ -48,7 +48,7 @@
   width: var(--plane);
   height: var(--plane);
   margin: calc(var(--plane) / -2) 0 0 calc(var(--plane) / -2);
-  transform: translateY(4%) rotateX(var(--tilt));
+  transform: translateY(var(--plane-shift, 4%)) rotateX(var(--tilt));
   transform-style: preserve-3d;
 }
 

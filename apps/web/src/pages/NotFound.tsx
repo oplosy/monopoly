@@ -1,10 +1,11 @@
 import { Link } from 'react-router';
+import { PaperPage } from './PaperPage';
 
 export function NotFound() {
   return (
-    <main className="center-message">
+    <PaperPage className="center-message">
       <h1>Page not found</h1>
       <Link to="/">Go home</Link>
-    </main>
+    </PaperPage>
   );
 }
