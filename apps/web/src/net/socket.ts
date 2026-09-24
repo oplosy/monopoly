@@ -33,7 +33,10 @@ export function socketLike(socket: GameSocket): SocketLike {
   };
 }
 
-/** Same-origin socket: the server serves the app in production, and Vite proxies /socket.io in development. */
+/**
+ * Same-origin socket: the server serves the app in production, and Vite proxies /socket.io in development.
+ * WebSocket first; `tryAllTransports` falls back to long-polling behind proxies that block it.
+ */
 export function connectSocket(): GameSocket {
-  return io({ transports: ['websocket', 'polling'] });
+  return io({ transports: ['websocket', 'polling'], tryAllTransports: true });
 }
