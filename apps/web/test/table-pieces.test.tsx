@@ -187,6 +187,12 @@ describe('HandFan', () => {
     expect(within(hand).getAllByRole('button')).toHaveLength(3);
   });
 
+  it('tells the stylesheet how many cards to fit, so a big hand squeezes instead of leaving the screen', () => {
+    const cards = [...Array.from({ length: 6 }, (_, i) => `money-1-${i + 1}`), ...Array.from({ length: 5 }, (_, i) => `money-2-${i + 1}`), 'money-3-1'];
+    mount(<HandFan cards={cards} me="p1" />);
+    expect(screen.getByRole('list', { name: 'Your hand, 12 cards' }).style.getPropertyValue('--n')).toBe('12');
+  });
+
   it('says when the hand is empty', () => {
     mount(<HandFan cards={[]} me="p1" />);
     expect(screen.getByText('Your hand is empty')).toBeInTheDocument();

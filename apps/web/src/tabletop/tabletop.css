@@ -236,7 +236,11 @@
 }
 .hand-fan > li {
   flex: none;
-  margin-left: calc(var(--hand-w) * -0.35);
+  /* Overlap 35%, or more when --n cards would not fit between the reserves (a big hand squeezes). */
+  margin-left: min(
+    calc(var(--hand-w) * -0.35),
+    calc((100vw - 2 * var(--hand-reserve) - var(--hand-w)) / max(var(--n, 1) - 1, 1) - var(--hand-w))
+  );
   transform-origin: 50% 160%;
   transform: translateY(var(--drop, 0px)) rotate(var(--rot, 0deg));
   transition: transform 0.15s ease, margin 0.15s ease;
@@ -280,6 +284,8 @@
   /* clip, unlike hidden, cannot be scrolled by focus(): focusing a hand card never shifts the table. */
   overflow: clip;
   --hand-w: clamp(84px, 8.5vw, 124px);
+  /* Kept free on each side of the hand: my seat sits at the lower left. */
+  --hand-reserve: 26vw;
 }
 /* The whole table fits the screen: the far seats below the narrator, the near rim under my hand. */
 .tabletop .scene { --plane: min(70vw, calc((100vh - 170px) * 1.12)); --plane-shift: -9%; }
@@ -399,7 +405,7 @@
 .log-drawer ol { margin: 0; padding-left: 1.2rem; overflow-y: auto; display: grid; gap: 0.3rem; align-content: start; font-size: 0.9rem; }
 
 @media (max-width: 700px) {
-  .tabletop { --hand-w: 68px; }
+  .tabletop { --hand-w: 68px; --hand-reserve: 8px; }
   .tabletop .scene { --plane: 100vw; --plane-shift: 4%; }
   .end-turn { right: 8px; bottom: calc(var(--hand-w) * 1.25); font-size: 1rem; padding: 0.6rem 1rem; }
   .my-clock { right: 12px; bottom: calc(var(--hand-w) * 1.25 + 3.2rem); font-size: 1.3rem; }

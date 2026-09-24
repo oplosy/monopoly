@@ -7,7 +7,7 @@ import { TableCard } from './TableCard';
 export function HandFan({ cards, me }: { cards: readonly string[]; me: string }) {
   if (cards.length === 0) return <p className="hand-fan is-empty">Your hand is empty</p>;
   return (
-    <ul className="hand-fan" aria-label={`Your hand, ${plural(cards.length, 'card')}`}>
+    <ul className="hand-fan" aria-label={`Your hand, ${plural(cards.length, 'card')}`} style={{ '--n': cards.length } as CSSProperties}>
       {cards.map((id, i) => {
         const f = fanLayout(cards.length, i);
         return (
