@@ -118,7 +118,10 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
         set({ resuming: true });
         const res = await call('room:resume', { token: saved.token });
         set({ resuming: false });
-        if (!res.ok && res.error === 'sessionNotFound') reset();
+        if (!res.ok && res.error === 'sessionNotFound') {
+          reset();
+          set({ error: res.error });
+        }
         return enter(res);
       },
       forgetSession() {

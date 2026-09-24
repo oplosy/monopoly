@@ -50,12 +50,13 @@ describe('game store: seats', () => {
     expect(store.getState().connected).toBe(true);
   });
 
-  it('forgets a seat the server no longer holds', async () => {
+  it('forgets a seat the server no longer holds, and says why', async () => {
     const { socket, storage, store } = setup(savedSeat('p1'));
     socket.reply('room:resume', () => ({ ok: false, error: 'sessionNotFound' }));
     expect(await store.getState().resume()).toEqual({ ok: false, error: 'sessionNotFound' });
     expect(storage.load()).toBeNull();
     expect(store.getState().savedCode).toBeNull();
+    expect(store.getState().error).toBe('sessionNotFound');
   });
 
   it('reconnects after a seat request times out, then resumes the saved seat', async () => {
