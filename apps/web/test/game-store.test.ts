@@ -208,6 +208,13 @@ describe('game store: intents', () => {
     expect(store.getState().error).toBe('busy');
   });
 
+  it('sends a start seed only when one is given', async () => {
+    const { socket, store } = online();
+    await store.getState().start();
+    await store.getState().start(18);
+    expect(socket.sentOf('room:start')).toEqual([{}, { seed: 18 }]);
+  });
+
   it('refuses intents before a game exists', async () => {
     const { socket, store } = online();
     expect(await store.getState().sendIntent({ type: 'endTurn' })).toEqual({ ok: false, error: 'notPlaying' });
