@@ -18,3 +18,8 @@ export function wrapLines(text: string, maxChars: number): string[] {
 export function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
+
+/** Character budgets per text box (checked against every card's text by tests). */
+export const NAME_WRAP = 14;
+export const TITLE_WRAP = 13;
+export const EFFECT_WRAP = 28;

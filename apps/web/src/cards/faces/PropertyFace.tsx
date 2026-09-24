@@ -1,13 +1,13 @@
 import { COLORS } from '@deal-city/engine';
 import { CardSvg, GlyphChip, Lines, RentLadder, ValueBadge, W, type FaceProps } from '../parts';
-import { wrapLines } from '../text';
+import { NAME_WRAP, wrapLines } from '../text';
 import { FONT_DISPLAY, INK, MUTED, inkOn } from '../theme';
 
 /** District deed: color band with the name, rent ladder, set size. */
 export function PropertyFace({ card, label, className }: FaceProps<'property'>) {
   const info = COLORS[card.color];
   const on = inkOn(info.hex);
-  const name = wrapLines(card.name, 14);
+  const name = wrapLines(card.name, NAME_WRAP);
   return (
     <CardSvg label={label} className={className}>
       <rect width={W} height={112} fill={info.hex} />

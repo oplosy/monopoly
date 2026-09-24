@@ -1,4 +1,5 @@
 import { getCard, type Color } from '@deal-city/engine';
+import { ActionFace } from './faces/ActionFace';
 import { MoneyFace } from './faces/MoneyFace';
 import { PropertyFace } from './faces/PropertyFace';
 import { RentFace } from './faces/RentFace';
@@ -12,6 +13,7 @@ export interface CardFaceProps {
   className?: string;
 }
 
+/** Draws any of the 106 cards from its engine definition. Throws RuleError('unknownCard') for bad ids. */
 export function CardFace({ id, activeColor, className }: CardFaceProps) {
   const card = getCard(id);
   const label = cardLabel(id);
@@ -24,7 +26,7 @@ export function CardFace({ id, activeColor, className }: CardFaceProps) {
       return <WildFace card={card} label={label} className={className} activeColor={activeColor} />;
     case 'rent':
       return <RentFace card={card} label={label} className={className} />;
-    default:
-      throw new Error(`CardFace: ${card.type} cards are not drawn yet`);
+    case 'action':
+      return <ActionFace card={card} label={label} className={className} />;
   }
 }

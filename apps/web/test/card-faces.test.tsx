@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { COLORS } from '@deal-city/engine';
+import { ACTIONS, CARDS, COLORS, PROPERTY_NAMES, type ActionKind } from '@deal-city/engine';
+import { CardBack } from '../src/cards/CardBack';
 import { CardFace, type CardFaceProps } from '../src/cards/CardFace';
 import { slicePath } from '../src/cards/faces/RentFace';
 import { cardLabel } from '../src/cards/labels';
+import { EFFECT_WRAP, NAME_WRAP, TITLE_WRAP, wrapLines } from '../src/cards/text';
 import { MONEY_TINTS } from '../src/cards/theme';
 
 /** React escapes attribute text; mirror it to compare labels. */
@@ -102,5 +104,43 @@ describe('RentFace', () => {
   it('builds pie slices with the right arc flags', () => {
     expect(slicePath(0, 0, 10, 0, Math.PI / 2)).toBe('M0 0 L10 0 A10 10 0 0 1 0 10 Z');
     expect(slicePath(0, 0, 10, 0, (3 * Math.PI) / 2)).toContain('A10 10 0 1 1');
+  });
+});
+
+describe('ActionFace', () => {
+  it('draws every action with its title, icon and effect text', () => {
+    for (const kind of Object.keys(ACTIONS) as ActionKind[]) {
+      const html = render({ id: `act-${kind}-1` });
+      expect(html).toContain(`data-icon="${kind}"`);
+      for (const line of wrapLines(ACTIONS[kind].name, TITLE_WRAP)) expect(html).toContain(esc(line));
+      expect(html).toContain(`>${ACTIONS[kind].value}M<`);
+    }
+  });
+});
+
+describe('CardBack', () => {
+  it('shows the game name and is labelled', () => {
+    const html = renderToStaticMarkup(<CardBack />);
+    expect(html).toContain('aria-label="Card back"');
+    expect(html).toContain('>DEAL<');
+    expect(html).toContain('>CITY<');
+  });
+});
+
+describe('the whole deck', () => {
+  it('renders all 106 cards', () => {
+    for (const c of CARDS) {
+      const html = render({ id: c.id });
+      expect(html, c.id).toContain(`aria-label="${esc(cardLabel(c.id))}"`);
+    }
+  });
+
+  it('all generated text fits its line budget', () => {
+    for (const names of Object.values(PROPERTY_NAMES)) for (const n of names) expect(wrapLines(n, NAME_WRAP).length, n).toBeLessThanOrEqual(2);
+    for (const a of Object.values(ACTIONS)) {
+      expect(wrapLines(a.name, TITLE_WRAP).length, a.name).toBeLessThanOrEqual(2);
+      expect(wrapLines(a.text, EFFECT_WRAP).length, a.text).toBeLessThanOrEqual(4);
+      for (const line of wrapLines(a.text, EFFECT_WRAP)) expect(line.length, line).toBeLessThanOrEqual(EFFECT_WRAP);
+    }
   });
 });
