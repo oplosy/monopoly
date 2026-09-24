@@ -88,12 +88,11 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
     return () => window.removeEventListener('keydown', onKey);
   }, [state?.phase]);
 
-  // Scenes started, or my turn ended: a card being dragged goes back.
+  // Scenes started, or my turn ended: a card pressed or being dragged goes back.
   useEffect(() => {
-    if (!enabled && live.current?.phase === 'dragging') {
-      press.current = null;
-      update(null);
-    }
+    if (enabled) return;
+    press.current = null;
+    if (live.current?.phase === 'dragging') update(null);
   }, [enabled]);
 
   useEffect(
@@ -125,6 +124,11 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
         onPointerMove(e) {
           const p = press.current;
           if (!p || p.card !== card) return;
+          // Scenes started under a pressed card: it stays put, as a click on it would.
+          if (!enabled) {
+            press.current = null;
+            return;
+          }
           const s = live.current;
           if (!s) {
             if (Math.hypot(e.clientX - p.x, e.clientY - p.y) < DRAG_START_PX) return;

@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 import { act, fireEvent, screen, within } from '@testing-library/react';
+import { applyIntent } from '@deal-city/engine';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RETURN_MS } from '../src/tabletop/drag';
 import { renderTabletop, sentIntents } from './dom';
-import { atTable, play } from './fixtures';
+import { atTable, payload, play } from './fixtures';
+import { stubAnimations } from './motion';
 
 afterEach(() => {
   Reflect.deleteProperty(document, 'elementsFromPoint');
@@ -95,5 +97,27 @@ describe('drag and drop', () => {
     fireEvent.pointerMove(card, { pointerId: 1, pointerType: 'touch', clientX: 140, clientY: 300 });
     expect(card).not.toHaveClass('is-dragging');
     expect(document.querySelector('.drag-ghost')).toBeNull();
+  });
+
+  it('does not start a drag once scenes start playing under a pressed card', () => {
+    const animations = stubAnimations();
+    try {
+      const s0 = play({ players: [{ id: 'p1', hand: ['money-2-1', 'money-1-1'] }, { id: 'p2' }] });
+      const { store, socket } = renderTabletop({ state: atTable(s0, 'p1') });
+      under(screen.getByRole('group', { name: 'Your bank, 0M' }));
+      const card = handCard(/^2M money/);
+      fireEvent.pointerDown(card, { ...mouse, button: 0, clientX: 100, clientY: 600 });
+      // Another play's scenes start while the button is still down.
+      const r = applyIntent(s0, 'p1', { type: 'playToBank', card: 'money-1-1' });
+      if (!r.ok) throw new Error(r.error);
+      act(() => store.setState({ game: payload(r.state, 'p1', { events: r.events }) }));
+      fireEvent.pointerMove(card, { ...mouse, clientX: 140, clientY: 300 });
+      expect(card).not.toHaveClass('is-dragging');
+      release(card);
+      expect(sentIntents(socket)).toEqual([]);
+      expect(document.querySelector('.drag-ghost')).toBeNull();
+    } finally {
+      animations.restore();
+    }
   });
 });
