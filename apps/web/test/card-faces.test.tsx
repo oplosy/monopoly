@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { COLORS } from '@deal-city/engine';
 import { CardFace, type CardFaceProps } from '../src/cards/CardFace';
+import { slicePath } from '../src/cards/faces/RentFace';
 import { cardLabel } from '../src/cards/labels';
 import { MONEY_TINTS } from '../src/cards/theme';
 
@@ -59,5 +60,47 @@ describe('PropertyFace', () => {
     const html = render({ id: 'prop-green-1' });
     expect(html).toContain('>Evergreen<');
     expect(html).toContain('>Heights<');
+  });
+});
+
+describe('WildFace', () => {
+  it('shows both colors of a two-color wildcard, first color upright by default', () => {
+    const html = render({ id: 'wild-pink-orange-1' });
+    expect(html).toContain('>PINK<');
+    expect(html).toContain('>ORANGE<');
+    expect(html).toContain(COLORS.pink.hex);
+    expect(html).toContain(COLORS.orange.hex);
+    expect(html).toContain('data-flipped="false"');
+    expect(html).toContain('>WILD<');
+  });
+
+  it('flips when the second color is active', () => {
+    expect(render({ id: 'wild-pink-orange-1', activeColor: 'orange' })).toContain('data-flipped="true"');
+    expect(render({ id: 'wild-pink-orange-1', activeColor: 'pink' })).toContain('data-flipped="false"');
+  });
+
+  it('draws the multicolor wildcard with all ten colors, no value badge, and marks the active color', () => {
+    const html = render({ id: 'wild-any-1', activeColor: 'green' });
+    for (const hex of Object.values(COLORS).map((c) => c.hex)) expect(html).toContain(hex);
+    expect(html).toContain('Any color');
+    expect(html).not.toContain('>0M<');
+    expect(html.match(/data-active="true"/g)).toHaveLength(1);
+  });
+});
+
+describe('RentFace', () => {
+  it('splits the disc into one slice per color', () => {
+    expect(render({ id: 'rent-red-yellow-1' }).match(/data-slice=/g)).toHaveLength(2);
+    expect(render({ id: 'rent-any-1' }).match(/data-slice=/g)).toHaveLength(10);
+  });
+
+  it('explains who pays', () => {
+    expect(render({ id: 'rent-red-yellow-1' })).toContain('Every other player');
+    expect(render({ id: 'rent-any-1' })).toContain('One player of your choice');
+  });
+
+  it('builds pie slices with the right arc flags', () => {
+    expect(slicePath(0, 0, 10, 0, Math.PI / 2)).toBe('M0 0 L10 0 A10 10 0 0 1 0 10 Z');
+    expect(slicePath(0, 0, 10, 0, (3 * Math.PI) / 2)).toContain('A10 10 0 1 1');
   });
 });

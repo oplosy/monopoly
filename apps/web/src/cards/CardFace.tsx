@@ -1,6 +1,8 @@
 import { getCard, type Color } from '@deal-city/engine';
 import { MoneyFace } from './faces/MoneyFace';
 import { PropertyFace } from './faces/PropertyFace';
+import { RentFace } from './faces/RentFace';
+import { WildFace } from './faces/WildFace';
 import { cardLabel } from './labels';
 
 export interface CardFaceProps {
@@ -10,7 +12,7 @@ export interface CardFaceProps {
   className?: string;
 }
 
-export function CardFace({ id, className }: CardFaceProps) {
+export function CardFace({ id, activeColor, className }: CardFaceProps) {
   const card = getCard(id);
   const label = cardLabel(id);
   switch (card.type) {
@@ -18,6 +20,10 @@ export function CardFace({ id, className }: CardFaceProps) {
       return <MoneyFace card={card} label={label} className={className} />;
     case 'property':
       return <PropertyFace card={card} label={label} className={className} />;
+    case 'wild':
+      return <WildFace card={card} label={label} className={className} activeColor={activeColor} />;
+    case 'rent':
+      return <RentFace card={card} label={label} className={className} />;
     default:
       throw new Error(`CardFace: ${card.type} cards are not drawn yet`);
   }
