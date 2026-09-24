@@ -1,4 +1,5 @@
-import { MAX_SEATS, MIN_PLAYERS, type RoomState } from '@deal-city/protocol';
+import { MAX_SEATS, MIN_PLAYERS } from '@deal-city/protocol/constants';
+import type { RoomState } from '@deal-city/protocol';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useGameStore } from '../store/context';

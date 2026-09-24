@@ -1,8 +1,7 @@
 import { z } from 'zod';
 import { COLOR_KEYS, type GameEvent, type GameView, type Intent } from '@deal-city/engine';
 
-export const MAX_SEATS = 3;
-export const MIN_PLAYERS = 2;
+export { MAX_SEATS, MIN_PLAYERS } from './constants';
 
 const cardId = z.string().min(1).max(40);
 const playerId = z.string().min(1).max(40);

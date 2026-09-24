@@ -77,6 +77,12 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
       return res;
     }
 
+    /** Socket.io buffers emits while offline and flushes them before the seat is resumed, so refuse them here. */
+    function offline(): Ack | null {
+      const { connected, resuming } = get();
+      return connected && !resuming ? null : toast({ ok: false, error: 'offline' });
+    }
+
     function reset(): void {
       storage.clear();
       set({ session: null, savedCode: null, room: null, names: {}, game: null, log: [] });
@@ -112,7 +118,10 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
         set({ resuming: true });
         const res = await call('room:resume', { token: saved.token });
         set({ resuming: false });
-        if (!res.ok && res.error === 'sessionNotFound') reset();
+        if (!res.ok && res.error === 'sessionNotFound') {
+          reset();
+          set({ error: res.error });
+        }
         return enter(res);
       },
       forgetSession() {
@@ -120,7 +129,7 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
         set({ replaced: false });
       },
       async start() {
-        return toast(await call('room:start', {}));
+        return offline() ?? toast(await call('room:start', {}));
       },
       async leave() {
         const res = await call('room:leave', {});
@@ -128,12 +137,14 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
         return res;
       },
       async rematch() {
-        return toast(await call('room:rematch', {}));
+        return offline() ?? toast(await call('room:rematch', {}));
       },
       async sendIntent(intent) {
         const { game, sending } = get();
         if (!game) return { ok: false, error: 'notPlaying' };
-        if (sending) return { ok: false, error: 'busy' };
+        if (sending) return toast({ ok: false, error: 'busy' });
+        const refused = offline();
+        if (refused) return refused;
         set({ sending: true });
         const res = await call('game:intent', { intent, expectedVersion: game.view.version });
         set({ sending: false });

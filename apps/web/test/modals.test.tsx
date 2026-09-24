@@ -30,6 +30,21 @@ describe('respond', () => {
   });
 });
 
+describe('dialog focus', () => {
+  it('keeps keyboard focus inside a dialog', async () => {
+    const s = play({ players: [{ id: 'p1', hand: ['act-debtCollector-1'] }, { id: 'p2', hand: ['act-justSayNo-1'], bank: ['money-5-1'] }] }, [['p1', dc]]);
+    const { user } = show(s, 'p2');
+    const dialog = screen.getByRole('dialog', { name: 'Ann wants 5M (Debt Collector)' });
+    const buttons = within(dialog).getAllByRole('button');
+    expect(buttons[0]).toHaveFocus();
+    act(() => buttons.at(-1)!.focus());
+    await user.tab();
+    expect(buttons[0]).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(buttons.at(-1)).toHaveFocus();
+  });
+});
+
 describe('counter', () => {
   it('lets the actor answer a Just Say No', async () => {
     const s = play(

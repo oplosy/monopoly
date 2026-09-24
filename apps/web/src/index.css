@@ -59,6 +59,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 button.primary,
 .button.primary { background: var(--ink); color: var(--paper); }
 button.link { border: none; background: none; text-decoration: underline; padding: 0.25rem; }
+button.danger { background: #b3261e; border-color: #b3261e; color: #fff; }
+.confirm { display: grid; gap: 0.5rem; justify-items: center; }
+.confirm p { margin: 0; font-weight: 600; }
 button:focus-visible,
 .button:focus-visible,
 input:focus-visible { outline: 3px solid #1f4e9a; outline-offset: 2px; }

@@ -15,6 +15,13 @@ function setup(saved: SavedSession | null = null) {
 
 const twoPlayers = () => play({ players: [{ id: 'p1', hand: ['money-1-1'] }, { id: 'p2' }] });
 
+/** A connected tab with no saved seat, so connecting sends nothing. */
+function online() {
+  const ctx = setup();
+  ctx.socket.connect();
+  return ctx;
+}
+
 describe('game store: seats', () => {
   it('saves the seat and nickname when creating a room', async () => {
     const { socket, storage, store } = setup();
@@ -43,12 +50,13 @@ describe('game store: seats', () => {
     expect(store.getState().connected).toBe(true);
   });
 
-  it('forgets a seat the server no longer holds', async () => {
+  it('forgets a seat the server no longer holds, and says why', async () => {
     const { socket, storage, store } = setup(savedSeat('p1'));
     socket.reply('room:resume', () => ({ ok: false, error: 'sessionNotFound' }));
     expect(await store.getState().resume()).toEqual({ ok: false, error: 'sessionNotFound' });
     expect(storage.load()).toBeNull();
     expect(store.getState().savedCode).toBeNull();
+    expect(store.getState().error).toBe('sessionNotFound');
   });
 
   it('reconnects after a seat request times out, then resumes the saved seat', async () => {
@@ -132,14 +140,14 @@ describe('game store: pushes', () => {
 
 describe('game store: intents', () => {
   it('sends intents with the current version', async () => {
-    const { socket, store } = setup();
+    const { socket, store } = online();
     socket.push('game:state', payload(twoPlayers(), 'p1'));
     expect(await store.getState().sendIntent({ type: 'endTurn' })).toEqual({ ok: true });
     expect(socket.sentOf('game:intent')).toEqual([{ intent: { type: 'endTurn' }, expectedVersion: 0 }]);
   });
 
   it('ignores a second intent while one is in flight', async () => {
-    const { socket, store } = setup();
+    const { socket, store } = online();
     socket.push('game:state', payload(twoPlayers(), 'p1'));
     let release: (value: unknown) => void = () => undefined;
     socket.reply('game:intent', () => new Promise((resolve) => (release = resolve)));
@@ -152,7 +160,7 @@ describe('game store: intents', () => {
   });
 
   it('shows action errors as a toast until cleared', async () => {
-    const { socket, store } = setup();
+    const { socket, store } = online();
     socket.push('game:state', payload(twoPlayers(), 'p1'));
     socket.reply('game:intent', () => ({ ok: false, error: 'noPlaysLeft' }));
     await store.getState().sendIntent({ type: 'endTurn' });
@@ -162,14 +170,46 @@ describe('game store: intents', () => {
   });
 
   it('turns an unanswered request into a timeout error', async () => {
-    const { socket, store } = setup();
+    const { socket, store } = online();
     socket.reply('room:start', () => Promise.reject(new Error('operation has timed out')));
     expect(await store.getState().start()).toEqual({ ok: false, error: 'timeout' });
     expect(store.getState().error).toBe('timeout');
   });
 
-  it('refuses intents before a game exists', async () => {
+  it('refuses intents while offline and says why', async () => {
     const { socket, store } = setup();
+    socket.push('game:state', payload(twoPlayers(), 'p1'));
+    expect(await store.getState().sendIntent({ type: 'endTurn' })).toEqual({ ok: false, error: 'offline' });
+    expect(await store.getState().rematch()).toEqual({ ok: false, error: 'offline' });
+    expect(socket.sentOf('game:intent')).toEqual([]);
+    expect(socket.sentOf('room:rematch')).toEqual([]);
+    expect(store.getState().error).toBe('offline');
+  });
+
+  it('refuses intents until the saved seat is resumed', async () => {
+    const { socket, store } = setup(savedSeat('p1'));
+    let release: (value: unknown) => void = () => undefined;
+    socket.reply('room:resume', () => new Promise((resolve) => (release = resolve)));
+    socket.push('game:state', payload(twoPlayers(), 'p1'));
+    socket.connect();
+    expect(await store.getState().sendIntent({ type: 'endTurn' })).toEqual({ ok: false, error: 'offline' });
+    expect(await store.getState().start()).toEqual({ ok: false, error: 'offline' });
+    release(joined);
+    await vi.waitFor(() => expect(store.getState().resuming).toBe(false));
+    expect(await store.getState().sendIntent({ type: 'endTurn' })).toEqual({ ok: true });
+  });
+
+  it('says so when a second intent is refused', async () => {
+    const { socket, store } = online();
+    socket.push('game:state', payload(twoPlayers(), 'p1'));
+    socket.reply('game:intent', () => new Promise(() => undefined));
+    void store.getState().sendIntent({ type: 'endTurn' });
+    await store.getState().sendIntent({ type: 'endTurn' });
+    expect(store.getState().error).toBe('busy');
+  });
+
+  it('refuses intents before a game exists', async () => {
+    const { socket, store } = online();
     expect(await store.getState().sendIntent({ type: 'endTurn' })).toEqual({ ok: false, error: 'notPlaying' });
     expect(socket.sentOf('game:intent')).toEqual([]);
   });
