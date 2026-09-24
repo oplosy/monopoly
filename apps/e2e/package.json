@@ -1,0 +1,16 @@
+{
+  "name": "@deal-city/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "e2e": "playwright test",
+    "smoke": "playwright test -c playwright.smoke.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1",
+    "@types/node": "^26.6.2",
+    "typescript": "^5"
+  }
+}

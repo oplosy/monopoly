@@ -9,6 +9,7 @@
   "scripts": {
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
+    "e2e": "pnpm --filter @deal-city/e2e e2e",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
