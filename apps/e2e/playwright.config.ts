@@ -15,7 +15,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'pnpm --filter @deal-city/web build && pnpm --filter @deal-city/server build && node ../server/dist/main.js',
+    command: 'node serve-test.mjs',
     url: `http://127.0.0.1:${PORT}/healthz`,
     reuseExistingServer: false,
     timeout: 180_000,
