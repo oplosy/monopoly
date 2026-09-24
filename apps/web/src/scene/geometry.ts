@@ -17,10 +17,10 @@ export const TABLEAU_RADIUS = 0.6;
 /** Where a seat's avatar sits, just outside the rim. */
 export const SEAT_UI_RADIUS = 1.08;
 /**
- * At the game table my own avatar sits at the lower left of the near rim, beside my hand, because the
- * hand fan covers the rim at 270°. My tableau stays at 270°.
+ * At the game table my own avatar sits at the lower left of the rim, clear of my hand, because the
+ * hand fan covers the rim at 270° (212° keeps a 7-card hand off it from 1280×720 up). My tableau stays at 270°.
  */
-export const MY_SEAT_UI: PlanePoint = planePoint(232, SEAT_UI_RADIUS);
+export const MY_SEAT_UI: PlanePoint = planePoint(212, SEAT_UI_RADIUS);
 
 const SEAT_ANGLES: Record<number, readonly number[]> = { 1: [270], 2: [270, 90], 3: [270, 150, 30] };
 

@@ -47,7 +47,8 @@ export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, 
       className={['seat', isMe && 'is-me', active && 'is-active', pick.target && 'is-target', !connected && 'is-offline']
         .filter(Boolean)
         .join(' ')}
-      style={at ? { left: at.x, top: at.y } : undefined}
+      // A rim point can fall off a narrow screen; the seat stays inside it.
+      style={at ? { left: `clamp(var(--seat-edge), ${at.x}px, calc(100% - var(--seat-edge)))`, top: at.y } : undefined}
     >
       <span className="ribbon">{name}</span>
       {pick.onPick ? (

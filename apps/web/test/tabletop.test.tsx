@@ -55,6 +55,18 @@ describe('the table', () => {
     expect(anchor('p2').style.top).toBe('-4%');
   });
 
+  it('keeps a seat on screen when its rim point falls outside it (phones)', () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const [x, y] = this.dataset.anchor === 'seat:p1' ? [-30, 500] : [0, 0];
+      return { left: x, right: x, top: y, bottom: y, width: 0, height: 0, x, y, toJSON: () => ({}) } as DOMRect;
+    });
+    renderTabletop({ state: atTable(base(), 'p1') });
+    const seat = screen.getByRole('group', { name: /^Your seat/ });
+    expect(seat.style.left).toMatch(/^clamp\(var\(--seat-edge\), -30px, /);
+    expect(seat.style.top).toBe('500px');
+    vi.restoreAllMocks();
+  });
+
   it('says whose turn it is and shows my countdown', () => {
     renderTabletop({ state: atTable(base(), 'p1', { deadlines: { turnEndsAt: Date.now() + 30_000 } }) });
     expect(screen.getByRole('heading', { level: 1, name: 'Your turn' })).toBeInTheDocument();
