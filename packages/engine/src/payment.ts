@@ -46,23 +46,22 @@ function cheapestCover(ids: readonly string[], amount: number): string[] {
   return pick ? pick[1] : [...ids];
 }
 
-/** Default payment used on timeout and by bots (spec §3.7). Always valid. */
+/**
+ * Default payment used on timeout and by bots (spec §3.7). Always valid.
+ * Order: bank, then properties from incomplete groups, then buildings (Hotel before House),
+ * then properties from complete groups, cheapest first, so a full set is broken only as a last resort.
+ */
 export function autoPayment(p: Player, amount: number): string[] {
   if (totalValue(p.bank) >= amount) return cheapestCover(p.bank, amount);
+  const byValue = (x: string, y: string) => getCard(x).value - getCard(y).value;
+  const loose = p.groups.filter((g) => !isComplete(g)).flatMap((g) => g.cards.filter((id) => !isAnyWild(id)));
+  const inSets = p.groups.filter(isComplete).flatMap((g) => g.cards.filter((id) => !isAnyWild(id)));
   const chosen = [...p.bank];
   let total = totalValue(chosen);
-  const properties = p.groups
-    .flatMap((g) => g.cards.filter((id) => !isAnyWild(id)).map((id) => ({ id, complete: isComplete(g) })))
-    .sort((x, y) => Number(x.complete) - Number(y.complete) || getCard(x.id).value - getCard(y.id).value);
-  for (const prop of properties) {
+  for (const id of [...loose.sort(byValue), ...buildingCards(p), ...inSets.sort(byValue)]) {
     if (total >= amount) break;
-    chosen.push(prop.id);
-    total += getCard(prop.id).value;
-  }
-  for (const building of buildingCards(p)) {
-    if (total >= amount) break;
-    chosen.push(building);
-    total += getCard(building).value;
+    chosen.push(id);
+    total += getCard(id).value;
   }
   return chosen;
 }

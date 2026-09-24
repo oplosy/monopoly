@@ -266,7 +266,7 @@ The engine exports `autoIntent(state, playerId)`, which the server calls when a 
 | Situation | Automatic action |
 |---|---|
 | `respond` or `counter` | `acceptAction` |
-| `pay` | Automatic payment: pick bank cards with the smallest sufficient total (prefer exact, else least overpay). If the bank is not enough, add properties from lowest value upward, taking cards from incomplete groups first. |
+| `pay` | Automatic payment: pick bank cards with the smallest sufficient total (prefer exact, else least overpay). If the bank is not enough, add properties from incomplete groups (lowest value first), then buildings (Hotel before House), then properties from complete groups (lowest value first), so a full set is broken only as a last resort. |
 | `play` phase | `endTurn` |
 | `discard` phase | Discard the cards with the lowest value. |
 
