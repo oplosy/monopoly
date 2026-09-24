@@ -6,6 +6,7 @@ import { useGameStore } from '../store/context';
 import { CardMenu } from './CardMenu';
 import { CenterStrip } from './CenterStrip';
 import { GameLog } from './GameLog';
+import { GameOver } from './GameOver';
 import { Decisions } from './modals/Decisions';
 import { MoveMenu } from './MoveMenu';
 import { OpponentPanel } from './OpponentPanel';
@@ -127,6 +128,7 @@ export function Table() {
           />
         )}
         <Decisions view={view} legal={legal} deadlines={game.deadlines} name={name} onSend={send} />
+        {view.winner && <GameOver view={view} name={name} isHost={room?.hostId === view.me} />}
       </main>
     </TargetingProvider>
   );

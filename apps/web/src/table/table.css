@@ -131,3 +131,8 @@ button.card-view:hover, button.card-view:focus-visible { z-index: 2; translate: 
 .countdown.low { color: #b3261e; }
 .counter-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; }
 .counter-list li { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+
+.winner-sets { display: flex; flex-wrap: wrap; gap: 1rem; }
+.winner-set { display: flex; }
+.winner-set .mini-face { width: 64px; height: auto; }
+.winner-set .mini-face + .mini-face { margin-left: -32px; }

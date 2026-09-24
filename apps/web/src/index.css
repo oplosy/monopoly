@@ -81,3 +81,6 @@ label { display: grid; gap: 0.3rem; font-weight: 600; }
 .tag { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.1rem 0.45rem; border-radius: 999px; background: var(--ink); color: var(--paper); }
 .tag.warn { background: #b3261e; }
 .center-message { max-width: 32rem; margin: 5rem auto; padding: 0 1rem; text-align: center; display: grid; gap: 1rem; justify-items: center; }
+.banner { position: fixed; top: 0; left: 0; right: 0; z-index: 40; background: #c77700; color: #fff; text-align: center; font-weight: 700; padding: 0.4rem; }
+.toast { position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); z-index: 40; background: var(--ink); color: var(--paper); padding: 0.7rem 0.8rem 0.7rem 1rem; border-radius: 12px; display: flex; gap: 0.75rem; align-items: center; max-width: calc(100vw - 2rem); }
+.toast button { background: none; border: none; color: inherit; font-size: 1.2rem; padding: 0 0.3rem; }
