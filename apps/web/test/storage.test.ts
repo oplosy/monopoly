@@ -43,5 +43,19 @@ describe('browserStorage', () => {
     expect(() => storage.saveNickname('Ann')).not.toThrow();
     expect(storage.load()).toBeNull();
     expect(storage.loadNickname()).toBe('');
+    expect(() => storage.saveAvatar(3)).not.toThrow();
+    expect(storage.loadAvatar()).toBeNull();
+  });
+
+  it('remembers the character across tabs and ignores bad values', () => {
+    const storage = browserStorage();
+    expect(storage.loadAvatar()).toBeNull();
+    storage.saveAvatar(7);
+    expect(localStorage.getItem('dealcity.avatar')).toBe('7');
+    expect(storage.loadAvatar()).toBe(7);
+    for (const bad of ['abc', '12', '-1', '1.5', '']) {
+      localStorage.setItem('dealcity.avatar', bad);
+      expect(browserStorage().loadAvatar(), bad).toBeNull();
+    }
   });
 });

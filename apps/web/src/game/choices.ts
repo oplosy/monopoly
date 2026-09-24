@@ -1,4 +1,4 @@
-import { COLORS, getCard, type Color, type Intent, type IntentOf, type PropertyGroup } from '@deal-city/engine';
+import { COLORS, getCard, type Color, type GameView, type Intent, type IntentOf, type PropertyGroup } from '@deal-city/engine';
 
 export type PlayKind =
   | 'property' | 'passGo' | 'birthday' | 'debtCollector' | 'rent'
@@ -110,4 +110,13 @@ export function moveOptions(legal: readonly Intent[], cardId: string, groups: re
       const join = `join the ${colorName} group with ${size} card${size === 1 ? '' : 's'}`;
       return { intent, label: flip ? `Flip to ${colorName} and ${join}` : `Move to ${join.replace(/^join /, '')}` };
     });
+}
+
+/** Why a hand card cannot be played right now, or null when it has at least one legal play. */
+export function playBlocker(view: GameView, options: readonly PlayOption[]): string | null {
+  if (view.winner) return 'The game is over.';
+  if (view.turn.playerId !== view.me) return "It's not your turn.";
+  if (view.turn.phase !== 'play') return "You can't play cards right now.";
+  if (view.turn.playsLeft <= 0) return 'You have no plays left this turn.';
+  return options.length > 0 ? null : "This card can't be played right now.";
 }

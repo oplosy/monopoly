@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { useGameStore } from '../store/context';
 import { errorMessage } from '../ui/errors';
+import { PaperPage } from './PaperPage';
 
 /** Shown on a shared room link when this tab has no seat yet. */
 export function JoinForm({ code }: { code: string }) {
@@ -23,18 +24,18 @@ export function JoinForm({ code }: { code: string }) {
 
   if (error === 'roomNotFound') {
     return (
-      <main className="home">
+      <PaperPage>
         <h1>{`Room ${code} is closed`}</h1>
         <p>It may have ended, or the code may be wrong. You can start a new room from the home page.</p>
         <p className="small">
           <Link to="/">Back to home</Link>
         </p>
-      </main>
+      </PaperPage>
     );
   }
 
   return (
-    <main className="home">
+    <PaperPage>
       <p className="eyebrow">You're invited to room</p>
       <h1 className="room-code">{code}</h1>
       <form className="stack" onSubmit={submit}>
@@ -54,6 +55,6 @@ export function JoinForm({ code }: { code: string }) {
       <p className="small">
         <Link to="/">Back to home</Link>
       </p>
-    </main>
+    </PaperPage>
   );
 }

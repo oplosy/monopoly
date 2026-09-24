@@ -1,0 +1,111 @@
+.paper-page {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+  isolation: isolate;
+}
+.paper-page > .scene { position: fixed; z-index: -1; }
+.paper {
+  position: relative;
+  width: min(32rem, 100%);
+  background: var(--paper);
+  border-radius: 18px;
+  padding: 1.75rem 1.5rem;
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.08), 0 18px 40px rgb(0 0 0 / 0.35);
+  display: grid;
+  gap: 0.9rem;
+}
+.paper > * { margin: 0; }
+.paper.center-message { text-align: center; justify-items: center; }
+.paper .stack { margin: 0; }
+.wordmark { font-size: clamp(2.6rem, 8vw, 3.6rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+.wordmark::after {
+  content: '';
+  display: block;
+  width: 3.5rem;
+  height: 0.45rem;
+  margin-top: 0.45rem;
+  border-radius: 999px;
+  background: repeating-linear-gradient(90deg, #cd2828 0 0.45rem, var(--cream) 0.45rem 0.9rem);
+}
+.home-character { display: flex; align-items: center; gap: 0.8rem; }
+.home-character .avatar-svg { width: 3.5rem; height: 3.5rem; flex: none; }
+.home-character p { margin: 0; }
+.avatar-empty {
+  width: 3.5rem;
+  height: 3.5rem;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 3px dashed var(--muted);
+  border-radius: 22%;
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: var(--muted);
+}
+
+/* Lobby: the table with three chairs, and a paper panel below it. */
+.lobby {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: var(--grass-3);
+}
+/* The whole table fits, from the far chairs to mine at the near rim; the plane is lifted to the top. */
+.lobby-table, .lobby-table .scene { --plane: min(62vw, 70vh); }
+.lobby-table { position: relative; overflow: hidden; height: calc(var(--plane) * 0.78 + 150px); }
+.lobby-table .scene { --plane-shift: calc(-9% - 75px); }
+.chairs { list-style: none; margin: 0; padding: 0; }
+.chair {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  z-index: 2;
+}
+.chair .avatar-svg { width: clamp(3rem, 6vw, 4.5rem); height: auto; filter: drop-shadow(0 4px 8px rgb(0 0 0 / 0.35)); }
+.chair.is-offline .avatar-svg { filter: grayscale(1) opacity(0.6); }
+.chair-tags { display: flex; gap: 0.25rem; }
+.chair-seat {
+  width: clamp(3rem, 6vw, 4.5rem);
+  aspect-ratio: 1;
+  border-radius: 22%;
+  border: 3px dashed rgb(255 255 255 / 0.75);
+  background: rgb(0 0 0 / 0.12);
+}
+.chair-wait { color: #fff; font-weight: 700; font-size: 0.85rem; text-shadow: 0 1px 2px rgb(0 0 0 / 0.5); }
+.lobby-panel {
+  position: relative;
+  z-index: 3;
+  width: min(46rem, calc(100% - 2rem));
+  margin: -1.5rem auto 2rem;
+  background: var(--paper);
+  border-radius: 18px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.35);
+  display: grid;
+  gap: 0.9rem;
+}
+.lobby-panel h2 { margin: 0; font-size: 1.1rem; }
+.invite-note {
+  background: #fff8d6;
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  rotate: -1deg;
+  box-shadow: 0 4px 10px rgb(0 0 0 / 0.15);
+}
+.invite-note .room-code { margin: 0.1rem 0 0.5rem; }
+.share { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; }
+
+@media (max-width: 640px) {
+  .lobby-table, .lobby-table .scene { --plane: 96vw; }
+  .lobby-panel { margin-top: -1rem; }
+}

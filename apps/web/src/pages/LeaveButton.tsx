@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/context';
 
-/** Leaves the room this tab has a seat in; asks first when that game is under way. */
-export function LeaveButton({ label }: { label: string }) {
+/** Leaves the room this tab has a seat in; asks first when that game is under way. `after` runs once it has left. */
+export function LeaveButton({ label, after }: { label: string; after?: () => void }) {
   const playing = useGameStore((s) => s.room?.status === 'playing');
   const leave = useGameStore((s) => s.leave);
   const [asking, setAsking] = useState(false);
+
+  async function go() {
+    await leave();
+    after?.();
+  }
 
   if (asking) {
     return (
       <div className="confirm" role="group" aria-label="Leave the game">
         <p>Leave the game in progress? You will lose your seat.</p>
         <div className="row">
-          <button type="button" className="danger" onClick={() => void leave()}>
+          <button type="button" className="danger" onClick={() => void go()}>
             Yes, leave
           </button>
           <button type="button" onClick={() => setAsking(false)}>
@@ -23,7 +28,7 @@ export function LeaveButton({ label }: { label: string }) {
     );
   }
   return (
-    <button type="button" className="link" onClick={() => (playing ? setAsking(true) : void leave())}>
+    <button type="button" className="link" onClick={() => (playing ? setAsking(true) : void go())}>
       {label}
     </button>
   );

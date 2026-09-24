@@ -1,9 +1,27 @@
 import type { Ack, JoinedRoom } from '@deal-city/protocol';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { Avatar, characterOf } from '../avatars/Avatar';
 import { useGameStore } from '../store/context';
-import { LeaveButton } from './LeaveButton';
 import { errorMessage } from '../ui/errors';
+import { LeaveButton } from './LeaveButton';
+import { PaperPage } from './PaperPage';
+
+function CharacterPreview() {
+  const preferred = useGameStore((s) => s.preferredAvatar);
+  return (
+    <div className="home-character">
+      {preferred === null ? (
+        <span className="avatar-empty" aria-hidden="true">
+          ?
+        </span>
+      ) : (
+        <Avatar index={preferred} className="avatar-svg" label={`Your character: ${characterOf(preferred).name}`} />
+      )}
+      <p className="small">{preferred === null ? 'You pick your character in the lobby.' : 'You can change it in the lobby.'}</p>
+    </div>
+  );
+}
 
 export function Home() {
   const navigate = useNavigate();
@@ -28,8 +46,8 @@ export function Home() {
 
   if (session) {
     return (
-      <main className="home">
-        <h1>Deal City</h1>
+      <PaperPage>
+        <h1 className="wordmark">Deal City</h1>
         <p>
           You have a seat in room <strong>{session.code}</strong>.
         </p>
@@ -39,7 +57,7 @@ export function Home() {
           </Link>
           <LeaveButton label="Leave that room" />
         </div>
-      </main>
+      </PaperPage>
     );
   }
 
@@ -49,9 +67,10 @@ export function Home() {
   }
 
   return (
-    <main className="home">
-      <h1>Deal City</h1>
+    <PaperPage>
+      <h1 className="wordmark">Deal City</h1>
       <p className="lead">A fast property card game for 2–3 players.</p>
+      <CharacterPreview />
       <div className="stack">
         <label>
           Nickname
@@ -78,6 +97,6 @@ export function Home() {
       <p className="small">
         <Link to="/gallery">See all the cards</Link>
       </p>
-    </main>
+    </PaperPage>
   );
 }

@@ -221,3 +221,62 @@ describe('game store: intents', () => {
     expect(socket.sentOf('game:intent')).toEqual([]);
   });
 });
+
+describe('game store: characters', () => {
+  const lobbyWith = (avatars: number[]) => {
+    const room = roomOf(['p1', 'p2'], 'lobby');
+    room.seats.forEach((s, i) => (s.avatar = avatars[i]!));
+    return room;
+  };
+
+  it('asks for the remembered character after joining when it is free', async () => {
+    const socket = new FakeSocket();
+    const store = createGameStore(socket, memoryStorage(null, '', 7));
+    socket.reply('room:join', () => {
+      socket.push('room:state', lobbyWith([0, 3]));
+      return { ...joined, playerId: 'p2' };
+    });
+    expect(store.getState().preferredAvatar).toBe(7);
+    await store.getState().joinRoom('ABCDEF', 'Bob');
+    expect(socket.sentOf('room:avatar')).toEqual([{ avatar: 7 }]);
+  });
+
+  it('does not ask when someone else has it or it is already mine', async () => {
+    for (const avatars of [[7, 3], [0, 7]]) {
+      const socket = new FakeSocket();
+      const store = createGameStore(socket, memoryStorage(null, '', 7));
+      socket.reply('room:join', () => {
+        socket.push('room:state', lobbyWith(avatars));
+        return { ...joined, playerId: 'p2' };
+      });
+      await store.getState().joinRoom('ABCDEF', 'Bob');
+      expect(socket.sentOf('room:avatar'), String(avatars)).toEqual([]);
+    }
+  });
+
+  it('remembers a character picked in the lobby', async () => {
+    const { socket, storage, store } = online();
+    expect(await store.getState().setAvatar(5)).toEqual({ ok: true });
+    expect(socket.sentOf('room:avatar')).toEqual([{ avatar: 5 }]);
+    expect(storage.loadAvatar()).toBe(5);
+    expect(store.getState().preferredAvatar).toBe(5);
+  });
+
+  it('shows why a pick failed and keeps the old preference', async () => {
+    const socket = new FakeSocket();
+    const storage = memoryStorage(null, '', 2);
+    const store = createGameStore(socket, storage);
+    socket.connect();
+    socket.reply('room:avatar', () => ({ ok: false, error: 'avatarTaken' }));
+    expect(await store.getState().setAvatar(5)).toEqual({ ok: false, error: 'avatarTaken' });
+    expect(store.getState().error).toBe('avatarTaken');
+    expect(storage.loadAvatar()).toBe(2);
+    expect(store.getState().preferredAvatar).toBe(2);
+  });
+
+  it('refuses a pick while offline', async () => {
+    const { socket, store } = setup();
+    expect(await store.getState().setAvatar(5)).toEqual({ ok: false, error: 'offline' });
+    expect(socket.sentOf('room:avatar')).toEqual([]);
+  });
+});

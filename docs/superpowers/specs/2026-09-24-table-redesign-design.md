@@ -1,6 +1,6 @@
 # Deal City: Game Table Redesign (UI, UX, Motion, Sound)
 
-**Status:** design approved in conversation on 2026-09-24. The user has not yet reviewed this written spec. The next step is Plan 6 (see §13).
+**Status:** design approved on 2026-09-24. Plan 6 (world and interaction) is implemented on `feat/table-world`; Plans 7 and 8 remain.
 **Parent spec:** `docs/superpowers/specs/2026-09-24-deal-city-design.md` covers the rules, engine, protocol and server. This document **supersedes its §4.4 (web client) for everything about the look, layout, interaction and motion of the game**. Engine rules are unchanged.
 **Mockups:** `docs/superpowers/specs/table-redesign/mockups/` holds standalone HTML files that open in any browser. §14 lists what each one shows.
 **Reference images:** `for_table/` in the repo root. These are the user's local screenshots of UNO games. They are **not committed**, because they are third-party art. §2.3 describes them in words.
@@ -94,7 +94,7 @@ Every decision below was made by the user in the 2026-09-24 conversation. The mo
 ### 4.1 The scene: layers, back to front
 
 1. **Ground:** grass, a warm green radial gradient with a subtle blade texture. A soft vignette at the edges.
-2. **Table plane (2.5D):** one DOM element rotated `rotateX(≈52–58°)` inside a `perspective` container, with the perspective origin near the top. The exact angle is tuned in Plan 6 visual review against the mockup. It holds:
+2. **Table plane (2.5D):** one DOM element rotated `rotateX(≈52–58°)` inside a `perspective` container, with the perspective origin near the top. The Plan 6 visual review kept **55°** (`--tilt: 55deg`; 50° on phones). The game table's plane is sized to the viewport (`min(70vw, (100vh − 170px) × 1.12)`), so the far seats and the near rim are always on screen. It holds:
    - the round wooden tabletop (planks, a rim, a drop shadow on the grass);
    - the gingham cloth, draped over part of the table (irregular edge, slight rotation);
    - a dappled light overlay (soft light blobs; in Plan 7 it drifts very slowly);
@@ -116,7 +116,7 @@ Seats sit on a circle of the table plane, at angles measured on the plane. 270°
 
 - The seat order follows `opponentsInOrder(view)`, the existing helper, so the first opponent after me is always upper left in a 3-player game.
 - **Tableau anchor:** each seat's tableau is placed on the plane at radius ≈0.6 R toward its seat angle, **unrotated in the plane** (D3), so it faces the viewer after projection. My tableau sits on the near side at 270°.
-- **Seat UI anchor:** the avatar, ribbon and badge sit just outside the table rim, at radius ≈1.08 R on the seat angle. Because the UI layer is flat, its screen position is found by **projecting a plane point**. An invisible anchor element sits in the plane, its `getBoundingClientRect()` is read, and the UI element is positioned there. This is recomputed on resize.
+- **Seat UI anchor:** the avatar, ribbon and badge sit just outside the table rim, at radius ≈1.08 R on the seat angle. At the game table, **my own seat UI sits at 212°** (the lower left of the rim), because my hand fan covers the rim at 270°; my tableau stays at 270°. Every projected seat is clamped inside the screen, so narrow screens never push a seat off it. Because the UI layer is flat, its screen position is found by **projecting a plane point**. An invisible anchor element sits in the plane, its `getBoundingClientRect()` is read, and the UI element is positioned there. This is recomputed on resize.
 - **Far-side scale:** perspective makes far cards smaller (≈0.7×). **Hover or long-press any table card to magnify it** in a flat preview near the pointer (§5.3), so small far cards stay readable.
 - The geometry lives in pure functions (`seatLayout(playerCount)`), which are unit-tested.
 
@@ -133,11 +133,12 @@ Seats sit on a circle of the table plane, at angles measured on the plane. 270°
 
 - **Avatar:** a rounded square portrait (the SVG character), a **name ribbon** above it and a white **hand-count badge** at its corner. The active player's avatar glows gold.
 - **Timer:** a **ring around the active player's avatar** that drains from full. It is orange normally, turns red and pulses in the last 10 s, and adds a slight shake in the last 3 s (Plan 7). While responses are pending, each player being waited on gets their own response ring. When it is your turn, a larger countdown number also appears by your hand.
-- **Plays left:** 3 pips next to my avatar, emptied as I play.
+- **Plays left:** 3 pips under my avatar on my seat, shown during my play phase and emptied as I play. My turn countdown number sits just above End turn.
 - **End turn:** a large sign-like button to the right of my hand, visible only when legal.
 - **Narrator bubble:** a speech-bubble strip centered above the table. It shows the latest event sentence (the existing `describeEvent`, e.g. "Bob charged you 4M rent") for ≈2.5 s, queued, and is `aria-live="polite"`. It also shows prompts while targeting ("Pick a property to steal", with a Cancel button).
 - **HUD corner (top right):** sound toggle and volume (Plan 8), log button, room code, leave.
 - **Log drawer:** a side sheet with the full event log (today's `GameLog`), opened from the HUD. It is not a permanent column.
+- **Action in play:** while responses are pending, the action's cards and `describeAction` are shown above the table (the "Action in play" stage) with "Waiting for …". Plan 7's flight to the center replaces this static stage.
 
 ### 4.5 Art direction
 
@@ -323,29 +324,34 @@ The server sends one `game:state` per change: the **new** redacted view plus the
 - `apps/web/src/game/*`: `choices.ts` (`playOptions`, `moveOptions`, rent helpers), `derive.ts` (`myRole`, `opponentsInOrder`, …), `log.ts` (`describeEvent`). These stay the single source for "what can I do" and "how do we say it".
 - `apps/web/src/cards/*`: card faces, labels, theme. The gallery stays.
 
-### 9.2 New web modules (proposed layout)
+### 9.2 New web modules (as built in Plan 6)
 
 ```
 apps/web/src/
-  scene/        PicnicScene (ground, table plane, cloth, light, props), seatLayout(), projection anchors
-  scenery/      SVG props: melon plate, chips bowl, glasses, sandwiches, grass texture
-  avatars/      12 SVG characters, Avatar component, AvatarPicker
-  table2/       the new table: Seat (avatar, ribbon, badge, timer ring), Tableau (groups, bank),
-                CenterPiles (deck, messy discard, turn ring), HandFan, CardActions popover,
-                Targeting, PayTray / DiscardTray, RespondPills, Narrator, LogDrawer, Hud, GameOverStage
-  motion/       anchor registry, scene planner (pure), choreographer (queue), FlightLayer, stamps,
-                counters, drag-and-drop zones, reduced-motion switch
-  audio/        AudioManager, cue map, useSound
-  pages/        Home, Lobby, RoomPage, Shell restyled into the picnic world
+  scene/        geometry.ts (planePoint, seatLayout, seatPlan, propLayout, discardJitter, fanLayout,
+                MY_SEAT_UI), PicnicScene (ground, table plane, cloth, light, props), projection.tsx
+                (ProjectionProvider, PlaneAnchor, useProjected), scene.css
+  scenery/      props.tsx: melon plate, chips bowl, sandwich plate, juice glass
+  avatars/      characters.tsx (12 SVG characters), Avatar, AvatarPicker, avatars.css
+  tabletop/     the new table: Tabletop, Seat (avatar, ribbon, badge, timer ring, pips), Tableau
+                (groups, bank), CenterPiles (deck, messy discard, turn ring), HandFan, TableCard,
+                inspect (preview), interaction + resolve (what a click does), Popover, PlayActions,
+                MoveActions, PlayForms, play-flow, anchored (placeBeside), selection, PayTray,
+                DiscardTray, RespondTray, CounterTray, Narrator + narration, PendingStage, Hud,
+                LogDrawer, GameOverStage, TimerRing, Countdown, tabletop.css
+  pages/        PaperPage (paper over the blurred picnic), Home, JoinForm, Lobby (chairs at the
+                table, avatar picker), RoomPage, NotFound, Shell restyled into the picnic world
+  ui/clock.ts   useNow, secondsLeft (moved from table/useNow.ts), useDrain
 ```
 
-- The old `apps/web/src/table/` (Table, CenterStrip, OpponentPanel, PlayerArea, GroupView, CardMenu, MoveMenu, TargetBar and the `modals/` folder) is **replaced** by `table2/` in Plan 6 and deleted once the new table passes the suite. The name `table2/` is a working name; the plan may rename it back to `table/` at the end.
+- `motion/` (anchor registry, scene planner, choreographer, FlightLayer, stamps, counters, drag-and-drop zones) arrives with Plan 7, and `audio/` (AudioManager, cue map, useSound) with Plan 8.
+- The old `apps/web/src/table/` (Table, CenterStrip, OpponentPanel, PlayerArea, GroupView, CardMenu, MoveMenu, TargetBar and the `modals/` folder) was **replaced** by `tabletop/` in Plan 6 and deleted, together with every `layoutId`. The working name `table2/` was never used.
 - The store gains no animation state. The choreographer subscribes to the store's `game` payload and owns "what is currently shown".
 
 ### 9.3 Protocol and server: avatar (the only backend change)
 
 - `SeatInfo` gains `avatar: number` (0–11).
-- **New client event `room:avatar { avatar: number }`**, with the ack `Ack`. It is valid only while the room is in the `lobby` status. It is rejected with `avatarTaken` if another seat has the avatar, and with `badRequest` if the value is out of range. It is rate-limited like everything else.
+- **New client event `room:avatar { avatar: number }`**, with the ack `Ack`. It is valid only while the room is in the `lobby` status. It is rejected with `avatarTaken` if another seat has the avatar, with `badRequest` if the value is out of range, and with `notInLobby` ("You can only change your character in the lobby.") once the game has started. It is rate-limited like everything else.
 - On join or create, the server assigns the default avatar (the first free index starting from a hash of the player id).
 - The zod schema, the protocol types and the error wording (`avatarTaken`: "Someone else picked that one.") are updated.
 - Server tests: default assignment keeps avatars unique; changes are refused in-game and when taken; the change is broadcast in `room:state`.
@@ -451,7 +457,8 @@ These are rough wireframes for layout decisions, not final art. Each file is a s
 2. State of the repo when this spec was written:
    - All of Plans 1–5 and the backlog fixes are merged to `main` (PRs #1–#5).
    - The redesign work branch is `feat/table-redesign`, which holds this spec, its mockups and a `.gitignore` entry for `.superpowers/`.
-3. **Next step:** the user reviews this spec. After approval, invoke the writing-plans skill for **Plan 6** (§13.1), save it as `docs/superpowers/plans/<date>-plan-6-table-world.md`, and ask the user to review it. The user has consistently chosen **native (inline) execution**.
+   - Plan 6 (`docs/superpowers/plans/2026-09-24-plan-6-table-world.md`) is implemented on `feat/table-world` (stacked on `feat/table-redesign`).
+3. **Next step:** invoke the writing-plans skill for **Plan 7** (motion, §13.2), save it as `docs/superpowers/plans/<date>-plan-7-motion.md`, and ask the user to review it. The user has consistently chosen **native (inline) execution**.
 4. **Working conventions (from the user's global CLAUDE.md and past sessions):**
    - Never work on `main`; branch first (`feat/…`).
    - One PR per plan, stacked if needed, merged in order by the user's request only.

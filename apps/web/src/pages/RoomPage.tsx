@@ -1,9 +1,10 @@
 import { Link, useParams } from 'react-router';
 import { useGameStore } from '../store/context';
 import { LeaveButton } from './LeaveButton';
-import { Table } from '../table/Table';
+import { Tabletop } from '../tabletop/Tabletop';
 import { JoinForm } from './JoinForm';
 import { Lobby } from './Lobby';
+import { PaperPage } from './PaperPage';
 
 export function RoomPage() {
   const code = (useParams().code ?? '').toUpperCase();
@@ -16,14 +17,14 @@ export function RoomPage() {
   const forget = useGameStore((s) => s.forgetSession);
 
   if (session?.code === code) {
-    if (!room) return <main className="center-message">Loading the room…</main>;
+    if (!room) return <PaperPage className="center-message"><p>Loading the room…</p></PaperPage>;
     if (room.status === 'lobby') return <Lobby room={room} />;
-    return <Table />;
+    return <Tabletop />;
   }
 
   if (session) {
     return (
-      <main className="center-message">
+      <PaperPage className="center-message">
         <p>
           You already have a seat in room <strong>{session.code}</strong>.
         </p>
@@ -33,14 +34,14 @@ export function RoomPage() {
           </Link>
           <LeaveButton label="Leave it" />
         </div>
-      </main>
+      </PaperPage>
     );
   }
 
   if (savedCode === code) {
-    if (!connected || resuming) return <main className="center-message">Rejoining your seat…</main>;
+    if (!connected || resuming) return <PaperPage className="center-message"><p>Rejoining your seat…</p></PaperPage>;
     return (
-      <main className="center-message">
+      <PaperPage className="center-message">
         <p>Your seat in this room is saved, but it could not be resumed.</p>
         <div className="row">
           <button type="button" className="primary" onClick={() => void resume()}>
@@ -50,7 +51,7 @@ export function RoomPage() {
             Join as a new player
           </button>
         </div>
-      </main>
+      </PaperPage>
     );
   }
 

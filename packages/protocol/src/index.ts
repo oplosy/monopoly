@@ -1,7 +1,9 @@
 import { z } from 'zod';
 import { COLOR_KEYS, type GameEvent, type GameView, type Intent } from '@deal-city/engine';
 
-export { MAX_SEATS, MIN_PLAYERS } from './constants';
+import { AVATAR_COUNT } from './constants';
+
+export { AVATAR_COUNT, MAX_SEATS, MIN_PLAYERS } from './constants';
 
 const cardId = z.string().min(1).max(40);
 const playerId = z.string().min(1).max(40);
@@ -42,12 +44,14 @@ export const ResumeSchema = z.object({ token: z.string().regex(/^[a-f0-9]{32}$/)
 export const StartSchema = z.object({ seed: z.number().int().nonnegative().max(2 ** 32 - 1).optional() });
 export const EmptySchema = z.object({});
 export const IntentPayloadSchema = z.object({ intent: IntentSchema, expectedVersion: z.number().int().nonnegative() });
+export const AvatarSchema = z.object({ avatar: z.number().int().min(0).max(AVATAR_COUNT - 1) });
 
 export type CreateRoomPayload = z.infer<typeof CreateRoomSchema>;
 export type JoinRoomPayload = z.infer<typeof JoinRoomSchema>;
 export type ResumePayload = z.infer<typeof ResumeSchema>;
 export type StartPayload = z.infer<typeof StartSchema>;
 export type IntentPayload = z.infer<typeof IntentPayloadSchema>;
+export type AvatarPayload = z.infer<typeof AvatarSchema>;
 
 export type Ack<T extends object = object> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -61,6 +65,8 @@ export interface SeatInfo {
   playerId: string;
   nickname: string;
   connected: boolean;
+  /** Character index, 0 to AVATAR_COUNT - 1, unique within the room. */
+  avatar: number;
 }
 
 export type RoomStatus = 'lobby' | 'playing' | 'finished';
@@ -93,6 +99,7 @@ export interface ClientToServerEvents {
   'room:start': (payload: StartPayload, ack: (res: Ack) => void) => void;
   'room:leave': (payload: Record<string, never>, ack: (res: Ack) => void) => void;
   'room:rematch': (payload: Record<string, never>, ack: (res: Ack) => void) => void;
+  'room:avatar': (payload: AvatarPayload, ack: (res: Ack) => void) => void;
   'game:intent': (payload: IntentPayload, ack: (res: Ack) => void) => void;
 }
 
