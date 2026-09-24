@@ -44,6 +44,8 @@
 .group-stack { position: relative; display: flex; flex-direction: column; width: var(--card-w); }
 /* Each card shows its color band (the top 26% of a card). */
 .group-stack > .table-card + .table-card { margin-top: calc(var(--card-w) * -1.1); }
+/* While its cards can be picked (a steal, a swap, paying), a set fans out so each card is easy to hit. */
+.group-stack:has(> .tone-target, > .tone-selectable) > .table-card + .table-card { margin-top: calc(var(--card-w) * -0.75); }
 .group-stack.is-complete { filter: drop-shadow(0 0 calc(var(--card-w) * 0.08) rgb(255 216 74 / 0.9)); }
 .group-stack.is-target { outline: 3px dashed var(--gold); outline-offset: 4px; border-radius: 8px; }
 .set-stamp {

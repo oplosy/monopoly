@@ -122,7 +122,7 @@ Seats sit on a circle of the table plane, at angles measured on the plane. 270°
 
 ### 4.3 Table contents
 
-- **Property groups:** each group is a small cascade, cards offset upward so every color band shows, with House and Hotel on top. A **complete set** gets a green "✓" stamp badge and a soft glow. Groups are ordered by color.
+- **Property groups:** each group is a small cascade, cards offset upward so every color band shows, with House and Hotel on top. A **complete set** gets a green "✓" stamp badge and a soft glow. Groups are ordered by color. While its cards can be picked (a steal, a swap, paying), a set fans out to about twice the spacing, so each card is easy to hit even on the far side.
 - **Bank:** a loose pile of money and banked action cards, with a **running total chip** ("9M"). The total counts up and down when it changes (Plan 7).
 - **Hand count (opponents):** their hand appears as a small fan of card backs next to the avatar, plus the count badge.
 - **Deck:** a stacked pile with a count badge. It shows a reshuffle effect when the discard pile becomes the deck.
