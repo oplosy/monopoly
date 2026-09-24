@@ -112,3 +112,22 @@ button.card-view:hover, button.card-view:focus-visible { z-index: 2; translate: 
   .card-menu { left: 0.5rem; right: 0.5rem; bottom: 0.5rem; grid-template-columns: 110px 1fr; }
   .card-menu-preview .card-svg { width: 110px; }
 }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgb(27 27 31 / 0.55); display: grid; place-items: center; z-index: 30; padding: 1rem; }
+.modal { background: var(--paper); border: 2px solid var(--ink); border-radius: 18px; padding: 1.25rem; width: min(40rem, 100%); max-height: calc(100vh - 2rem); overflow-y: auto; display: grid; gap: 0.75rem; }
+.modal h2 { margin: 0; font-size: 1.3rem; }
+.modal h3 { margin: 0.5rem 0 0.3rem; font-size: 0.95rem; }
+.modal p { margin: 0; }
+.modal-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+.modal-cards { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.modal-card { width: 110px; height: auto; }
+.pay-status { display: flex; gap: 1.5rem; font-family: var(--font-num); }
+.pay-cards { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.pick-card { padding: 0; border: 3px solid transparent; border-radius: 10px; background: none; width: 84px; }
+.pick-card[aria-pressed='true'] { border-color: #1f4e9a; translate: 0 -4px; }
+.pick-card .card-svg { width: 100%; height: auto; display: block; }
+.warn { color: #b3261e; font-weight: 600; }
+.countdown { font-family: var(--font-num); font-weight: 700; }
+.countdown.low { color: #b3261e; }
+.counter-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.5rem; }
+.counter-list li { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }

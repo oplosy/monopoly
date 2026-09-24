@@ -6,6 +6,7 @@ import { useGameStore } from '../store/context';
 import { CardMenu } from './CardMenu';
 import { CenterStrip } from './CenterStrip';
 import { GameLog } from './GameLog';
+import { Decisions } from './modals/Decisions';
 import { MoveMenu } from './MoveMenu';
 import { OpponentPanel } from './OpponentPanel';
 import { PlayerArea } from './PlayerArea';
@@ -125,6 +126,7 @@ export function Table() {
             onClose={() => setSelected(null)}
           />
         )}
+        <Decisions view={view} legal={legal} deadlines={game.deadlines} name={name} onSend={send} />
       </main>
     </TargetingProvider>
   );
