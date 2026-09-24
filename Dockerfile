@@ -16,10 +16,19 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm --filter @deal-city/web build && pnpm --filter @deal-city/server build
 
-FROM base AS runtime
-ENV NODE_ENV=production PORT=3000 WEB_DIST=/app/web
+FROM base AS deps
 # The server bundle inlines the workspace packages and zod; only its own dependencies stay external.
 RUN pnpm install --frozen-lockfile --prod --filter @deal-city/server
+
+# A clean Node image: no pnpm, npm, corepack or package caches, only what the server runs.
+FROM node:24-alpine AS runtime
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+  /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /root/.npm
+ENV NODE_ENV=production PORT=3000 WEB_DIST=/app/web
+WORKDIR /app
+COPY --from=deps /app/node_modules node_modules
+COPY --from=deps /app/apps/server/node_modules apps/server/node_modules
+COPY apps/server/package.json apps/server/
 COPY --from=build /app/apps/server/dist apps/server/dist
 COPY --from=build /app/apps/web/dist web
 USER node
