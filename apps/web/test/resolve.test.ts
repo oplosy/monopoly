@@ -92,6 +92,23 @@ describe('resolveInteraction: answering', () => {
     expect(actions.toggleDiscard).toHaveBeenCalledWith('money-2-1');
   });
 
+  it('keeps my hand to previews while I answer, so no play popover covers the answer', () => {
+    const s = play(
+      { players: [{ id: 'p1', hand: ['act-debtCollector-1'] }, { id: 'p2', hand: ['act-justSayNo-1', 'money-2-1'], bank: ['money-5-1'] }] },
+      [['p1', dc]],
+    );
+    const { interaction } = resolve(s, 'p2');
+    expect(interaction.card('hand', 'act-justSayNo-1', 'p2')).toEqual({ tone: 'target' });
+    expect(interaction.card('hand', 'money-2-1', 'p2')).toEqual({ tone: 'dim' });
+    const countered = play(
+      { players: [{ id: 'p1', hand: ['act-debtCollector-1', 'act-justSayNo-2', 'money-1-1'] }, { id: 'p2', hand: ['act-justSayNo-1'], bank: ['money-5-1'] }] },
+      [['p1', dc], ['p2', { type: 'respondJustSayNo', card: 'act-justSayNo-1' }]],
+    );
+    const actor = resolve(countered, 'p1').interaction;
+    expect(actor.card('hand', 'act-justSayNo-2', 'p1')).toEqual({ tone: 'target' });
+    expect(actor.card('hand', 'money-1-1', 'p1')).toEqual({ tone: 'dim' });
+  });
+
   it('lights up my Just Say No when I can answer with it', () => {
     const s = play({ players: [{ id: 'p1', hand: ['act-debtCollector-1'] }, { id: 'p2', hand: ['act-justSayNo-1'], bank: ['money-5-1'] }] }, [['p1', dc]]);
     expect(resolve(s, 'p2').interaction.card('hand', 'act-justSayNo-1', 'p2').tone).toBe('target');

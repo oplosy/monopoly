@@ -29,7 +29,8 @@ const nothing = (): PickInteraction => NOTHING;
 
 /**
  * What clicking each card, set and seat does in the current mode. Aiming at a target comes first,
- * then paying, then discarding. Otherwise hand cards open their play popover and my movable table
+ * then paying, then discarding, then answering an action (hand cards only preview; the tray
+ * holds the answers). Otherwise hand cards open their play popover and my movable table
  * cards open their move popover. Everything else only shows its preview.
  */
 export function resolveInteraction({ view, legal, role, aim, selected, payPicked, discardPicked, actions }: ResolveInput): TableInteraction {
@@ -79,6 +80,16 @@ export function resolveInteraction({ view, legal, role, aim, selected, payPicked
     return {
       card: (zone, id) =>
         zone === 'hand' ? { tone: 'selectable', pressed: discardPicked.includes(id), onActivate: () => actions.toggleDiscard(id) } : { tone: 'normal' },
+      group: nothing,
+      player: nothing,
+    };
+  }
+
+  if (role?.kind === 'respond' || role?.kind === 'counter') {
+    // The answers live in the tray; hand cards only show their preview, so no play popover covers it.
+    const answers = new Set(legal.flatMap((i) => (i.type === 'respondJustSayNo' ? [i.card] : [])));
+    return {
+      card: (zone, id) => (zone === 'hand' ? { tone: answers.has(id) ? 'target' : 'dim' } : { tone: 'normal' }),
       group: nothing,
       player: nothing,
     };

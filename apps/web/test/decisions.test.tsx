@@ -33,6 +33,14 @@ describe('answering an action', () => {
     expect(sentIntents(socket)).toEqual([{ type: 'respondJustSayNo', card: 'act-justSayNo-1' }]);
   });
 
+  it('keeps the answer buttons usable when I click my glowing Just Say No card', async () => {
+    const s = play({ players: [{ id: 'p1', hand: ['act-debtCollector-1'] }, { id: 'p2', hand: ['act-justSayNo-1'], bank: ['money-5-1'] }] }, [['p1', dc]]);
+    const { user } = show(s, 'p2');
+    await user.click(within(myHand()).getByRole('button', { name: /^Just Say No/ }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Ann wants 5M (Debt Collector)' })).getByRole('button', { name: 'Just Say No!' })).toBeVisible();
+  });
+
   it('lets the actor answer a Just Say No', async () => {
     const s = play(
       { players: [{ id: 'p1', hand: ['act-debtCollector-1', 'act-justSayNo-2'] }, { id: 'p2', hand: ['act-justSayNo-1'], bank: ['money-5-1'] }] },
