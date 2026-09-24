@@ -64,3 +64,51 @@ button.card-view:hover, button.card-view:focus-visible { z-index: 2; translate: 
   .card-hand { --w: 96px; }
   .log { position: static; max-height: 14rem; }
 }
+
+.card-menu {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: 160px minmax(0, 16rem);
+  gap: 1rem;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.25);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+.card-menu-preview .card-svg { width: 160px; height: auto; display: block; }
+.card-menu-body { display: grid; gap: 0.5rem; align-content: start; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chip { border: 2px solid var(--chip); border-left-width: 10px; display: inline-flex; gap: 0.3rem; align-items: center; padding: 0.35rem 0.6rem; border-radius: 10px; font-weight: 600; background: var(--paper); cursor: pointer; }
+.rent-form { display: grid; gap: 0.6rem; }
+.rent-form fieldset { border: none; padding: 0; margin: 0; display: grid; gap: 0.3rem; }
+.rent-form legend { font-weight: 700; margin-bottom: 0.2rem; }
+.rent-form label { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500; }
+.rent-form input { width: auto; }
+.target-bar {
+  position: fixed;
+  left: 50%;
+  top: 1rem;
+  transform: translateX(-50%);
+  z-index: 20;
+  background: #c77700;
+  color: #fff;
+  font-weight: 700;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  box-shadow: 0 8px 20px rgb(0 0 0 / 0.2);
+}
+.target-bar button { padding: 0.2rem 0.7rem; }
+
+@media (max-width: 600px) {
+  .card-menu { left: 0.5rem; right: 0.5rem; bottom: 0.5rem; grid-template-columns: 110px 1fr; }
+  .card-menu-preview .card-svg { width: 110px; }
+}
