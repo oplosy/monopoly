@@ -1,4 +1,6 @@
 import { CARDS, type Color } from '@deal-city/engine';
+import { Avatar } from '../avatars/Avatar';
+import { CHARACTERS } from '../avatars/characters';
 import { CardBack } from './CardBack';
 import { CardFace } from './CardFace';
 
@@ -14,7 +16,7 @@ export function Gallery() {
   return (
     <main className="gallery">
       <h1>Deal City card sheet</h1>
-      <p>{CARDS.length} cards plus the back. Captions are card ids.</p>
+      <p>{`${CARDS.length} cards plus the back, the characters and the picnic props. Captions are ids.`}</p>
       <div className="gallery-grid">
         {CARDS.map((c) => (
           <figure key={c.id}>
@@ -33,6 +35,15 @@ export function Gallery() {
           <figure key={`${w.id}-${w.activeColor}`}>
             <CardFace id={w.id} activeColor={w.activeColor} className="card" />
             <figcaption>{`${w.id} as ${w.activeColor}`}</figcaption>
+          </figure>
+        ))}
+      </div>
+      <h2>Characters</h2>
+      <div className="gallery-grid">
+        {CHARACTERS.map((c, i) => (
+          <figure key={c.name}>
+            <Avatar index={i} className="card" label={c.name} />
+            <figcaption>{`${i} ${c.name}`}</figcaption>
           </figure>
         ))}
       </div>
