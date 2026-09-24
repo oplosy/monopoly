@@ -143,6 +143,17 @@ describe('paying on the table', () => {
 });
 
 describe('discarding', () => {
+  it('keeps my picks when the table changes around me', async () => {
+    const hand = ['money-1-1', 'money-1-2', 'money-1-3', 'money-1-4', 'money-1-5', 'money-1-6', 'money-2-1', 'money-2-2', 'money-2-3'];
+    const s = play({ players: [{ id: 'p1', hand }, { id: 'p2' }] }, [['p1', { type: 'endTurn' }]]);
+    const { user, store } = show(s, 'p1');
+    await user.click(within(myHand()).getAllByRole('button', { name: '1M money' })[0]!);
+    const next = payload(s, 'p1');
+    act(() => store.setState({ game: { ...next, view: { ...next.view, version: next.view.version + 1 } } }));
+    expect(within(myHand()).getAllByRole('button', { name: '1M money', pressed: true })).toHaveLength(1);
+  });
+
+
   it('picks exactly the extra cards from my hand', async () => {
     const hand = ['money-1-1', 'money-1-2', 'money-1-3', 'money-1-4', 'money-1-5', 'money-1-6', 'money-2-1', 'money-2-2', 'money-2-3'];
     const s = play({ players: [{ id: 'p1', hand }, { id: 'p2' }] }, [['p1', { type: 'endTurn' }]]);

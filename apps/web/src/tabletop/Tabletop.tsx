@@ -72,7 +72,8 @@ function TableScene({ game }: { game: GameStatePayload }) {
   // Keyed by the action, not the version: another payer finishing must not reset this player's picks.
   const payKey = role?.kind === 'pay' ? `${role.pending.actorId}:${role.pending.cardIds.join(',')}` : '';
   const [payPicked, setPayPicked] = useKeyedSelection(payKey, () => (role?.kind === 'pay' ? autoPayment(meAsPlayer(view), role.amount) : []));
-  const discardKey = role?.kind === 'discard' ? String(view.version) : '';
+  // One discard phase per turn: picks survive other changes (someone leaving), and reset when it ends.
+  const discardKey = role?.kind === 'discard' ? `discard:${view.turn.playerId}` : '';
   const [discardPicked, setDiscardPicked] = useKeyedSelection(discardKey, () => []);
 
   useEffect(() => {
