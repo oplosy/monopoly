@@ -4,6 +4,7 @@ import { Avatar } from '../avatars/Avatar';
 import { CardBack } from '../cards/CardBack';
 import { plural } from '../game/log';
 import { useAnchor } from '../motion/anchor-context';
+import { useCountUp } from '../motion/stage-context';
 import { fanLayout } from '../scene/geometry';
 import { useProjected } from '../scene/projection';
 import { useTableInteraction } from './interaction';
@@ -21,6 +22,8 @@ interface Props {
   active: boolean;
   connected: boolean;
   handCount: number;
+  /** The count to show while cards fly to or from this hand; defaults to handCount. */
+  shownCount?: number;
   /** Plays left, shown as pips; null hides them. */
   playsLeft: number | null;
   /** The timer ring, when this player is on the clock. */
@@ -28,17 +31,18 @@ interface Props {
 }
 
 /** A player at the table (flat UI): ribbon, character, hand badge, timer ring. A button while they are a target. */
-export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, handCount, playsLeft, clock }: Props) {
+export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, handCount, shownCount, playsLeft, clock }: Props) {
   const at = useProjected(anchor);
   const pick = useTableInteraction().player(playerId);
+  const shown = useCountUp(Math.max(0, shownCount ?? handCount));
   const frame = useAnchor<HTMLSpanElement>(`seat:${playerId}`);
   const face = (
     <span ref={frame} className="avatar-frame">
       <Avatar index={avatar} className="avatar-svg" />
       {clock}
       <span className="hand-badge">
-        {handCount}
-        <span className="sr-only">{` ${handCount === 1 ? 'card' : 'cards'} in hand`}</span>
+        <span aria-hidden="true">{shown}</span>
+        <span className="sr-only">{`${handCount} ${handCount === 1 ? 'card' : 'cards'} in hand`}</span>
       </span>
     </span>
   );
@@ -61,7 +65,7 @@ export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, 
         face
       )}
       {!connected && <span className="tag warn">offline</span>}
-      {!isMe && handCount > 0 && <BackFan count={handCount} anchor={`hand:${playerId}`} />}
+      {!isMe && shown > 0 && <BackFan count={shown} anchor={`hand:${playerId}`} />}
       {playsLeft !== null && <Pips left={playsLeft} />}
     </div>
   );

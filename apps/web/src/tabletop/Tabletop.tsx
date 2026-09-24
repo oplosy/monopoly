@@ -1,6 +1,8 @@
 import { autoPayment, legalIntentsForView, waitingOnView, type Intent, type IntentOf } from '@deal-city/engine';
 import type { GameStatePayload } from '@deal-city/protocol';
-import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { MotionStage } from '../motion/MotionStage';
+import { useStage, useStaged } from '../motion/stage-context';
 import { moveOptions, playBlocker, playOptions } from '../game/choices';
 import { meAsPlayer, myRole, namesFrom } from '../game/derive';
 import { cardName } from '../game/log';
@@ -17,7 +19,7 @@ import { GameOverStage } from './GameOverStage';
 import { HandFan } from './HandFan';
 import { Hud } from './Hud';
 import { InspectProvider, useInspect } from './inspect';
-import { TableInteractionProvider, type Aim, type Selection } from './interaction';
+import { gateInteraction, TableInteractionProvider, type Aim, type Selection } from './interaction';
 import { LogDrawer } from './LogDrawer';
 import { MoveActions } from './MoveActions';
 import { useNarration } from './narration';
@@ -34,13 +36,25 @@ import { useKeyedSelection } from './selection';
 import { Tableau } from './Tableau';
 import { TimerRing } from './TimerRing';
 import './tabletop.css';
+import '../motion/motion.css';
 
 /** Clicks inside these never count as clicking the empty table. */
 const INTERACTIVE = 'button, input, label, [role="dialog"], .tray, .log-drawer, .hud';
 
 /** The game table: the picnic scene with everyone's cards, my hand, the seats and the HUD. */
 export function Tabletop() {
-  const game = useGameStore((s) => s.game);
+  return (
+    <InspectProvider>
+      <MotionStage>
+        <StagedTable />
+      </MotionStage>
+    </InspectProvider>
+  );
+}
+
+/** The table shows the stage's payload: the latest one, with its scenes playing over it. */
+function StagedTable() {
+  const game = useStaged((s) => s.game);
   if (!game) {
     return (
       <PaperPage className="center-message">
@@ -48,11 +62,7 @@ export function Tabletop() {
       </PaperPage>
     );
   }
-  return (
-    <InspectProvider>
-      <TableScene game={game} />
-    </InspectProvider>
-  );
+  return <TableScene game={game} />;
 }
 
 function TableScene({ game }: { game: GameStatePayload }) {
@@ -61,6 +71,11 @@ function TableScene({ game }: { game: GameStatePayload }) {
   const log = useGameStore((s) => s.log);
   const sendIntent = useGameStore((s) => s.sendIntent);
   const inspect = useInspect();
+  const stage = useStage();
+  const busy = useStaged((s) => s.busy);
+  const counts = useStaged((s) => s.counts);
+  // The stage starts a payload's scenes once the table shows it.
+  useLayoutEffect(() => stage.committed(game));
   const rootRef = useRef<HTMLDivElement>(null);
   const { view, deadlines } = game;
   const legal = useMemo(() => legalIntentsForView(view), [view]);
@@ -100,6 +115,8 @@ function TableScene({ game }: { game: GameStatePayload }) {
     setAim(null);
   };
   const send = (intent: Intent) => {
+    // Nothing is sent while scenes play: the table may not show that state yet (spec §7.3).
+    if (busy) return;
     cancel();
     void sendIntent(intent);
   };
@@ -108,7 +125,7 @@ function TableScene({ game }: { game: GameStatePayload }) {
     setSelected(null);
     setAim((prev) => ({ prompt, card: card ?? prev?.card ?? null, choices: new Map(choices) }));
   };
-  const interaction = resolveInteraction({
+  const resolved = resolveInteraction({
     view,
     legal,
     role,
@@ -130,6 +147,7 @@ function TableScene({ game }: { game: GameStatePayload }) {
         }),
     },
   });
+  const interaction = gateInteraction(resolved, busy);
 
   const places = seatPlan(view.players.map((p) => p.id), view.me);
   const players = new Map(view.players.map((p) => [p.id, p]));
@@ -195,7 +213,7 @@ function TableScene({ game }: { game: GameStatePayload }) {
             </div>
           )}
           {legal.some((i) => i.type === 'endTurn') && (
-            <button type="button" className="end-turn" onClick={() => send({ type: 'endTurn' })}>
+            <button type="button" className="end-turn" aria-disabled={busy || undefined} onClick={() => send({ type: 'endTurn' })}>
               End turn
             </button>
           )}
@@ -208,16 +226,17 @@ function TableScene({ game }: { game: GameStatePayload }) {
               deadline={responseDeadline}
               onAuto={() => setPayPicked(() => autoPayment(meAsPlayer(view), role.amount))}
               onPay={() => send({ type: 'pay', cards: [...payPicked] })}
+              busy={busy}
             />
           )}
           {role?.kind === 'discard' && (
-            <DiscardTray count={role.count} picked={discardPicked} deadline={deadlines.turnEndsAt} onDiscard={() => send({ type: 'discard', cards: [...discardPicked] })} />
+            <DiscardTray count={role.count} picked={discardPicked} deadline={deadlines.turnEndsAt} onDiscard={() => send({ type: 'discard', cards: [...discardPicked] })} busy={busy} />
           )}
           {role?.kind === 'respond' && (
-            <RespondTray view={view} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} onSend={send} />
+            <RespondTray view={view} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} onSend={send} busy={busy} />
           )}
           {role?.kind === 'counter' && (
-            <CounterTray pending={role.pending} targets={role.targets} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} onSend={send} />
+            <CounterTray pending={role.pending} targets={role.targets} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} onSend={send} busy={busy} />
           )}
           <PicnicScene players={places.length}>
             {places.map(({ playerId, spot }) => (
@@ -228,21 +247,25 @@ function TableScene({ game }: { game: GameStatePayload }) {
               <PlaneAnchor key={playerId} id={`seat:${playerId}`} at={playerId === view.me ? MY_SEAT_UI : spot.ui} />
             ))}
           </PicnicScene>
-          {places.map(({ playerId }) => (
-            <Seat
-              key={playerId}
-              playerId={playerId}
-              name={name(playerId)}
-              avatar={seats.get(playerId)?.avatar ?? 0}
-              anchor={`seat:${playerId}`}
-              isMe={playerId === view.me}
-              active={playerId === active}
-              connected={seats.get(playerId)?.connected ?? false}
-              handCount={playerId === view.me ? view.hand.length : players.get(playerId)!.handCount}
-              playsLeft={playerId === view.me && myTurn && view.turn.phase === 'play' ? view.turn.playsLeft : null}
-              clock={clockFor(playerId)}
-            />
-          ))}
+          {places.map(({ playerId }) => {
+            const handCount = playerId === view.me ? view.hand.length : players.get(playerId)!.handCount;
+            return (
+              <Seat
+                key={playerId}
+                playerId={playerId}
+                name={name(playerId)}
+                avatar={seats.get(playerId)?.avatar ?? 0}
+                anchor={`seat:${playerId}`}
+                isMe={playerId === view.me}
+                active={playerId === active}
+                connected={seats.get(playerId)?.connected ?? false}
+                handCount={handCount}
+                shownCount={handCount + (counts.get(`hand:${playerId}`) ?? 0)}
+                playsLeft={playerId === view.me && myTurn && view.turn.phase === 'play' ? view.turn.playsLeft : null}
+                clock={clockFor(playerId)}
+              />
+            );
+          })}
           {popover}
           <Hud code={room?.code ?? ''} logOpen={logOpen} onToggleLog={() => setLogOpen((open) => !open)} />
           {logOpen && <LogDrawer entries={log} names={names} onClose={() => setLogOpen(false)} />}

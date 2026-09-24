@@ -9,17 +9,19 @@ interface Props {
   picked: readonly string[];
   deadline: number | null;
   onDiscard(): void;
+  /** Scenes are playing: answers wait (spec §7.3). */
+  busy?: boolean;
 }
 
 /** Over the hand limit: pick the extra cards in the hand, then discard them here. */
-export function DiscardTray({ count, picked, deadline, onDiscard }: Props) {
+export function DiscardTray({ count, picked, deadline, onDiscard, busy }: Props) {
   const ref = useRef<HTMLElement>(null);
   useDialogFocus(ref, '.tray-actions button:not(:disabled)');
   return (
     <section ref={ref} className="tray discard-tray" aria-label={`Discard ${plural(count, 'card')}`}>
       <p className="tray-title">{`You may keep ${HAND_LIMIT} cards. Pick ${plural(count, 'card')} in your hand to discard.`}</p>
       <div className="tray-actions">
-        <button type="button" className="primary" disabled={picked.length !== count} onClick={onDiscard}>
+        <button type="button" className="primary" disabled={picked.length !== count} aria-disabled={busy || undefined} onClick={onDiscard}>
           {`Discard ${picked.length}/${count}`}
         </button>
         <Countdown deadline={deadline} />
