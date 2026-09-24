@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { viewFor } from '@deal-city/engine';
 import { opponentsInOrder } from '../src/game/derive';
 import {
-  discardJitter, fanLayout, planePoint, propLayout, seatLayout, seatPlan, SEAT_UI_RADIUS, TABLEAU_RADIUS,
+  discardJitter, fanLayout, MY_SEAT_UI, planePoint, propLayout, seatLayout, seatPlan, SEAT_UI_RADIUS, TABLEAU_RADIUS,
 } from '../src/scene/geometry';
 import { play } from './fixtures';
 
@@ -31,6 +31,14 @@ describe('seatLayout', () => {
     }
     expect(seatLayout(3)[1]!.tableau.x).toBeLessThan(50); // the first opponent sits upper left
     expect(seatLayout(3)[1]!.tableau.y).toBeLessThan(50);
+  });
+});
+
+describe('MY_SEAT_UI', () => {
+  it('puts my seat at the lower left of the near rim, clear of the hand in the middle', () => {
+    expect(Math.hypot(MY_SEAT_UI.x - 50, MY_SEAT_UI.y - 50)).toBeCloseTo(50 * SEAT_UI_RADIUS, 0);
+    expect(MY_SEAT_UI.x).toBeLessThan(25);
+    expect(MY_SEAT_UI.y).toBeGreaterThan(85);
   });
 });
 
