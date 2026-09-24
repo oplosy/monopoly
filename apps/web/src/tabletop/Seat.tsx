@@ -3,8 +3,11 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Avatar } from '../avatars/Avatar';
 import { CardBack } from '../cards/CardBack';
 import { plural } from '../game/log';
+import { useAnchor } from '../motion/anchor-context';
+import { CountUp, useCountShift } from '../motion/stage-context';
 import { fanLayout } from '../scene/geometry';
 import { useProjected } from '../scene/projection';
+import { dropClass, useDropState } from './drag';
 import { useTableInteraction } from './interaction';
 
 /** At most this many card backs are drawn next to an opponent. */
@@ -30,21 +33,28 @@ interface Props {
 export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, handCount, playsLeft, clock }: Props) {
   const at = useProjected(anchor);
   const pick = useTableInteraction().player(playerId);
+  // While cards fly to or from this hand, the badge and the back fan still show them where they were.
+  const shown = Math.max(0, handCount + useCountShift(`hand:${playerId}`));
+  const frame = useAnchor<HTMLSpanElement>(`seat:${playerId}`);
+  const dropState = useDropState(isMe ? null : `player:${playerId}`);
   const face = (
-    <span className="avatar-frame">
+    <span ref={frame} className="avatar-frame">
       <Avatar index={avatar} className="avatar-svg" />
       {clock}
       <span className="hand-badge">
-        {handCount}
-        <span className="sr-only">{` ${handCount === 1 ? 'card' : 'cards'} in hand`}</span>
+        <span aria-hidden="true">
+          <CountUp value={shown} />
+        </span>
+        <span className="sr-only">{`${handCount} ${handCount === 1 ? 'card' : 'cards'} in hand`}</span>
       </span>
     </span>
   );
   return (
     <div
       role="group"
+      data-drop={isMe ? undefined : `player:${playerId}`}
       aria-label={`${isMe ? 'Your seat' : `${name}'s seat`}${active ? ', playing now' : ''}`}
-      className={['seat', isMe && 'is-me', active && 'is-active', pick.target && 'is-target', !connected && 'is-offline']
+      className={['seat', isMe && 'is-me', active && 'is-active', pick.target && 'is-target', !connected && 'is-offline', dropClass(dropState)]
         .filter(Boolean)
         .join(' ')}
       // A rim point can fall off a narrow screen; the seat stays inside it.
@@ -59,16 +69,17 @@ export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, 
         face
       )}
       {!connected && <span className="tag warn">offline</span>}
-      {!isMe && handCount > 0 && <BackFan count={handCount} />}
+      {!isMe && shown > 0 && <BackFan count={shown} anchor={`hand:${playerId}`} />}
       {playsLeft !== null && <Pips left={playsLeft} />}
     </div>
   );
 }
 
-function BackFan({ count }: { count: number }) {
+function BackFan({ count, anchor }: { count: number; anchor: string }) {
+  const ref = useAnchor<HTMLSpanElement>(anchor);
   const n = Math.min(count, BACKS_SHOWN);
   return (
-    <span className="back-fan" aria-hidden="true">
+    <span ref={ref} className="back-fan" aria-hidden="true">
       {Array.from({ length: n }, (_, i) => (
         <span key={i} className="back-card" style={{ '--rot': `${fanLayout(n, i).rotate * 2}deg` } as CSSProperties}>
           <CardBack className="card-svg" />

@@ -1,9 +1,11 @@
-import { isComplete, type GameView } from '@deal-city/engine';
+import { isComplete, type Color, type GameView } from '@deal-city/engine';
 import { useId, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { Avatar } from '../avatars/Avatar';
 import { CardFace } from '../cards/CardFace';
 import type { Names } from '../game/log';
+import { useAnchor } from '../motion/anchor-context';
+import { useHidden } from '../motion/stage-context';
 import { useGameStore } from '../store/context';
 import { useDialogFocus } from '../ui/useDialogFocus';
 
@@ -15,7 +17,7 @@ interface Props {
   isHost: boolean;
 }
 
-/** The winner's banner over the table, with their complete sets. Flights and confetti come with Plan 7. */
+/** The winner's banner over the table, with their complete sets (they fly in from the table). */
 export function GameOverStage({ view, winner, name, avatarOf, isHost }: Props) {
   const rematch = useGameStore((s) => s.rematch);
   const leave = useGameStore((s) => s.leave);
@@ -35,7 +37,7 @@ export function GameOverStage({ view, winner, name, avatarOf, isHost }: Props) {
           {sets.map((g) => (
             <div key={g.id} className="gameover-set">
               {g.cards.map((id) => (
-                <CardFace key={id} id={id} activeColor={g.color} className="card-svg" />
+                <WinCard key={id} id={id} color={g.color} />
               ))}
             </div>
           ))}
@@ -60,5 +62,16 @@ export function GameOverStage({ view, winner, name, avatarOf, isHost }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** A card of the winner's set, hidden until its copy has flown in from the table. */
+function WinCard({ id, color }: { id: string; color: Color }) {
+  const anchor = useAnchor<HTMLSpanElement>(`win:${id}`);
+  const hidden = useHidden(`win:${id}`);
+  return (
+    <span ref={anchor} className="gameover-card" style={hidden ? { visibility: 'hidden' } : undefined}>
+      <CardFace id={id} activeColor={color} className="card-svg" />
+    </span>
   );
 }

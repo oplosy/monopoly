@@ -15,10 +15,12 @@ interface Props {
   deadline: number | null;
   anchor: Element | null;
   onSend(intent: Intent): void;
+  /** Scenes are playing: answers wait (spec §7.3). */
+  busy?: boolean;
 }
 
 /** My answer to each player who played Just Say No against me: say no again, or let it go. */
-export function CounterTray({ pending, targets, legal, name, deadline, anchor, onSend }: Props) {
+export function CounterTray({ pending, targets, legal, name, deadline, anchor, onSend, busy }: Props) {
   const ref = useRef<HTMLElement>(null);
   useDialogFocus(ref, '.tray-actions button');
   const place = useAnchoredPosition(anchor, ref);
@@ -38,12 +40,12 @@ export function CounterTray({ pending, targets, legal, name, deadline, anchor, o
             <p className="tray-title">{`${said}.`}</p>
             <div className="tray-actions">
               {back && (
-                <button type="button" className="primary" onClick={() => onSend(back)}>
+                <button type="button" className="primary" aria-disabled={busy || undefined} onClick={() => onSend(back)}>
                   Just Say No!
                 </button>
               )}
               {drop && (
-                <button type="button" onClick={() => onSend(drop)}>
+                <button type="button" aria-disabled={busy || undefined} onClick={() => onSend(drop)}>
                   Let it go
                 </button>
               )}

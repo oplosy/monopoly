@@ -14,10 +14,12 @@ interface Props {
   /** My Just Say No card in the hand; the answers sit beside it. */
   anchor: Element | null;
   onSend(intent: Intent): void;
+  /** Scenes are playing: answers wait (spec §7.3). */
+  busy?: boolean;
 }
 
 /** An action aimed at me: play Just Say No, or accept it. */
-export function RespondTray({ view, legal, name, deadline, anchor, onSend }: Props) {
+export function RespondTray({ view, legal, name, deadline, anchor, onSend, busy }: Props) {
   const ref = useRef<HTMLElement>(null);
   useDialogFocus(ref, '.tray-actions button');
   const place = useAnchoredPosition(anchor, ref);
@@ -33,11 +35,11 @@ export function RespondTray({ view, legal, name, deadline, anchor, onSend }: Pro
       <p className="tray-title">{jsn ? 'Play your Just Say No to cancel it, or accept it.' : 'You have no Just Say No.'}</p>
       <div className="tray-actions">
         {jsn && (
-          <button type="button" className="primary" onClick={() => onSend(jsn)}>
+          <button type="button" className="primary" aria-disabled={busy || undefined} onClick={() => onSend(jsn)}>
             Just Say No!
           </button>
         )}
-        <button type="button" onClick={() => onSend(accept)}>
+        <button type="button" aria-disabled={busy || undefined} onClick={() => onSend(accept)}>
           Accept
         </button>
         <Countdown deadline={deadline} />

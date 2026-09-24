@@ -24,6 +24,8 @@ export interface CardInteraction {
   pressed?: boolean;
   /** What a click does. Without it, a click shows the card's large preview. */
   onActivate?: () => void;
+  /** Set while scenes play: the card would act, but waits (spec §7.3). */
+  busy?: boolean;
 }
 
 export interface PickInteraction {
@@ -44,6 +46,28 @@ export const IDLE: TableInteraction = {
   group: () => ({ target: false }),
   player: () => ({ target: false }),
 };
+
+/**
+ * While scenes play, nothing on the table acts (spec §7.3): cards keep their look and say they are
+ * unavailable, and picks stay lit but do nothing.
+ */
+export function gateInteraction(inner: TableInteraction, busy: boolean): TableInteraction {
+  if (!busy) return inner;
+  return {
+    card(zone, id, owner) {
+      const c = inner.card(zone, id, owner);
+      return c.onActivate ? { tone: c.tone, pressed: c.pressed, busy: true } : c;
+    },
+    group(groupId, owner) {
+      const g = inner.group(groupId, owner);
+      return g.onPick ? { target: g.target } : g;
+    },
+    player(playerId) {
+      const p = inner.player(playerId);
+      return p.onPick ? { target: p.target } : p;
+    },
+  };
+}
 
 const InteractionContext = createContext<TableInteraction>(IDLE);
 export const TableInteractionProvider = InteractionContext.Provider;

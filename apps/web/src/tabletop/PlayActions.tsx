@@ -13,11 +13,13 @@ interface Props {
   /** Returns false when the option needs more input here (a property color, the rent form). */
   onChoose(option: PlayOption): boolean;
   onSend(intent: Intent): void;
+  /** Open this option's own choice at once (a drop that already chose the kind of play). */
+  initialOpen?: PlayKind | null;
 }
 
 /** A hand card's legal plays as pills, the card's own effect first; sub-choices open in place. */
-export function PlayActions({ options, reason, view, name, onChoose, onSend }: Props) {
-  const [open, setOpen] = useState<PlayKind | null>(null);
+export function PlayActions({ options, reason, view, name, onChoose, onSend, initialOpen }: Props) {
+  const [open, setOpen] = useState<PlayKind | null>(initialOpen ?? null);
   const opened = options.find((o) => o.kind === open);
   if (reason) return <p className="popover-reason">{reason}</p>;
   if (opened) {

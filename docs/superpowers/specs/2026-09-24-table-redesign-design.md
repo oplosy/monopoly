@@ -1,6 +1,6 @@
 # Deal City: Game Table Redesign (UI, UX, Motion, Sound)
 
-**Status:** design approved on 2026-09-24. Plan 6 (world and interaction) is implemented on `feat/table-world`; Plans 7 and 8 remain.
+**Status:** design approved on 2026-09-24. Plans 6 (world and interaction) and 7 (motion) are implemented; Plan 8 (sound) remains.
 **Parent spec:** `docs/superpowers/specs/2026-09-24-deal-city-design.md` covers the rules, engine, protocol and server. This document **supersedes its §4.4 (web client) for everything about the look, layout, interaction and motion of the game**. Engine rules are unchanged.
 **Mockups:** `docs/superpowers/specs/table-redesign/mockups/` holds standalone HTML files that open in any browser. §14 lists what each one shows.
 **Reference images:** `for_table/` in the repo root. These are the user's local screenshots of UNO games. They are **not committed**, because they are third-party art. §2.3 describes them in words.
@@ -189,6 +189,7 @@ Seats sit on a circle of the table plane, at angles measured on the plane. 270°
   - **an opponent's seat or tableau**, for targeted actions (Debt Collector, Wild Rent, Deal Breaker on a set, Sly Deal on a card).
 - Dropping on a zone that maps to **exactly one** intent sends it. If it maps to several (for example a two-color wild on the tableau, or rent that needs a Double choice), the popover from §5.1 opens anchored to the drop point, pre-filtered. Dropping outside any zone flies the card back to the hand.
 - Drag is pointer-only sugar. Every drop has a click and keyboard equivalent through §5.1, and drop zones come from the same legal-intent list.
+- *As built (Plan 7):* drag works with a mouse or a pen only; touch keeps its long-press preview. The innermost zone under the pointer wins (a card before its set, a set before its area), and an opponent's property is its own zone (`card:<id>`) for Sly Deal and Forced Deal. A dropped card waits at the drop point, registered as the card's anchor, so its flight starts there. A drop that fits several plays opens the popover at the drop point, already on the matching option; several plays of one targeted kind start targeting instead.
 
 ### 5.3 Inspecting cards
 
@@ -255,6 +256,8 @@ All motion uses **transform and opacity only**, targets 60 fps, and respects `pr
 
 With `prefers-reduced-motion: reduce`, flights become ≤150 ms cross-fades in place. There is no shake, no confetti, no spinning and no looping pulses (a static gold outline is used instead). Sound is unaffected.
 
+*As built (Plan 7):* reduced motion (like a browser without the Web Animations API) puts the stage in `'instant'` mode: no flights, nothing hidden and nothing gated. Every card that appears fades in over 150 ms. Every animation in `motion/motion.css` sits inside `@media (prefers-reduced-motion: no-preference)`, and a test enforces it.
+
 ---
 
 ## 7. Choreography: turning snapshots into scenes
@@ -272,6 +275,14 @@ The server sends one `game:state` per change: the **new** redacted view plus the
 5. **Flat ↔ tilted flights:** the destination rect of a plane card is its projected bounding box. The clone also interpolates `rotateX` from 0° to the plane angle (or back), so it lands matching the table's perspective. Motion's shared `layoutId` is **not** used for cards inside the tilted plane, because layout animation breaks under 3D transforms. That is why this custom flight layer exists.
 6. **Counters** (bank totals, hand badges, deck count) animate from their previous number to the new one during the matching scene.
 
+*As built (Plan 7):*
+- The registry keys are `card:`, `hand:`, `bank:`, `tableau:`, `group:`, `seat:`, `deck`, `discard`, `center` and `win:` (the winner's banner cards). The newest element holds a key, and each key keeps its last pose after it leaves the page.
+- The stage owns the shown payload: the table reads it from the stage, never from the store, so a new view and its hidden cards change in the same render. Poses are taken in the store subscription, before React renders the new view.
+- Clones fly box to box between measured poses (center, own size, rotation) and do not interpolate `rotateX` (Plan 7 decision 2). The destination is the real card's projected box, so the clone lands exactly on it; the visual review measured the error at ≤0.1 px.
+- Paths with a pause (the action card read at the center, the Just Say No slam, the Deal Breaker float) run on linear time with each leg eased, so the pause lasts as long as its offsets say (≈315 ms of a 900 ms action flight). An opponent's action card turns face-up before it pauses.
+- Cards that only moved (the hand closing a gap, a set re-stacking, the table re-seating) glide with a FLIP on `translate`.
+- Counters count toward the truth: a bank total sums only its landed notes, and hand and deck badges add the cards still on their way. Accessible names always give the real state.
+
 ### 7.3 Queue rules
 
 - **One batch per `game:state`**, and batches play in arrival order.
@@ -279,6 +290,7 @@ The server sends one `game:state` per change: the **new** redacted view plus the
 - **Input gating:** my own action controls (popover, drag, pay tray) are enabled only when the queue is idle, so I never act on a state I cannot see yet. Timers are not paused: the server is authoritative, and the rings show the real deadline.
 - A snapshot with **no events** (a resume after a reload or reconnect) is applied instantly, with no scenes.
 - The planner never needs hidden information. It uses only the redacted views and events (opponent draws fly as backs, and an opponent's card turns face-up only when the event names it).
+- *As built (Plan 7):* the budget is 1600 ms; a batch plays at ×2 speed while others wait; sped-up scenes start when two thirds of the one before has played; more than 3 waiting batches drop the oldest; at most 12 clones fly at once; no flight is shorter than 90 ms. Controls are gated with `aria-disabled` (not `disabled`), so keyboard focus stays put, and nothing is sent while scenes play. The stage snaps when the tab is hidden.
 
 ### 7.4 Tools
 
@@ -287,6 +299,7 @@ The server sends one `game:state` per change: the **new** redacted view plus the
 - **SVG animation inside card faces** (rent wheel spin, stamps) through Motion on SVG elements.
 - **canvas-confetti** (≈5 kB) for the win.
 - **No GSAP and no three.js.**
+- *As built (Plan 7):* flights use the Web Animations API directly (`element.animate`); Motion drives the drag ghost's springs; `canvas-confetti` is a separate chunk loaded only on a win.
 
 ---
 
@@ -344,7 +357,7 @@ apps/web/src/
   ui/clock.ts   useNow, secondsLeft (moved from table/useNow.ts), useDrain
 ```
 
-- `motion/` (anchor registry, scene planner, choreographer, FlightLayer, stamps, counters, drag-and-drop zones) arrives with Plan 7, and `audio/` (AudioManager, cue map, useSound) with Plan 8.
+- `motion/` (Plan 7): mode, pose, anchors, anchor-context, scenes, planner, timing, keyframes, stage, settle, stage-context, FlightLayer, MotionStage, confetti and motion.css; drag and drop is `tabletop/drop.ts` and `tabletop/drag.tsx`. `audio/` (AudioManager, cue map, useSound) arrives with Plan 8.
 - The old `apps/web/src/table/` (Table, CenterStrip, OpponentPanel, PlayerArea, GroupView, CardMenu, MoveMenu, TargetBar and the `modals/` folder) was **replaced** by `tabletop/` in Plan 6 and deleted, together with every `layoutId`. The working name `table2/` was never used.
 - The store gains no animation state. The choreographer subscribes to the store's `game` payload and owns "what is currently shown".
 
@@ -457,8 +470,9 @@ These are rough wireframes for layout decisions, not final art. Each file is a s
 2. State of the repo when this spec was written:
    - All of Plans 1–5 and the backlog fixes are merged to `main` (PRs #1–#5).
    - The redesign work branch is `feat/table-redesign`, which holds this spec, its mockups and a `.gitignore` entry for `.superpowers/`.
-   - Plan 6 (`docs/superpowers/plans/2026-09-24-plan-6-table-world.md`) is implemented on `feat/table-world` (stacked on `feat/table-redesign`).
-3. **Next step:** invoke the writing-plans skill for **Plan 7** (motion, §13.2), save it as `docs/superpowers/plans/<date>-plan-7-motion.md`, and ask the user to review it. The user has consistently chosen **native (inline) execution**.
+   - Plan 6 (`docs/superpowers/plans/2026-09-24-plan-6-table-world.md`) is merged to `main` (PR #6).
+   - Plan 7 (`docs/superpowers/plans/2026-09-25-plan-7-motion.md`) is implemented on `feat/table-motion`.
+3. **Next step:** invoke the writing-plans skill for **Plan 8** (sound, §13.3), save it as `docs/superpowers/plans/<date>-plan-8-sound.md`, and ask the user to review it. The user has consistently chosen **native (inline) execution**.
 4. **Working conventions (from the user's global CLAUDE.md and past sessions):**
    - Never work on `main`; branch first (`feat/…`).
    - One PR per plan, stacked if needed, merged in order by the user's request only.

@@ -14,10 +14,12 @@ interface Props {
   deadline: number | null;
   onAuto(): void;
   onPay(): void;
+  /** Scenes are playing: answers wait (spec §7.3). */
+  busy?: boolean;
 }
 
 /** Paying happens on the table: I pick cards on my tableau, and this tray totals and sends them. Every check is the engine's. */
-export function PayTray({ view, amount, picked, name, deadline, onAuto, onPay }: Props) {
+export function PayTray({ view, amount, picked, name, deadline, onAuto, onPay, busy }: Props) {
   const ref = useRef<HTMLElement>(null);
   useDialogFocus(ref, '.tray-actions button:not(:disabled)');
   const me = meAsPlayer(view);
@@ -37,7 +39,7 @@ export function PayTray({ view, amount, picked, name, deadline, onAuto, onPay }:
       {problem === 'hotelFirst' && <p className="tray-warn">Pay the Hotel before its House.</p>}
       {problem === 'insufficientPayment' && <p className="tray-note">{`Select at least ${amount}M, or everything you have.`}</p>}
       <div className="tray-actions">
-        <button type="button" className="primary" disabled={problem !== null} onClick={onPay}>
+        <button type="button" className="primary" disabled={problem !== null} aria-disabled={busy || undefined} onClick={onPay}>
           {everything && total < amount ? 'Pay everything' : `Pay ${total}M`}
         </button>
         <button type="button" onClick={onAuto}>

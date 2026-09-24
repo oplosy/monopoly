@@ -14,3 +14,10 @@ export function useGameStore<T>(selector: (s: AppState) => T): T {
   if (!store) throw new Error('useGameStore needs a StoreProvider');
   return useStore(store, selector);
 }
+
+/** The store itself, for code that follows it outside rendering (the table's choreographer). */
+export function useGameStoreApi(): GameStore {
+  const store = useContext(StoreContext);
+  if (!store) throw new Error('useGameStoreApi needs a StoreProvider');
+  return store;
+}

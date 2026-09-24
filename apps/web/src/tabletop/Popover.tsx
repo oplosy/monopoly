@@ -1,11 +1,11 @@
 import { useRef, type ReactNode } from 'react';
 import { useDialogFocus } from '../ui/useDialogFocus';
-import { useAnchoredPosition } from './anchored';
+import { useAnchoredPosition, type AnchorLike } from './anchored';
 
 interface Props {
   title: string;
-  /** The card the popover belongs to. */
-  anchor: Element | null;
+  /** The card the popover belongs to, or the point where it was dropped. */
+  anchor: AnchorLike | null;
   onClose(): void;
   children: ReactNode;
 }

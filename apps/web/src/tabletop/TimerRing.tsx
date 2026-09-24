@@ -1,8 +1,9 @@
 import type { CSSProperties } from 'react';
 import { secondsLeft, useDrain, useNow } from '../ui/clock';
 
-/** Timers turn red at this many seconds left. */
+/** Timers turn red at this many seconds left, and shake from CRITICAL_SECONDS. */
 export const LOW_SECONDS = 10;
+export const CRITICAL_SECONDS = 3;
 
 interface Props {
   deadline: number | null;
@@ -22,9 +23,10 @@ export function TimerRing({ deadline, total, drainKey, kind, label }: Props) {
   if (fraction === null) return null;
   const seconds = secondsLeft(deadline, now);
   const low = seconds !== null && seconds <= LOW_SECONDS;
+  const critical = seconds !== null && seconds <= CRITICAL_SECONDS;
   return (
     <span
-      className={['timer-ring', `ring-${kind}`, low && 'is-low', deadline === null && 'is-paused'].filter(Boolean).join(' ')}
+      className={['timer-ring', `ring-${kind}`, low && 'is-low', critical && 'is-critical', deadline === null && 'is-paused'].filter(Boolean).join(' ')}
       style={{ '--p': fraction.toFixed(3) } as CSSProperties}
     >
       <span className="sr-only">{seconds === null ? `${label}, paused` : `${label}, ${seconds}s left`}</span>
