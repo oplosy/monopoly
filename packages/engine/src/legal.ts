@@ -108,7 +108,12 @@ export function candidateIntents(s: GameState, playerId: string): Intent[] {
   return out;
 }
 
-/** Every intent that would succeed right now. Used by the UI to enable controls. */
+/**
+ * The candidate intents that would succeed right now; the UI uses them to enable controls.
+ * It is not every legal intent: choices of cards list one representative each. `pay` offers only
+ * the automatic payment and `discard` only the automatic discard (any valid selection is accepted),
+ * and rent uses the first Double The Rent cards in hand, one intent per count (0–2).
+ */
 export function legalIntents(s: GameState, playerId: string): Intent[] {
   return candidateIntents(s, playerId).filter((intent) => applyIntent(s, playerId, intent).ok);
 }
