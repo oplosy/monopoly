@@ -1,4 +1,4 @@
-import type { Browser, Locator, Page } from '@playwright/test';
+import { expect, type Browser, type Locator, type Page } from '@playwright/test';
 
 /** Each player gets their own browser context: separate storage, so a separate seat. */
 export async function newPlayer(browser: Browser, baseURL: string | undefined): Promise<Page> {
@@ -27,4 +27,15 @@ export async function joinRoom(page: Page, link: string, nickname: string): Prom
   await page.goto(link);
   await page.getByLabel('Nickname').fill(nickname);
   await page.getByRole('button', { name: 'Join room' }).click();
+}
+
+/** Gives up this page's seat from the home page, confirming if a game is under way. */
+export async function leaveRoom(page: Page): Promise<void> {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Leave that room' }).click();
+  const confirm = page.getByRole('button', { name: 'Yes, leave' });
+  const home = page.getByRole('button', { name: 'Create a room' });
+  await expect(confirm.or(home)).toBeVisible();
+  if (await confirm.isVisible()) await confirm.click();
+  await expect(home).toBeVisible();
 }

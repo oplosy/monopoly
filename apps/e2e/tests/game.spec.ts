@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createRoom, hand, joinRoom, log, newPlayer, playFromHand } from './players';
+import { createRoom, hand, joinRoom, leaveRoom, log, newPlayer, playFromHand } from './players';
 
 test('three players play a seeded game through to a rematch', async ({ browser, baseURL }) => {
   const [ann, bob, cy] = [await newPlayer(browser, baseURL), await newPlayer(browser, baseURL), await newPlayer(browser, baseURL)];
@@ -40,12 +40,7 @@ test('three players play a seeded game through to a rematch', async ({ browser, 
   await expect(ann.getByRole('button', { name: 'End turn' })).toBeVisible();
 
   // Bob and Cy leave; the last player standing wins, and the host starts a rematch.
-  for (const page of [bob, cy]) {
-    await page.goto('/');
-    await page.getByRole('button', { name: 'Leave that room' }).click();
-    await page.getByRole('button', { name: 'Yes, leave' }).click();
-    await expect(page.getByRole('button', { name: 'Create a room' })).toBeVisible();
-  }
+  for (const page of [bob, cy]) await leaveRoom(page);
   const over = ann.getByRole('dialog', { name: 'You win!' });
   await expect(over).toBeVisible();
   await over.getByRole('button', { name: 'Play again' }).click();

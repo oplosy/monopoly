@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createRoom, hand, joinRoom, newPlayer } from './players';
+import { createRoom, hand, joinRoom, leaveRoom, newPlayer } from './players';
 
 test('two players can meet and start a game', async ({ browser, baseURL, request }) => {
   expect((await request.get('/healthz')).ok()).toBe(true);
@@ -20,4 +20,6 @@ test('two players can meet and start a game', async ({ browser, baseURL, request
     await expect(hand(page).getByRole('button')).not.toHaveCount(0);
   }
   expect(frames, 'no Socket.IO traffic over WebSocket').toBeGreaterThan(0);
+  // Leave, so a smoke run against a real deployment leaves no room behind.
+  for (const page of [bob, ann]) await leaveRoom(page);
 });
