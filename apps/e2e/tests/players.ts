@@ -55,3 +55,35 @@ export async function leaveRoom(page: Page): Promise<void> {
   if (await confirm.isVisible()) await confirm.click();
   await expect(home).toBeVisible();
 }
+
+/** Drags `from` onto `to` with the mouse, in steps, as a player would. */
+export async function dragOnto(page: Page, from: Locator, to: Locator): Promise<void> {
+  const a = await from.boundingBox();
+  const b = await to.boundingBox();
+  if (!a || !b) throw new Error('dragOnto: an element is not on screen');
+  // Hand cards overlap from the right: grab the left part of the card, which is never covered.
+  await page.mouse.move(a.x + a.width * 0.3, a.y + a.height * 0.3);
+  await page.mouse.down();
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 12 });
+  await page.mouse.up();
+}
+
+/** Starts counting the flight clones this page draws from now on. */
+export async function watchFlights(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const w = window as unknown as { flights: number };
+    w.flights = 0;
+    new MutationObserver((records) => {
+      for (const r of records) {
+        r.addedNodes.forEach((n) => {
+          if (n instanceof HTMLElement && n.classList.contains('flight')) w.flights += 1;
+        });
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+}
+
+/** How many flight clones this page has drawn since watchFlights. */
+export async function flightsSeen(page: Page): Promise<number> {
+  return page.evaluate(() => (window as unknown as { flights?: number }).flights ?? 0);
+}

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { attachScreenshot, createRoom, hand, joinRoom, leaveRoom, newPlayer } from './players';
+import { attachScreenshot, createRoom, flightsSeen, hand, joinRoom, leaveRoom, newPlayer, watchFlights } from './players';
 
 // The table must work with the OS asking for less motion.
 test.use({ reducedMotion: 'reduce' });
@@ -31,6 +31,28 @@ test('two players pick characters and meet at the picnic table', async ({ browse
   await ann.keyboard.press('Escape');
   await expect(ann.getByRole('dialog')).toHaveCount(0);
   await attachScreenshot(ann, testInfo, 'table-2p');
+
+  for (const page of [bob, ann]) await leaveRoom(page);
+});
+
+test('nothing flies when the OS asks for less motion', async ({ browser, baseURL }) => {
+  const ann = await newPlayer(browser, baseURL);
+  const bob = await newPlayer(browser, baseURL);
+  const link = await createRoom(ann, 'Ann');
+  await joinRoom(bob, link, 'Bob');
+  await ann.getByRole('button', { name: 'Start game' }).click();
+  for (const page of [ann, bob]) {
+    await expect(hand(page).getByRole('button')).not.toHaveCount(0);
+    await watchFlights(page);
+  }
+
+  // Whoever moves first ends the turn: the other player draws, and every card simply appears.
+  const [first, second] = (await ann.getByRole('button', { name: 'End turn' }).isVisible()) ? [ann, bob] : [bob, ann];
+  await first.getByRole('button', { name: 'End turn' }).click();
+  await expect(second.getByRole('button', { name: 'End turn' })).toBeVisible();
+  await expect(second.getByRole('button', { name: 'End turn' })).not.toHaveAttribute('aria-disabled');
+  expect(await flightsSeen(ann)).toBe(0);
+  expect(await flightsSeen(bob)).toBe(0);
 
   for (const page of [bob, ann]) await leaveRoom(page);
 });
