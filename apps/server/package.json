@@ -1,0 +1,28 @@
+{
+  "name": "@deal-city/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsup",
+    "start": "node dist/main.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@deal-city/engine": "workspace:^",
+    "@deal-city/protocol": "workspace:^",
+    "@fastify/static": "^10.1.4",
+    "fastify": "^5.12.5",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "socket.io-client": "^4.8.3",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.1"
+  }
+}

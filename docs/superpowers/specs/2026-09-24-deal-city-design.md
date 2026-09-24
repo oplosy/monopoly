@@ -321,7 +321,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
   - opponents' hands as counts only;
   - the deck as a count only;
   - the whole discard pile and all tables in full.
-- **`rng.ts`** — the mulberry32 PRNG. Its state is stored in `GameState`, so any game can be replayed.
+- **`rng.ts`** — a ChaCha20 (RFC 8439) PRNG keyed by a 256-bit seed. The server seeds each game with 8 crypto-random 32-bit words, because a 32-bit seed could be brute-forced from an opening hand to reveal the whole deck. Its state is stored in `GameState` (never sent to clients), so any game can be replayed.
 
 **Intents**
 
@@ -360,11 +360,11 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 | Client → server | `room:rematch` | — | host only, after `gameOver`; returns to the lobby with the same seats |
 | Client → server | `game:intent` | `{intent, expectedVersion}` | ack `{ok: true}` or `{ok: false, error}` |
 | Server → client | `room:state` | `{code, status: 'lobby' \| 'playing' \| 'finished', seats: [{nickname, connected, isHost}]}` | |
-| Server → client | `game:state` | `{view, version, deadlines: {turnEndsAt?, responseEndsAt?: {[playerId]: ts}}}` | |
-| Server → client | `game:events` | `GameEvent[]` | |
+| Server → client | `game:state` | `{view, deadlines: {turnEndsAt, responseEndsAt}, events}` | |
 
 - `game:intent` is rejected if `expectedVersion` does not match, so stale clicks are ignored.
-- Every change sends a full redacted snapshot. The state is small, and sending all of it avoids diffing bugs.
+- Every change sends one `game:state` message holding the full redacted snapshot **and** the events that produced it (empty on attach/resume), so state and animation cues arrive atomically. The state is small, and sending all of it avoids diffing bugs.
+- Every client→server event is acknowledged with `{ ok: true, ... }` or `{ ok: false, error }`. Server error codes: `badRequest`, `rateLimited`, `internal`, `serverBusy`, `badNickname`, `roomNotFound`, `roomFull`, `gameInProgress`, `sessionNotFound`, `noSession`, `alreadyInRoom`, `notHost`, `notEnoughPlayers`, `notPlaying`, `notFinished`, `staleVersion`, plus every engine rule error code.
 
 ### 4.3 `apps/server`
 
@@ -411,7 +411,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
     - **Respond / Just Say No:** has a countdown.
     - **Discard.**
     - **Wildcard color picker.**
-- **Animations:** Motion (Framer Motion) animates cards between zones, driven by `game:events`.
+- **Animations:** Motion (Framer Motion) animates cards between zones, driven by the `events` carried in each `game:state`.
 - **Layout:** Desktop first. On narrow screens the hand scrolls sideways.
 
 ---
@@ -453,7 +453,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 |---|---|
 | Deal Breaker | Gavel |
 | Just Say No | Shield with a stop bar |
-| Sly Deal | Reaching hand |
+| Sly Deal | Bandit mask |
 | Forced Deal | Swap arrows |
 | Debt Collector | Invoice |
 | Birthday | Cake |
@@ -467,7 +467,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 - CSS variables for the 10 property colors and 6 money tints, plus neutral surfaces.
 - Typography from Google Fonts: a condensed display face for titles (Bricolage Grotesque) and a font with tabular numerals for values (IBM Plex Mono or Inter with `tnum`).
 
-**Review.** `/gallery` renders all 106 cards plus the card back. A Playwright test takes a screenshot of it, and design review is done on that screenshot.
+**Review.** `/gallery` renders all 106 cards plus the card back and sample wildcard orientations. It is reviewed in the browser during development; Plan 5 adds a Playwright screenshot of it.
 
 **PNG export (optional, later).** The same components can be rendered to PNG with resvg. This is not needed for v1.
 
@@ -489,7 +489,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
   - each of the 106 card IDs is in exactly one place;
   - no counts are negative;
   - `legalIntents` is never empty for the player who must act next, unless the game is over;
-  - every game finishes within a step cap. If it doesn't, the test fails with the seed.
+  - at least 90% of games finish within a 3000-step cap; no game ever gets stuck.
 - **Server integration tests.** Using `socket.io-client` in the tests:
   - create and join a room;
   - a 4th player is rejected;
