@@ -21,6 +21,14 @@ describe('shell', () => {
     expect(await screen.findByText('Loading the room…')).toBeInTheDocument();
   });
 
+  it('lets a replaced tab give up the seat and join as a new player', async () => {
+    const user = userEvent.setup();
+    const { store } = renderApp('/room/ABCDEF', { saved: savedSeat('p1'), state: { replaced: true } });
+    await user.click(screen.getByRole('button', { name: 'Join as a new player' }));
+    expect(store.getState()).toMatchObject({ replaced: false, savedCode: null, session: null });
+    expect(screen.getByRole('button', { name: 'Join room' })).toBeInTheDocument();
+  });
+
   it('shows errors as a dismissable toast', async () => {
     const user = userEvent.setup();
     renderApp('/', { state: { error: 'noPlaysLeft' } });

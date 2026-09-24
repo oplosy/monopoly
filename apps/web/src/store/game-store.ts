@@ -117,6 +117,7 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
       },
       async start() {
         return toast(await call('room:start', {}));
+        set({ replaced: false });
       },
       async leave() {
         const res = await call('room:leave', {});
