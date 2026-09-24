@@ -243,12 +243,14 @@
   );
   transform-origin: 50% 160%;
   transform: translateY(var(--drop, 0px)) rotate(var(--rot, 0deg));
-  transition: transform 0.15s ease, margin 0.15s ease;
+  transition: transform 0.15s ease, translate 0.15s ease;
 }
 .hand-fan > li:first-child { margin-left: 0; }
 .hand-fan > li:hover,
 .hand-fan > li:focus-within { z-index: 2; transform: translateY(calc(var(--drop, 0px) - 12px)) rotate(calc(var(--rot, 0deg) * 0.5)); }
-.hand-fan > li:hover + li { margin-left: calc(var(--hand-w) * -0.25); }
+/* The hovered card's neighbours part a little, by transform only, so the fan never re-centres. */
+.hand-fan > li:hover ~ li { translate: calc(var(--hand-w) * 0.1) 0; }
+.hand-fan > li:has(~ li:hover) { translate: calc(var(--hand-w) * -0.1) 0; }
 .hand-fan > li:has(> .is-pressed) { z-index: 3; transform: translateY(calc(var(--hand-w) * -0.3)) scale(1.18); }
 .hand-fan .table-card { width: var(--hand-w); box-shadow: 0 6px 14px rgb(0 0 0 / 0.4); }
 .hand-fan .table-card.tone-target { outline: none; box-shadow: 0 0 0 3px var(--gold), 0 0 24px 4px rgb(255 216 74 / 0.9); }
