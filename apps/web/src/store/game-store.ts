@@ -66,6 +66,9 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
     }
 
     function enter(res: Ack<JoinedRoom>): Ack<JoinedRoom> {
+      // The server may still have seated this socket after we gave up waiting. Reconnecting drops that
+      // stale seat; the connect handler then resumes the saved one, if any.
+      if (!res.ok && res.error === 'timeout') socket.reconnect();
       if (res.ok) {
         const session = { code: res.code, playerId: res.playerId, token: res.token };
         storage.save(session);
@@ -114,10 +117,10 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
       },
       forgetSession() {
         reset();
+        set({ replaced: false });
       },
       async start() {
         return toast(await call('room:start', {}));
-        set({ replaced: false });
       },
       async leave() {
         const res = await call('room:leave', {});

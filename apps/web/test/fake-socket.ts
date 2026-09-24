@@ -44,6 +44,14 @@ export class FakeSocket implements SocketLike {
     this.fire('disconnect', []);
   }
 
+  reconnects = 0;
+
+  reconnect(): void {
+    this.reconnects += 1;
+    this.disconnect();
+    this.connect();
+  }
+
   sentOf(event: string): unknown[] {
     return this.sent.filter((s) => s.event === event).map((s) => s.payload);
   }

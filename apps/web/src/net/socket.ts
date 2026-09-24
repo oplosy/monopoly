@@ -8,6 +8,8 @@ export interface SocketLike {
   readonly connected: boolean;
   on(event: string, listener: (...args: never[]) => void): unknown;
   emitWithAck(event: string, payload: unknown): Promise<unknown>;
+  /** Drops and reopens the connection; the server forgets whatever seat the old socket held. */
+  reconnect(): void;
 }
 
 export const ACK_TIMEOUT_MS = 8000;
@@ -24,6 +26,10 @@ export function socketLike(socket: GameSocket): SocketLike {
     },
     on: (event, listener) => raw.on(event, listener),
     emitWithAck: (event, payload) => raw.timeout(ACK_TIMEOUT_MS).emitWithAck(event, payload),
+    reconnect: () => {
+      socket.disconnect();
+      socket.connect();
+    },
   };
 }
 

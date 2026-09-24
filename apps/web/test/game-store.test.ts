@@ -51,6 +51,23 @@ describe('game store: seats', () => {
     expect(store.getState().savedCode).toBeNull();
   });
 
+  it('reconnects after a seat request times out, then resumes the saved seat', async () => {
+    const { socket, store } = setup(savedSeat('p1'));
+    let calls = 0;
+    socket.reply('room:resume', () => (++calls === 1 ? Promise.reject(new Error('operation has timed out')) : joined));
+    expect(await store.getState().resume()).toEqual({ ok: false, error: 'timeout' });
+    expect(socket.reconnects).toBe(1);
+    await vi.waitFor(() => expect(store.getState().session).toEqual(savedSeat('p1')));
+  });
+
+  it('reconnects after a create times out, so no stale seat lingers on the socket', async () => {
+    const { socket, store } = setup();
+    socket.reply('room:create', () => Promise.reject(new Error('operation has timed out')));
+    expect(await store.getState().createRoom('Ann')).toEqual({ ok: false, error: 'timeout' });
+    expect(socket.reconnects).toBe(1);
+    expect(socket.sentOf('room:resume')).toEqual([]);
+  });
+
   it('marks the tab replaced and stops resuming on reconnect', () => {
     const { socket, store } = setup(savedSeat('p1'));
     socket.push('room:replaced');
