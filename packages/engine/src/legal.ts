@@ -3,6 +3,7 @@ import { autoPayment } from './payment';
 import { cardColors, getCard, isAction } from './sets';
 import { autoDiscard } from './turn';
 import type { GameState, Intent } from './types';
+import { stateFromView, type GameView } from './view';
 
 /** Players whose input the game is currently waiting for. */
 export function waitingOn(s: GameState): string[] {
@@ -110,4 +111,14 @@ export function candidateIntents(s: GameState, playerId: string): Intent[] {
 /** Every intent that would succeed right now. Used by the UI to enable controls. */
 export function legalIntents(s: GameState, playerId: string): Intent[] {
   return candidateIntents(s, playerId).filter((intent) => applyIntent(s, playerId, intent).ok);
+}
+
+/** legalIntents for the viewer, computed from their redacted view (used by the web client). */
+export function legalIntentsForView(v: GameView): Intent[] {
+  return legalIntents(stateFromView(v), v.me);
+}
+
+/** waitingOn, computed from a redacted view. */
+export function waitingOnView(v: GameView): string[] {
+  return waitingOn(stateFromView(v));
 }
