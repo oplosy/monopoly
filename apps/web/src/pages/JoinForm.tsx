@@ -18,7 +18,19 @@ export function JoinForm({ code }: { code: string }) {
     setError(null);
     const res = await joinRoom(code, name);
     setBusy(false);
-    if (!res.ok) setError(errorMessage(res.error));
+    if (!res.ok) setError(res.error);
+  }
+
+  if (error === 'roomNotFound') {
+    return (
+      <main className="home">
+        <h1>{`Room ${code} is closed`}</h1>
+        <p>It may have ended, or the code may be wrong. You can start a new room from the home page.</p>
+        <p className="small">
+          <Link to="/">Back to home</Link>
+        </p>
+      </main>
+    );
   }
 
   return (
@@ -36,7 +48,7 @@ export function JoinForm({ code }: { code: string }) {
       </form>
       {error && (
         <p role="alert" className="form-error">
-          {error}
+          {errorMessage(error)}
         </p>
       )}
       <p className="small">

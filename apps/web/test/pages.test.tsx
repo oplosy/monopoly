@@ -55,6 +55,17 @@ describe('Room page', () => {
     expect(socket.sentOf('room:join')).toEqual([{ code: 'ABCDEF', nickname: 'Cy' }]);
   });
 
+  it('says so when the shared room no longer exists', async () => {
+    const user = userEvent.setup();
+    const { socket } = renderApp('/room/abcdef', { nickname: 'Cy' });
+    socket.reply('room:join', () => ({ ok: false, error: 'roomNotFound' }));
+    await user.click(screen.getByRole('button', { name: 'Join room' }));
+    expect(screen.getByRole('heading', { name: 'Room ABCDEF is closed' })).toBeInTheDocument();
+    expect(screen.queryByText(/invited/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Join room' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to home' })).toBeInTheDocument();
+  });
+
   it('rejoins a saved seat instead of asking again', () => {
     renderApp('/room/ABCDEF', { saved: savedSeat('p1'), state: { connected: false } });
     expect(screen.getByText('Rejoining your seat…')).toBeInTheDocument();
