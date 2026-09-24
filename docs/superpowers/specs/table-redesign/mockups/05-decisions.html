@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8"><title>05-decisions</title>
+<style>
+  body { margin: 0; padding: 24px; background: #1d1d1f; color: #eee; font-family: system-ui, sans-serif; }
+  h2 { margin: 0 0 6px; } h3 { margin: 0 0 8px; font-size: 15px; }
+  .subtitle { color: #aaa; margin: 0 0 16px; }
+  .options { display: grid; gap: 16px; }
+  .option { display: flex; gap: 12px; background: #2a2a2d; border: 1px solid #3a3a3e; border-radius: 12px; padding: 14px; }
+  .option .letter { flex: none; width: 26px; height: 26px; border-radius: 6px; background: #3a3a3e; display: grid; place-items: center; font-weight: 800; }
+  .option .content { flex: 1; min-width: 0; }
+  .chosen { outline: 3px solid #7ddf64; }
+  .banner { background: #203a20; border: 1px solid #7ddf64; color: #cfe; padding: 8px 12px; border-radius: 8px; margin-bottom: 16px; }
+</style></head><body>
+<div class="banner">Chosen: A (decisions happen on the table: select assets on your tableau, pay tray; JSN card pulses in hand).</div>
+<style>
+  .sc { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; container-type: inline-size; font-family: system-ui, sans-serif;
+    background: linear-gradient(180deg, #d9ae7b 0%, #c99461 60%, #a8733f 100%); }
+  .sc::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(90,50,20,.25) 0 2px, transparent 2px 12cqw); }
+  .dim::after { content: ''; position: absolute; inset: 0; background: rgba(20,10,0,.45); z-index: 3; }
+  .abs { position: absolute; }
+  .card { position: absolute; width: 6.5cqw; height: 9cqw; border-radius: .7cqw; background: #fbf7ee; border: 1px solid #333; box-shadow: .3cqw .5cqw .8cqw rgba(0,0,0,.35); }
+  .card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2.4cqw; background: var(--k); border-radius: .6cqw .6cqw 0 0; }
+  .note { position: absolute; width: 7cqw; height: 4.2cqw; border-radius: .4cqw; background: #cde8d2; border: 1px solid #275e34; box-shadow: .2cqw .3cqw .5cqw rgba(0,0,0,.3);
+    font-size: 1.6cqw; font-weight: 900; color: #275e34; display: grid; place-items: center; }
+  .pick { outline: .45cqw solid #ffd84a; box-shadow: 0 0 1.8cqw rgba(255,216,74,.95); transform: translateY(-1.2cqw); }
+  .can { outline: .3cqw dashed rgba(255,216,74,.9); }
+  .av { width: 5.6cqw; height: 5.6cqw; border-radius: 1.2cqw; border: .4cqw solid #fff; display: grid; place-items: center; font-weight: 900; font-size: 2.2cqw;
+    color: #3b2a10; box-shadow: 0 .4cqw 1cqw rgba(0,0,0,.35); position: relative; }
+  .ring { position: absolute; inset: -1.2cqw; border-radius: 1.8cqw; background: conic-gradient(#ff7a1a 0 55%, rgba(255,255,255,.3) 55% 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; padding: .5cqw; }
+  .tag { background: linear-gradient(90deg, #1aa3c8, #58d3ee); color: #fff; font-size: 1.4cqw; font-weight: 800; padding: .2cqw 1cqw; border-radius: .4cqw; }
+  .bigc { position: absolute; width: 13cqw; height: 18cqw; border-radius: 1.2cqw; background: #fbf7ee; border: 1px solid #333; box-shadow: 0 2cqw 3cqw rgba(0,0,0,.5); transform: rotate(-5deg); }
+  .bigc::before { content: 'RENT'; position: absolute; left: 0; right: 0; top: 0; height: 4cqw; background: #1b1b1f; color: #fbf7ee; font-weight: 900; font-size: 1.8cqw;
+    display: grid; place-items: center; border-radius: 1.1cqw 1.1cqw 0 0; letter-spacing: .4cqw; }
+  .wheel { position: absolute; left: 3cqw; top: 6cqw; width: 7cqw; height: 7cqw; border-radius: 50%; background: conic-gradient(#d93a2b 0 50%, #f4c430 50% 100%); border: .3cqw solid #1b1b1f; }
+  .banner { position: absolute; background: #fffbe8; color: #3b2a10; font-weight: 900; font-size: 1.9cqw; padding: .8cqw 1.8cqw; border-radius: 3cqw;
+    box-shadow: 0 .5cqw 1.4cqw rgba(0,0,0,.35); white-space: nowrap; }
+  .tray { position: absolute; display: flex; align-items: center; gap: 1.2cqw; background: rgba(33,22,12,.88); color: #fff; padding: 1cqw 1.6cqw; border-radius: 2cqw;
+    font-size: 1.7cqw; font-weight: 800; box-shadow: 0 .6cqw 1.6cqw rgba(0,0,0,.4); z-index: 5; }
+  .btn { background: #ffd84a; color: #3b2a10; padding: .6cqw 1.6cqw; border-radius: 2cqw; font-weight: 900; }
+  .btn.ghostb { background: transparent; color: #fff; border: .25cqw solid #fff; }
+  .meter { width: 14cqw; height: 1.2cqw; border-radius: 1cqw; background: rgba(255,255,255,.25); overflow: hidden; }
+  .meter i { display: block; height: 100%; width: 75%; background: linear-gradient(90deg, #7ddf64, #ffd84a); }
+  .hand { position: absolute; left: 50%; bottom: -4cqw; transform: translateX(-50%); display: flex; z-index: 4; }
+  .h { width: 9cqw; height: 12.6cqw; border-radius: .9cqw; background: #fbf7ee; border: 1px solid #333; margin-left: -2cqw; position: relative; box-shadow: 0 .5cqw 1.2cqw rgba(0,0,0,.4); }
+  .h::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3.4cqw; background: var(--k); border-radius: .8cqw .8cqw 0 0; }
+  .modal { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); width: 46cqw; background: #fbf7ee; border-radius: 1.6cqw; padding: 2cqw; z-index: 6;
+    box-shadow: 0 2cqw 4cqw rgba(0,0,0,.5); color: #1b1b1f; font-size: 1.6cqw; }
+  .modal h4 { margin: 0 0 1cqw; font-size: 2.2cqw; }
+  .mrow { display: flex; gap: 1cqw; margin: 1cqw 0; }
+  .mc { width: 6cqw; height: 8.4cqw; border-radius: .6cqw; border: 1px solid #333; background: #fff; position: relative; }
+  .mc::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2.2cqw; background: var(--k); border-radius: .5cqw .5cqw 0 0; }
+  .note2 { font-size: 12px; color: #aaa; margin-top: 6px; }
+</style>
+
+<h2>Sana yöneltilen kararlar nasıl görünsün?</h2>
+<p class="subtitle">Örnek: Bob kırmızı-sarı kira oynadı, Ann 4M borçlu. Aynı fikir Just Say No kararına ve fazla kart atmaya da uygulanır.</p>
+
+<div class="options">
+  <div class="option chosen" data-choice="a">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Masanın içinde (önerim): kartları masada seçersin</h3>
+      <div class="sc">
+        <div class="abs" style="left:14%;top:5%;display:flex;align-items:center;gap:1cqw"><div class="av" style="background:#7cc6f2">B</div><span class="tag">Bob</span></div>
+        <div class="bigc" style="left:43%;top:10%"><div class="wheel"></div></div>
+        <div class="banner" style="left:36%;top:45%">Bob charges you <b>4M</b> rent</div>
+        <!-- my table: bank + sets, selectable -->
+        <div class="note pick" style="left:22%;top:60%">3M</div>
+        <div class="note can" style="left:30%;top:60%">1M</div>
+        <div class="card can" style="--k:#f28c28;left:62%;top:55%"></div><div class="card can" style="--k:#f28c28;left:62%;top:58%"></div>
+        <div class="card can" style="--k:#2e9e5b;left:71%;top:56%"></div>
+        <div class="abs" style="left:7%;top:62%;display:flex;flex-direction:column;align-items:center;gap:.6cqw"><div class="av" style="background:#f29fb9"><div class="ring"></div>A</div><span class="tag">Ann · 12s</span></div>
+        <div class="tray" style="left:50%;top:79%;transform:translateX(-50%)">Paying <span class="meter"><i></i></span> 3 / 4M <span class="btn ghostb">Auto</span><span class="btn" style="opacity:.5">Pay</span></div>
+        <div class="hand"><div class="h" style="--k:#d9469a"></div><div class="h" style="--k:#1f4e9a"></div><div class="h" style="--k:#0f766e"></div><div class="h" style="--k:#d93a2b"></div></div>
+      </div>
+      <p class="note2">Bob'un kira kartı ortaya süzülür. Senin bankan ve setlerin masada seçilebilir hale gelir (kesikli çerçeve); dokunduğun kart kalkar, alttaki şerit toplamı doldurur. Süre halkası avatarında. Just Say No'da: elindeki JSN kartı titrer, yanında "Just Say No!" ve "Accept".</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Ortada şık bir pencere (bugünkünün güzelleştirilmişi)</h3>
+      <div class="sc dim">
+        <div class="bigc" style="left:43%;top:10%"><div class="wheel"></div></div>
+        <div class="modal">
+          <h4>You owe Bob 4M · 12s</h4>
+          <div>Bank</div>
+          <div class="mrow"><div class="mc" style="--k:#cde8d2;outline:.4cqw solid #ffd84a"></div><div class="mc" style="--k:#cde8d2"></div></div>
+          <div>Properties</div>
+          <div class="mrow"><div class="mc" style="--k:#f28c28"></div><div class="mc" style="--k:#f28c28"></div><div class="mc" style="--k:#2e9e5b"></div></div>
+          <div style="display:flex;gap:1cqw;justify-content:flex-end"><span class="btn" style="background:#ddd">Auto</span><span class="btn" style="opacity:.5">Pay 3M</span></div>
+        </div>
+        <div class="hand" style="z-index:2"><div class="h" style="--k:#d9469a"></div><div class="h" style="--k:#1f4e9a"></div><div class="h" style="--k:#0f766e"></div><div class="h" style="--k:#d93a2b"></div></div>
+      </div>
+      <p class="note2">Daha az iş ve her şey tek yerde. Ama masa kaybolur; neyi kime ödediğini kartların gerçekten gittiğini görerek yaşamazsın.</p>
+    </div>
+  </div>
+</div>
+
+</body></html>

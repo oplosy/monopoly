@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8"><title>02-seating</title>
+<style>
+  body { margin: 0; padding: 24px; background: #1d1d1f; color: #eee; font-family: system-ui, sans-serif; }
+  h2 { margin: 0 0 6px; } h3 { margin: 0 0 8px; font-size: 15px; }
+  .subtitle { color: #aaa; margin: 0 0 16px; }
+  .options { display: grid; gap: 16px; }
+  .option { display: flex; gap: 12px; background: #2a2a2d; border: 1px solid #3a3a3e; border-radius: 12px; padding: 14px; }
+  .option .letter { flex: none; width: 26px; height: 26px; border-radius: 6px; background: #3a3a3e; display: grid; place-items: center; font-weight: 800; }
+  .option .content { flex: 1; min-width: 0; }
+  .chosen { outline: 3px solid #7ddf64; }
+  .banner { background: #203a20; border: 1px solid #7ddf64; color: #cfe; padding: 8px 12px; border-radius: 8px; margin-bottom: 16px; }
+</style></head><body>
+<div class="banner">Chosen: B (always the same round table: 2 players face to face, 3 players 120° apart). Perspective (03) fixes B’s empty-sides drawback.</div>
+<style>
+  .row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .scene { position: relative; width: 460px; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; font-family: system-ui, sans-serif;
+    background: radial-gradient(ellipse at 50% 40%, #7fb65a, #4f8a37 70%, #3f7a2c); }
+  .scene::before { content: ''; position: absolute; inset: 0; opacity: .25;
+    background: repeating-linear-gradient(100deg, rgba(255,255,255,.18) 0 2px, transparent 2px 9px); }
+  .wood { position: absolute; background: linear-gradient(160deg, #a06b3c, #7a4a26); box-shadow: 0 14px 28px rgba(0,0,0,.45); }
+  .cloth { position: absolute; background:
+      repeating-linear-gradient(0deg, rgba(200,40,40,.5) 0 12px, transparent 12px 24px),
+      repeating-linear-gradient(90deg, rgba(200,40,40,.5) 0 12px, transparent 12px 24px), #fbf3e6; }
+  .p { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .av { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #fff; display: grid; place-items: center; font-weight: 800; font-size: 11px;
+    color: #3b2a10; box-shadow: 0 2px 5px rgba(0,0,0,.35); }
+  .tag { background: rgba(33,22,12,.85); color: #fff; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 8px; white-space: nowrap; }
+  .tab { display: flex; gap: 3px; align-items: flex-start; }
+  .c { width: 13px; height: 18px; border-radius: 2px; border: 1px solid rgba(0,0,0,.4); background: #fff; position: relative; }
+  .c::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 5px; background: var(--k); }
+  .n { width: 18px; height: 11px; border-radius: 2px; background: #cde8d2; border: 1px solid #275e34; margin-left: 3px; }
+  .pile { position: absolute; transform: translate(-50%, -50%); display: flex; gap: 8px; }
+  .dk { width: 22px; height: 31px; border-radius: 3px; background: #1f2d5c; border: 2px solid #f4d35e; box-shadow: 2px 2px 0 #0c1636; }
+  .ds { width: 22px; height: 31px; border-radius: 3px; background: #fff; border: 1px solid #555; transform: rotate(9deg); position: relative; }
+  .ds::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 9px; background: #f28c28; }
+  .hand { position: absolute; left: 50%; bottom: -12px; transform: translateX(-50%); display: flex; }
+  .h { width: 34px; height: 48px; border-radius: 4px; background: #fbf7ee; border: 1px solid #333; margin-left: -8px; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,.35); }
+  .h::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 13px; background: var(--k); border-radius: 3px 3px 0 0; }
+  .cap { text-align: center; font-size: 12px; color: #bbb; margin-top: 4px; }
+  .ang { position: absolute; border: 1px dashed rgba(255,255,255,.7); border-radius: 50%; pointer-events: none; }
+</style>
+
+<h2>Oyuncu sayısına göre masa</h2>
+<p class="subtitle">Ben hep alttayım, elim ekranın alt kenarından taşıyor. Rakiplerin kartları hep dik, bize dönük. Kesik daire sadece açıyı göstermek için.</p>
+
+<div class="options">
+  <div class="option" data-choice="a">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Masanın şekli oyuncu sayısıyla değişir (önerim)</h3>
+      <div class="row">
+        <div>
+          <div class="scene">
+            <div class="wood" style="left:6%;right:6%;top:9%;bottom:4%;border-radius:48%/50%"></div>
+            <div class="cloth" style="left:9%;right:9%;top:13%;bottom:8%;border-radius:48%/50%"></div>
+            <div class="p" style="left:50%;top:9%"><div class="av" style="background:#7cc6f2">B</div><span class="tag">Bob · 5</span></div>
+            <div class="p" style="left:50%;top:30%"><div class="tab"><div class="c" style="--k:#d93a2b"></div><div class="c" style="--k:#d93a2b"></div><div class="c" style="--k:#1f3a93"></div><div class="n"></div></div></div>
+            <div class="pile" style="left:50%;top:50%"><div class="dk"></div><div class="ds"></div></div>
+            <div class="p" style="left:50%;top:69%"><div class="tab"><div class="c" style="--k:#f28c28"></div><div class="c" style="--k:#f28c28"></div><div class="n"></div></div></div>
+            <div class="p" style="left:20%;top:80%"><div class="av" style="background:#f29fb9">A</div><span class="tag">Ann</span></div>
+            <div class="hand"><div class="h" style="--k:#d9469a"></div><div class="h" style="--k:#1b1b1f"></div><div class="h" style="--k:#2e9e5b"></div><div class="h" style="--k:#0f766e"></div><div class="h" style="--k:#b3261e"></div></div>
+          </div>
+          <div class="cap">2 kişi: uzun oval piknik masası, karşılıklı</div>
+        </div>
+        <div>
+          <div class="scene">
+            <div class="wood" style="left:26%;top:5%;width:48%;aspect-ratio:1;border-radius:50%"></div>
+            <div class="cloth" style="left:28.5%;top:9.5%;width:43%;aspect-ratio:1;border-radius:50%"></div>
+            <div class="ang" style="left:31%;top:14%;width:38%;aspect-ratio:1"></div>
+            <div class="p" style="left:23%;top:24%"><div class="av" style="background:#7cc6f2">B</div><span class="tag">Bob · 5</span></div>
+            <div class="p" style="left:36%;top:40%"><div class="tab"><div class="c" style="--k:#d93a2b"></div><div class="c" style="--k:#1f3a93"></div><div class="n"></div></div></div>
+            <div class="p" style="left:77%;top:24%"><div class="av" style="background:#b9e27c">C</div><span class="tag">Cy · 3</span></div>
+            <div class="p" style="left:64%;top:40%"><div class="tab"><div class="c" style="--k:#d9469a"></div><div class="n"></div></div></div>
+            <div class="pile" style="left:50%;top:52%"><div class="dk"></div><div class="ds"></div></div>
+            <div class="p" style="left:50%;top:72%"><div class="tab"><div class="c" style="--k:#f28c28"></div><div class="c" style="--k:#f28c28"></div><div class="n"></div></div></div>
+            <div class="p" style="left:24%;top:80%"><div class="av" style="background:#f29fb9">A</div><span class="tag">Ann</span></div>
+            <div class="hand"><div class="h" style="--k:#d9469a"></div><div class="h" style="--k:#1b1b1f"></div><div class="h" style="--k:#2e9e5b"></div><div class="h" style="--k:#0f766e"></div><div class="h" style="--k:#b3261e"></div></div>
+          </div>
+          <div class="cap">3 kişi: yuvarlak masa, aralar 120°</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option chosen" data-choice="b">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Hep aynı yuvarlak masa</h3>
+      <div class="row">
+        <div>
+          <div class="scene">
+            <div class="wood" style="left:26%;top:5%;width:48%;aspect-ratio:1;border-radius:50%"></div>
+            <div class="cloth" style="left:28.5%;top:9.5%;width:43%;aspect-ratio:1;border-radius:50%"></div>
+            <div class="p" style="left:50%;top:9%"><div class="av" style="background:#7cc6f2">B</div><span class="tag">Bob · 5</span></div>
+            <div class="p" style="left:50%;top:30%"><div class="tab"><div class="c" style="--k:#d93a2b"></div><div class="c" style="--k:#d93a2b"></div><div class="c" style="--k:#1f3a93"></div><div class="n"></div></div></div>
+            <div class="pile" style="left:50%;top:52%"><div class="dk"></div><div class="ds"></div></div>
+            <div class="p" style="left:50%;top:72%"><div class="tab"><div class="c" style="--k:#f28c28"></div><div class="c" style="--k:#f28c28"></div><div class="n"></div></div></div>
+            <div class="p" style="left:24%;top:80%"><div class="av" style="background:#f29fb9">A</div><span class="tag">Ann</span></div>
+            <div class="hand"><div class="h" style="--k:#d9469a"></div><div class="h" style="--k:#1b1b1f"></div><div class="h" style="--k:#2e9e5b"></div><div class="h" style="--k:#0f766e"></div><div class="h" style="--k:#b3261e"></div></div>
+          </div>
+          <div class="cap">2 kişi: aynı masa, karşılıklı</div>
+        </div>
+        <div>
+          <div class="scene">
+            <div class="wood" style="left:26%;top:5%;width:48%;aspect-ratio:1;border-radius:50%"></div>
+            <div class="cloth" style="left:28.5%;top:9.5%;width:43%;aspect-ratio:1;border-radius:50%"></div>
+            <div class="p" style="left:23%;top:24%"><div class="av" style="background:#7cc6f2">B</div><span class="tag">Bob · 5</span></div>
+            <div class="p" style="left:36%;top:40%"><div class="tab"><div class="c" style="--k:#d93a2b"></div><div class="c" style="--k:#1f3a93"></div><div class="n"></div></div></div>
+            <div class="p" style="left:77%;top:24%"><div class="av" style="background:#b9e27c">C</div><span class="tag">Cy · 3</span></div>
+            <div class="p" style="left:64%;top:40%"><div class="tab"><div class="c" style="--k:#d9469a"></div><div class="n"></div></div></div>
+            <div class="pile" style="left:50%;top:52%"><div class="dk"></div><div class="ds"></div></div>
+            <div class="p" style="left:50%;top:72%"><div class="tab"><div class="c" style="--k:#f28c28"></div><div class="c" style="--k:#f28c28"></div><div class="n"></div></div></div>
+            <div class="p" style="left:24%;top:80%"><div class="av" style="background:#f29fb9">A</div><span class="tag">Ann</span></div>
+            <div class="hand"><div class="h" style="--k:#d9469a"></div><div class="h" style="--k:#1b1b1f"></div><div class="h" style="--k:#2e9e5b"></div><div class="h" style="--k:#0f766e"></div><div class="h" style="--k:#b3261e"></div></div>
+          </div>
+          <div class="cap">3 kişi: aynı masa, aralar 120°</div>
+        </div>
+      </div>
+      <p class="subtitle" style="margin-top:6px">Tek bir sahne, daha tutarlı. Ama 2 kişide ekranın iki yanı boş çimen kalır; yuvarlak masa 16:9'da genişliği iyi kullanmaz.</p>
+    </div>
+  </div>
+</div>
+
+</body></html>

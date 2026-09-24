@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8"><title>01-layout</title>
+<style>
+  body { margin: 0; padding: 24px; background: #1d1d1f; color: #eee; font-family: system-ui, sans-serif; }
+  h2 { margin: 0 0 6px; } h3 { margin: 0 0 8px; font-size: 15px; }
+  .subtitle { color: #aaa; margin: 0 0 16px; }
+  .options { display: grid; gap: 16px; }
+  .option { display: flex; gap: 12px; background: #2a2a2d; border: 1px solid #3a3a3e; border-radius: 12px; padding: 14px; }
+  .option .letter { flex: none; width: 26px; height: 26px; border-radius: 6px; background: #3a3a3e; display: grid; place-items: center; font-weight: 800; }
+  .option .content { flex: 1; min-width: 0; }
+  .chosen { outline: 3px solid #7ddf64; }
+  .banner { background: #203a20; border: 1px solid #7ddf64; color: #cfe; padding: 8px 12px; border-radius: 8px; margin-bottom: 16px; }
+</style></head><body>
+<div class="banner">Chosen: A (opponents across the top, their cards upright facing the viewer). Refined later by 02-seating.</div>
+<style>
+  .tbl { position: relative; width: 100%; max-width: 720px; margin: 0 auto; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden;
+    background: #7a4a26; box-shadow: inset 0 0 80px rgba(0,0,0,.45); font-family: system-ui, sans-serif; }
+  .tbl::before { content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 2px, transparent 2px 140px),
+      linear-gradient(180deg, #8d5a31, #6e4122); }
+  .cloth { position: absolute; left: 8%; right: 8%; top: 6%; bottom: -10%; border-radius: 26px;
+    background:
+      repeating-linear-gradient(0deg, rgba(200,40,40,.55) 0 18px, transparent 18px 36px),
+      repeating-linear-gradient(90deg, rgba(200,40,40,.55) 0 18px, transparent 18px 36px), #fbf3e6;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35); transform: rotate(-1.2deg); }
+  .abs { position: absolute; }
+  .seat { display: flex; align-items: center; gap: 6px; }
+  .av { width: 34px; height: 34px; border-radius: 50%; background: #f2c14e; border: 3px solid #fff; display: grid; place-items: center;
+    font-weight: 800; color: #3b2a10; font-size: 14px; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+  .av.b { background: #7cc6f2; } .av.c { background: #b9e27c; } .av.me { background: #f29fb9; }
+  .active { box-shadow: 0 0 0 3px #ffd84a, 0 0 18px 4px rgba(255,216,74,.9); position: relative; }
+  .ring { position: absolute; inset: -9px; border-radius: 50%;
+    background: conic-gradient(#ff7a1a 0 70%, rgba(255,255,255,.25) 70% 100%);
+    -webkit-mask: radial-gradient(circle, transparent 23px, #000 24px); mask: radial-gradient(circle, transparent 23px, #000 24px); }
+  .tag { background: rgba(33,22,12,.85); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .cnt { background: #fff; color: #222; font-size: 10px; font-weight: 800; border-radius: 4px; padding: 1px 4px; border: 1px solid #333; }
+  .fan { position: relative; width: 70px; height: 34px; }
+  .back { position: absolute; width: 22px; height: 31px; border-radius: 3px; background: #1f2d5c; border: 2px solid #f4d35e; }
+  .sets { display: flex; gap: 5px; align-items: flex-start; }
+  .set { position: relative; width: 22px; }
+  .c { position: absolute; left: 0; width: 22px; height: 30px; border-radius: 3px; border: 1px solid rgba(0,0,0,.4); background: #fff; }
+  .c::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 9px; border-radius: 2px 2px 0 0; background: var(--k); }
+  .done::after { content: '✓'; position: absolute; top: -8px; right: -7px; background: #2e9e5b; color: #fff; font-size: 9px; font-weight: 900;
+    width: 13px; height: 13px; border-radius: 50%; display: grid; place-items: center; }
+  .bank { position: relative; width: 34px; height: 26px; }
+  .note { position: absolute; width: 30px; height: 18px; border-radius: 2px; background: #cde8d2; border: 1px solid #275e34; }
+  .btxt { position: absolute; left: 36px; top: 4px; font-size: 11px; font-weight: 800; color: #1b1b1f; background: #fffbe8; padding: 1px 5px; border-radius: 6px; }
+  .pile { width: 40px; height: 56px; border-radius: 5px; background: #1f2d5c; border: 2px solid #f4d35e; box-shadow: 2px 2px 0 #13204a, 4px 4px 0 #0c1636; }
+  .disc { position: absolute; width: 40px; height: 56px; border-radius: 5px; background: #fff; border: 1px solid #555; }
+  .disc::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 16px; background: var(--k); border-radius: 4px 4px 0 0; }
+  .arrow { position: absolute; border: 4px solid transparent; border-top-color: rgba(255,170,40,.9); border-right-color: rgba(255,170,40,.9); border-radius: 50%; }
+  .pill { background: rgba(255,251,232,.95); color: #3b2a10; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.25); white-space: nowrap; }
+  .hcard { position: absolute; bottom: -18px; width: 62px; height: 88px; border-radius: 6px; background: #fbf7ee; border: 1px solid #333; box-shadow: 0 3px 8px rgba(0,0,0,.35); transform-origin: 50% 160%; }
+  .hcard::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 24px; background: var(--k); border-radius: 5px 5px 0 0; }
+  .lift { bottom: 4px !important; box-shadow: 0 0 0 3px #ffd84a, 0 10px 18px rgba(0,0,0,.45); }
+  .note2 { font-size: 11px; color: #555; margin-top: 6px; }
+</style>
+
+<h2>Masanın kompozisyonu: hangisi?</h2>
+<p class="subtitle">İki düzen de aynı 3 oyunculu anı gösteriyor: sıra Ann'de (turuncu halka sayaç), Bob'un iki seti tamam. Ahşap masa ve piknik örtüsü yalnızca havayı göstermek için; ayrıntı sonra.</p>
+
+<div class="options">
+  <div class="option chosen" data-choice="a">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Yay (önerim): rakipler üstte, yüzleri bize dönük</h3>
+      <div class="tbl">
+        <div class="cloth"></div>
+        <div class="abs" style="left:14%;top:9%">
+          <div class="seat"><div class="av b">B</div><span class="tag">Bob</span><span class="cnt">5</span>
+            <div class="fan"><div class="back" style="left:0;transform:rotate(-12deg)"></div><div class="back" style="left:10px;transform:rotate(-6deg)"></div><div class="back" style="left:20px"></div><div class="back" style="left:30px;transform:rotate(6deg)"></div><div class="back" style="left:40px;transform:rotate(12deg)"></div></div></div>
+          <div style="display:flex;gap:14px;margin-top:8px;align-items:flex-start">
+            <div class="sets">
+              <div class="set done" style="height:46px"><div class="c" style="--k:#d93a2b;top:0"></div><div class="c" style="--k:#d93a2b;top:8px"></div><div class="c" style="--k:#d93a2b;top:16px"></div></div>
+              <div class="set done" style="height:38px"><div class="c" style="--k:#1f3a93;top:0"></div><div class="c" style="--k:#1f3a93;top:8px"></div></div>
+              <div class="set" style="height:30px"><div class="c" style="--k:#2e9e5b;top:0"></div></div>
+            </div>
+            <div class="bank"><div class="note" style="top:0"></div><div class="note" style="top:4px;left:2px"></div><span class="btxt">9M</span></div>
+          </div>
+        </div>
+        <div class="abs" style="right:14%;top:9%">
+          <div class="seat"><div class="fan"><div class="back" style="left:0;transform:rotate(-10deg)"></div><div class="back" style="left:12px"></div><div class="back" style="left:24px;transform:rotate(10deg)"></div></div><span class="cnt">3</span><span class="tag">Cy</span><div class="av c">C</div></div>
+          <div style="display:flex;gap:14px;margin-top:8px;justify-content:flex-end">
+            <div class="bank"><div class="note"></div><span class="btxt">2M</span></div>
+            <div class="sets"><div class="set" style="height:38px"><div class="c" style="--k:#d9469a;top:0"></div><div class="c" style="--k:#d9469a;top:8px"></div></div></div>
+          </div>
+        </div>
+        <div class="abs" style="left:42%;top:36%;display:flex;gap:18px;align-items:center">
+          <div class="pile"></div>
+          <div style="position:relative;width:52px;height:60px"><div class="disc" style="--k:#f28c28;transform:rotate(-14deg)"></div><div class="disc" style="--k:#2e9e5b;transform:rotate(8deg);left:4px"></div><div class="disc" style="--k:#1b1b1f;transform:rotate(-3deg);left:2px;top:2px"></div></div>
+        </div>
+        <div class="arrow" style="left:37%;top:28%;width:25%;height:34%;transform:rotate(-20deg)"></div>
+        <div class="abs" style="left:40%;top:66%"><span class="pill">Bob charged you 4M rent</span></div>
+        <div class="abs" style="left:12%;bottom:24%;display:flex;gap:16px;align-items:flex-end">
+          <div class="seat"><div class="av me active"><div class="ring"></div>A</div><span class="tag">Ann · 2 plays left</span></div>
+        </div>
+        <div class="abs" style="left:12%;bottom:6%;display:flex;gap:14px;align-items:flex-end">
+          <div class="sets"><div class="set done" style="height:46px"><div class="c" style="--k:#f28c28;top:0"></div><div class="c" style="--k:#f28c28;top:8px"></div><div class="c" style="--k:#f28c28;top:16px"></div></div></div>
+          <div class="bank"><div class="note"></div><div class="note" style="top:4px;left:2px"></div><span class="btxt">5M</span></div>
+        </div>
+        <div class="abs" style="left:38%;right:22%;bottom:0;height:40%">
+          <div class="hcard" style="--k:#d9469a;left:0%;transform:rotate(-14deg)"></div>
+          <div class="hcard" style="--k:#1b1b1f;left:14%;transform:rotate(-8deg)"></div>
+          <div class="hcard lift" style="--k:#2e9e5b;left:28%;transform:rotate(-2deg)"></div>
+          <div class="hcard" style="--k:#0f766e;left:42%;transform:rotate(3deg)"></div>
+          <div class="hcard" style="--k:#b3261e;left:56%;transform:rotate(9deg)"></div>
+          <div class="hcard" style="--k:#cde8d2;left:70%;transform:rotate(15deg)"></div>
+        </div>
+      </div>
+      <p class="note2">Kartlar hiç dönmeden okunur; 2 oyuncuda rakip üst ortaya geçer. Ortada animasyonlar için geniş boşluk kalır. Olaylar ortada kısa bir "anlatıcı" balonunda görünür; log bir düğmenin arkasına saklanır.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Masanın etrafı: rakipler sol ve sağ kenarda, masaya dönük</h3>
+      <div class="tbl">
+        <div class="cloth"></div>
+        <div class="abs" style="left:14%;top:22%;transform:rotate(90deg);transform-origin:left top">
+          <div class="seat"><div class="av b">B</div><span class="tag">Bob</span><span class="cnt">5</span></div>
+          <div class="sets" style="margin-top:8px">
+            <div class="set done" style="height:46px"><div class="c" style="--k:#d93a2b;top:0"></div><div class="c" style="--k:#d93a2b;top:8px"></div><div class="c" style="--k:#d93a2b;top:16px"></div></div>
+            <div class="set done" style="height:38px"><div class="c" style="--k:#1f3a93;top:0"></div><div class="c" style="--k:#1f3a93;top:8px"></div></div>
+            <div class="set" style="height:30px"><div class="c" style="--k:#2e9e5b;top:0"></div></div>
+            <div class="bank" style="margin-left:6px"><div class="note"></div><span class="btxt">9M</span></div>
+          </div>
+        </div>
+        <div class="abs" style="right:14%;top:22%;transform:rotate(-90deg);transform-origin:right top">
+          <div class="seat"><div class="av c">C</div><span class="tag">Cy</span><span class="cnt">3</span></div>
+          <div class="sets" style="margin-top:8px"><div class="set" style="height:38px"><div class="c" style="--k:#d9469a;top:0"></div><div class="c" style="--k:#d9469a;top:8px"></div></div>
+            <div class="bank" style="margin-left:6px"><div class="note"></div><span class="btxt">2M</span></div></div>
+        </div>
+        <div class="abs" style="left:42%;top:28%;display:flex;gap:18px;align-items:center">
+          <div class="pile"></div>
+          <div style="position:relative;width:52px;height:60px"><div class="disc" style="--k:#f28c28;transform:rotate(-14deg)"></div><div class="disc" style="--k:#2e9e5b;transform:rotate(8deg);left:4px"></div><div class="disc" style="--k:#1b1b1f;transform:rotate(-3deg);left:2px;top:2px"></div></div>
+        </div>
+        <div class="abs" style="left:40%;top:56%"><span class="pill">Bob charged you 4M rent</span></div>
+        <div class="abs" style="left:30%;bottom:26%;display:flex;gap:16px;align-items:flex-end">
+          <div class="seat"><div class="av me active"><div class="ring"></div>A</div><span class="tag">Ann · 2 plays left</span></div>
+          <div class="sets"><div class="set done" style="height:46px"><div class="c" style="--k:#f28c28;top:0"></div><div class="c" style="--k:#f28c28;top:8px"></div><div class="c" style="--k:#f28c28;top:16px"></div></div></div>
+          <div class="bank"><div class="note"></div><span class="btxt">5M</span></div>
+        </div>
+        <div class="abs" style="left:32%;right:32%;bottom:0;height:40%">
+          <div class="hcard" style="--k:#d9469a;left:0%;transform:rotate(-14deg)"></div>
+          <div class="hcard" style="--k:#1b1b1f;left:14%;transform:rotate(-8deg)"></div>
+          <div class="hcard lift" style="--k:#2e9e5b;left:28%;transform:rotate(-2deg)"></div>
+          <div class="hcard" style="--k:#0f766e;left:42%;transform:rotate(3deg)"></div>
+          <div class="hcard" style="--k:#b3261e;left:56%;transform:rotate(9deg)"></div>
+          <div class="hcard" style="--k:#cde8d2;left:70%;transform:rotate(15deg)"></div>
+        </div>
+      </div>
+      <p class="note2">UNO referanslarına en yakın, daha "oturulan masa" hissi. Ama yan rakiplerin kartları ve setleri 90° dönük; okumak ve Sly Deal için hedeflemek zorlaşır, ekranın yanları dar kalır.</p>
+    </div>
+  </div>
+</div>
+
+</body></html>

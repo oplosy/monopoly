@@ -400,6 +400,8 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 
 ### 4.4 `apps/web`
 
+> **Superseded for look, layout, interaction and motion** by `2026-09-24-table-redesign-design.md` (the picnic-table redesign, Plans 6–8). The routes and the store described here still apply.
+
 - **Stack:** React, Vite, a Zustand store that owns the socket, and React Router.
 - **Routes:** `/` (home), `/room/:code` (lobby, game and game over) and `/gallery` (the card sheet, for development and review).
 - **Table layout**
