@@ -98,7 +98,7 @@ export function RentLadder({ color, x, y, width, rowHeight, fontSize = 15 }: { c
           <g key={i}>
             {full && <rect x={x - 8} y={ry - rowHeight / 2 + 2} width={width + 16} height={rowHeight - 4} rx={6} fill={info.hex} opacity={0.2} />}
             <CardPips count={i + 1} x={x} y={ry} fill={info.hex} />
-            <text x={x + 44} y={ry} dominantBaseline="central" fontFamily={FONT_DISPLAY} fontSize={fontSize - 3} fill={MUTED} letterSpacing={full ? 1 : 0}>
+            <text x={x + 44} y={ry} dominantBaseline="central" fontFamily={FONT_DISPLAY} fontSize={fontSize - 3} fill={full ? INK : MUTED} letterSpacing={full ? 1 : 0}>
               {full ? 'FULL SET' : `${i + 1} card${i ? 's' : ''}`}
             </text>
             <text x={x + width} y={ry} textAnchor="end" dominantBaseline="central" fontFamily={FONT_NUM} fontWeight={700} fontSize={fontSize} fill={INK}>

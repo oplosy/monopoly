@@ -1,7 +1,7 @@
 import { COLORS } from '@deal-city/engine';
 import { CardSvg, GlyphChip, Lines, RentLadder, ValueBadge, W, type FaceProps } from '../parts';
 import { NAME_WRAP, wrapLines } from '../text';
-import { FONT_DISPLAY, INK, MUTED, inkOn } from '../theme';
+import { FONT_DISPLAY, INK, MUTED, inkOn, labelOn } from '../theme';
 
 /** District deed: color band with the name, rent ladder, set size. */
 export function PropertyFace({ card, label, className }: FaceProps<'property'>) {
@@ -11,7 +11,7 @@ export function PropertyFace({ card, label, className }: FaceProps<'property'>) 
   return (
     <CardSvg label={label} className={className}>
       <rect width={W} height={112} fill={info.hex} />
-      <text x={W / 2} y={46} textAnchor="middle" fontFamily={FONT_DISPLAY} fontSize={10} letterSpacing={3} fill={on} opacity={0.8}>
+      <text x={W / 2} y={46} textAnchor="middle" fontFamily={FONT_DISPLAY} fontSize={10} letterSpacing={3} fill={labelOn(info.hex)}>
         DISTRICT DEED
       </text>
       <Lines lines={name} x={W / 2} y={name.length === 1 ? 82 : 72} lineHeight={24} textAnchor="middle" fontFamily={FONT_DISPLAY} fontWeight={800} fontSize={22} fill={on} />

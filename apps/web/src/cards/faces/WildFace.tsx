@@ -11,7 +11,7 @@ function WildHalf({ color, value }: { color: Color; value: number }) {
   return (
     <g>
       <rect width={W} height={58} fill={info.hex} />
-      <text x={W / 2} y={36} textAnchor="middle" fontFamily={FONT_DISPLAY} fontWeight={800} fontSize={18} letterSpacing={2} fill={on}>
+      <text x={W / 2} y={36} textAnchor="middle" fontFamily={FONT_DISPLAY} fontWeight={800} fontSize={19} letterSpacing={2} fill={on}>
         {info.name.toUpperCase()}
       </text>
       <GlyphChip glyph={info.glyph} x={206} y={29} />
