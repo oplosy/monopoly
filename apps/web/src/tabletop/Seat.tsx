@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Avatar } from '../avatars/Avatar';
 import { CardBack } from '../cards/CardBack';
 import { plural } from '../game/log';
+import { useAnchor } from '../motion/anchor-context';
 import { fanLayout } from '../scene/geometry';
 import { useProjected } from '../scene/projection';
 import { useTableInteraction } from './interaction';
@@ -30,8 +31,9 @@ interface Props {
 export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, handCount, playsLeft, clock }: Props) {
   const at = useProjected(anchor);
   const pick = useTableInteraction().player(playerId);
+  const frame = useAnchor<HTMLSpanElement>(`seat:${playerId}`);
   const face = (
-    <span className="avatar-frame">
+    <span ref={frame} className="avatar-frame">
       <Avatar index={avatar} className="avatar-svg" />
       {clock}
       <span className="hand-badge">
@@ -59,16 +61,17 @@ export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, 
         face
       )}
       {!connected && <span className="tag warn">offline</span>}
-      {!isMe && handCount > 0 && <BackFan count={handCount} />}
+      {!isMe && handCount > 0 && <BackFan count={handCount} anchor={`hand:${playerId}`} />}
       {playsLeft !== null && <Pips left={playsLeft} />}
     </div>
   );
 }
 
-function BackFan({ count }: { count: number }) {
+function BackFan({ count, anchor }: { count: number; anchor: string }) {
+  const ref = useAnchor<HTMLSpanElement>(anchor);
   const n = Math.min(count, BACKS_SHOWN);
   return (
-    <span className="back-fan" aria-hidden="true">
+    <span ref={ref} className="back-fan" aria-hidden="true">
       {Array.from({ length: n }, (_, i) => (
         <span key={i} className="back-card" style={{ '--rot': `${fanLayout(n, i).rotate * 2}deg` } as CSSProperties}>
           <CardBack className="card-svg" />
