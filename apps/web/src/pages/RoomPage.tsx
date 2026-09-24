@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router';
 import { useGameStore } from '../store/context';
+import { Table } from '../table/Table';
 import { JoinForm } from './JoinForm';
 import { Lobby } from './Lobby';
 
@@ -17,7 +18,7 @@ export function RoomPage() {
   if (session?.code === code) {
     if (!room) return <main className="center-message">Loading the room…</main>;
     if (room.status === 'lobby') return <Lobby room={room} />;
-    return <main className="center-message">The game is on.</main>;
+    return <Table />;
   }
 
   if (session) {
