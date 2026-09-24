@@ -143,6 +143,18 @@ describe('CenterPiles', () => {
     expect(within(pile()).getAllByRole('button').map((c) => c.getAttribute('style'))).toEqual(styles);
   });
 
+  it('always turns the ring forward, in the direction of play', () => {
+    const view = viewFor(state(), 'p1');
+    const { rerender } = mount(<CenterPiles view={view} activeAngle={270} />);
+    const turn = () => document.querySelector<HTMLElement>('.turn-ring')!.style.getPropertyValue('--turn');
+    const seen = [turn()];
+    for (const angle of [150, 30, 270, 150]) {
+      rerender(wrap(<CenterPiles view={view} activeAngle={angle} />));
+      seen.push(turn());
+    }
+    expect(seen).toEqual(['-180deg', '-60deg', '60deg', '180deg', '300deg']);
+  });
+
   it('says when the discard pile is empty', () => {
     mount(<CenterPiles view={viewFor(play({ players: [{ id: 'p1' }, { id: 'p2' }] }), 'p1')} activeAngle={null} />);
     expect(screen.getByRole('group', { name: 'Discard pile, empty' })).toBeInTheDocument();
