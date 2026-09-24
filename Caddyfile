@@ -1,0 +1,7 @@
+# DOMAIN is a real host name in production (Caddy fetches a certificate for it);
+# "localhost" uses Caddy's internal certificate authority for local checks.
+{$DOMAIN:localhost} {
+	encode zstd gzip
+	# Socket.IO's WebSocket upgrade is proxied automatically.
+	reverse_proxy app:3000
+}
