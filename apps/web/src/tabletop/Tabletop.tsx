@@ -125,7 +125,11 @@ function TableScene({ game }: { game: GameStatePayload }) {
   const send = (intent: Intent) => {
     // Nothing is sent while scenes play: the table may not show that state yet (spec §7.3).
     if (busy) return;
-    cancel();
+    setSelected(null);
+    setAim(null);
+    setDropped(null);
+    // A dropped card waits at the drop point until its play is shown: its flight starts there.
+    drag.sent();
     void sendIntent(intent);
   };
   /** Aims a play of `card` at targets on the table, from its popover or from a drop. */

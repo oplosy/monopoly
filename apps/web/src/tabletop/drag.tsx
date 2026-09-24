@@ -41,6 +41,8 @@ export interface DragApi {
   consumeClick(card: string): boolean;
   /** Ends a held or landing drag: the table changed, or the choice was cancelled. */
   clear(): void;
+  /** The play of a held drop went out: the card keeps waiting where it was dropped, so it flies from there. */
+  sent(): void;
 }
 
 interface Options {
@@ -114,6 +116,11 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
       },
       clear() {
         if (live.current && live.current.phase !== 'dragging') update(null);
+      },
+      sent() {
+        if (live.current?.phase !== 'landing') return;
+        if (timer.current) clearTimeout(timer.current);
+        timer.current = setTimeout(() => update(null), LANDING_MS);
       },
       handlers: (card) => ({
         onPointerDown(e) {

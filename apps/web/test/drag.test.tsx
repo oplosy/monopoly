@@ -120,4 +120,20 @@ describe('drag and drop', () => {
       animations.restore();
     }
   });
+
+  it('keeps a card dropped where several plays fit at the drop point until its play is shown, so it flies from there', () => {
+    const s0 = play({ players: [{ id: 'p1', hand: ['wild-red-yellow-1'] }, { id: 'p2' }] });
+    const { store, socket } = renderTabletop({ state: atTable(s0, 'p1') });
+    under(screen.getByRole('region', { name: 'Your area' }));
+    const card = handCard(/^Property wildcard/);
+    dragAway(card);
+    release(card);
+    fireEvent.click(within(screen.getByRole('dialog', { name: /^Play / })).getByRole('button', { name: 'Yellow' }));
+    expect(sentIntents(socket)).toEqual([{ type: 'playProperty', card: 'wild-red-yellow-1', color: 'yellow' }]);
+    expect(document.querySelector('.drag-ghost')).not.toBeNull();
+    const r = applyIntent(s0, 'p1', { type: 'playProperty', card: 'wild-red-yellow-1', color: 'yellow' });
+    if (!r.ok) throw new Error(r.error);
+    act(() => store.setState({ game: payload(r.state, 'p1', { events: r.events }) }));
+    expect(document.querySelector('.drag-ghost')).toBeNull();
+  });
 });
