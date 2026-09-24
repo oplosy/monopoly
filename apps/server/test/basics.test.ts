@@ -68,4 +68,13 @@ describe('createRateLimiter', () => {
     t = 1000;
     expect(allow()).toBe(true);
   });
+  it('never allows more than `limit` calls in any window, even across a boundary', () => {
+    let t = 0;
+    const allow = createRateLimiter(3, 1000, () => t);
+    expect(allow()).toBe(true);
+    t = 999;
+    expect([allow(), allow(), allow()]).toEqual([true, true, false]);
+    t = 1000;
+    expect([allow(), allow()]).toEqual([true, false]);
+  });
 });

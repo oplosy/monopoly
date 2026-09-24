@@ -59,6 +59,14 @@ async function threePlayerRoom() {
 }
 
 describe('server', () => {
+  it('rate-limits a client that floods the server', async () => {
+    const c = await client();
+    const acks = await Promise.all(Array.from({ length: 40 }, () => c.emitWithAck('room:leave', {})));
+    const limited = acks.filter((a) => !a.ok && a.error === 'rateLimited').length;
+    expect(limited).toBeGreaterThanOrEqual(20);
+    expect(c.connected).toBe(true);
+  });
+
   it('drops a client that sends an oversized message', async () => {
     const c = await client();
     const gone = new Promise<string>((resolve) => c.once('disconnect', resolve));
