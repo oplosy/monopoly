@@ -43,6 +43,26 @@ describe('Home', () => {
     renderApp('/', { state: { session: savedSeat('p1') } });
     expect(screen.getByRole('link', { name: 'Back to room ABCDEF' })).toHaveAttribute('href', '/room/ABCDEF');
   });
+
+  it('asks before leaving a game in progress', async () => {
+    const user = userEvent.setup();
+    const { socket } = renderApp('/', { state: { session: savedSeat('p1'), room: roomOf(['p1', 'p2'], 'playing') } });
+    await user.click(screen.getByRole('button', { name: 'Leave that room' }));
+    expect(socket.sentOf('room:leave')).toEqual([]);
+    expect(screen.getByText('Leave the game in progress? You will lose your seat.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Stay' }));
+    expect(screen.queryByText(/lose your seat/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Leave that room' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, leave' }));
+    expect(socket.sentOf('room:leave')).toEqual([{}]);
+  });
+
+  it('leaves a lobby without asking', async () => {
+    const user = userEvent.setup();
+    const { socket } = renderApp('/', { state: { session: savedSeat('p1'), room: roomOf(['p1', 'p2'], 'lobby') } });
+    await user.click(screen.getByRole('button', { name: 'Leave that room' }));
+    expect(socket.sentOf('room:leave')).toEqual([{}]);
+  });
 });
 
 describe('Room page', () => {
@@ -76,6 +96,15 @@ describe('Room page', () => {
     renderApp('/room/ABCDEF', { saved: savedSeat('p1') });
     await user.click(screen.getByRole('button', { name: 'Join as a new player' }));
     expect(screen.getByRole('button', { name: 'Join room' })).toBeInTheDocument();
+  });
+
+  it('asks before leaving a game elsewhere to join this room', async () => {
+    const user = userEvent.setup();
+    const { socket } = renderApp('/room/zzzzzz', { state: { session: savedSeat('p1'), room: roomOf(['p1', 'p2'], 'playing') } });
+    await user.click(screen.getByRole('button', { name: 'Leave it' }));
+    expect(socket.sentOf('room:leave')).toEqual([]);
+    await user.click(screen.getByRole('button', { name: 'Yes, leave' }));
+    expect(socket.sentOf('room:leave')).toEqual([{}]);
   });
 
   it('points a player with a seat elsewhere to their room', () => {

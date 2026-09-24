@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router';
 import { useGameStore } from '../store/context';
+import { LeaveButton } from './LeaveButton';
 import { Table } from '../table/Table';
 import { JoinForm } from './JoinForm';
 import { Lobby } from './Lobby';
@@ -13,7 +14,6 @@ export function RoomPage() {
   const resuming = useGameStore((s) => s.resuming);
   const resume = useGameStore((s) => s.resume);
   const forget = useGameStore((s) => s.forgetSession);
-  const leave = useGameStore((s) => s.leave);
 
   if (session?.code === code) {
     if (!room) return <main className="center-message">Loading the room…</main>;
@@ -31,9 +31,7 @@ export function RoomPage() {
           <Link className="button primary" to={`/room/${session.code}`}>
             Go to room {session.code}
           </Link>
-          <button type="button" className="link" onClick={() => void leave()}>
-            Leave it
-          </button>
+          <LeaveButton label="Leave it" />
         </div>
       </main>
     );

@@ -2,6 +2,7 @@ import type { Ack, JoinedRoom } from '@deal-city/protocol';
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useGameStore } from '../store/context';
+import { LeaveButton } from './LeaveButton';
 import { errorMessage } from '../ui/errors';
 
 export function Home() {
@@ -10,7 +11,6 @@ export function Home() {
   const savedNickname = useGameStore((s) => s.nickname);
   const createRoom = useGameStore((s) => s.createRoom);
   const joinRoom = useGameStore((s) => s.joinRoom);
-  const leave = useGameStore((s) => s.leave);
   const [nickname, setNickname] = useState(savedNickname);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -37,9 +37,7 @@ export function Home() {
           <Link className="button primary" to={`/room/${session.code}`}>
             Back to room {session.code}
           </Link>
-          <button type="button" className="link" onClick={() => void leave()}>
-            Leave that room
-          </button>
+          <LeaveButton label="Leave that room" />
         </div>
       </main>
     );
