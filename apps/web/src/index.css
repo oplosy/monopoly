@@ -1,0 +1,43 @@
+:root {
+  --paper: #fbf7ee;
+  --ink: #1b1b1f;
+  --muted: #6b6760;
+  --table: #ede8dc;
+  --font-display: 'Bricolage Grotesque', 'Arial Narrow', system-ui, sans-serif;
+  --font-num: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--table);
+  color: var(--ink);
+  font-family: var(--font-display);
+}
+
+.home { max-width: 40rem; margin: 4rem auto; padding: 0 1rem; }
+
+.gallery { padding: 1.5rem 1rem 4rem; max-width: 90rem; margin: 0 auto; }
+.gallery h1 { margin: 0 0 0.25rem; font-size: 2rem; }
+.gallery h2 { margin: 2.5rem 0 1rem; font-size: 1.25rem; }
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+.gallery figure { margin: 0; }
+.gallery figcaption {
+  margin-top: 0.35rem;
+  font-family: var(--font-num);
+  font-size: 0.7rem;
+  text-align: center;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.card {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.15));
+}
