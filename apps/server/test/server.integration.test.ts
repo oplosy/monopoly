@@ -59,6 +59,36 @@ async function threePlayerRoom() {
 }
 
 describe('server', () => {
+  it('drops a client that sends an oversized message', async () => {
+    const c = await client();
+    const gone = new Promise<string>((resolve) => c.once('disconnect', resolve));
+    c.emit('room:create', { nickname: 'x'.repeat(20_000) }, () => undefined);
+    expect(await gone).toBe('transport close');
+  });
+
+  it('ignores client seeds outside test mode', async () => {
+    const prod = (await buildServer({ ...loadConfig({ NODE_ENV: 'production' }), port: 0 })).app;
+    await prod.listen({ port: 0, host: '127.0.0.1' });
+    const prodUrl = `http://127.0.0.1:${(prod.server.address() as AddressInfo).port}`;
+    try {
+      const hands: string[][] = [];
+      for (let i = 0; i < 2; i++) {
+        const [a, b] = [0, 1].map(() => connect(prodUrl, { transports: ['websocket'], forceNew: true, reconnection: false }) as Client);
+        clients.push(a!, b!);
+        const created = await a!.emitWithAck('room:create', { nickname: 'Ann' });
+        if (!created.ok) throw new Error(created.error);
+        await b!.emitWithAck('room:join', { code: created.code, nickname: 'Bob' });
+        const first = nextGame(a!);
+        expect(await a!.emitWithAck('room:start', { seed: 7 })).toEqual({ ok: true });
+        hands.push([...(await first).view.hand]);
+      }
+      expect(hands[0]).not.toEqual(hands[1]);
+    } finally {
+      for (const c of clients.splice(0)) c.disconnect();
+      await prod.close();
+    }
+  });
+
   it('answers health checks', async () => {
     const res = await app.inject({ method: 'GET', url: '/healthz' });
     expect(res.statusCode).toBe(200);
