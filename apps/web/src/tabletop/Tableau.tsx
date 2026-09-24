@@ -1,7 +1,7 @@
 import { COLOR_KEYS, COLORS, isComplete, totalValue, type PropertyGroup, type PublicPlayer } from '@deal-city/engine';
 import type { CSSProperties } from 'react';
 import { useAnchor } from '../motion/anchor-context';
-import { useCountUp, useStaged } from '../motion/stage-context';
+import { useCountUp, useStaged, useStageEffect } from '../motion/stage-context';
 import { discardJitter, type PlanePoint } from '../scene/geometry';
 import { useTableInteraction } from './interaction';
 import { TableCard } from './TableCard';
@@ -54,6 +54,7 @@ export function Tableau({ player, name, isMe, at }: Props) {
 function GroupStack({ group, owner, whose }: { group: PropertyGroup; owner: string; whose: string }) {
   const info = COLORS[group.color];
   const complete = isComplete(group);
+  const celebrating = useStageEffect(`group:${group.id}`) !== null;
   const hidden = useStaged((s) => s.hidden);
   // The set glows and gets its stamp once its last card has landed; its name says complete at once.
   const looksComplete = isComplete({ ...group, cards: group.cards.filter((id) => !((hidden.get(`card:${id}`) ?? 0) > 0)) });
@@ -65,7 +66,7 @@ function GroupStack({ group, owner, whose }: { group: PropertyGroup; owner: stri
       ref={anchor}
       role="group"
       aria-label={`${info.name} group, ${group.cards.length} of ${info.setSize}${complete ? ', complete' : ''}`}
-      className={['group-stack', looksComplete && 'is-complete', pick.target && 'is-target'].filter(Boolean).join(' ')}
+      className={['group-stack', looksComplete && 'is-complete', celebrating && 'is-celebrating', pick.target && 'is-target'].filter(Boolean).join(' ')}
       style={{ '--band': info.hex } as CSSProperties}
     >
       {group.cards.map((id) => (

@@ -2,7 +2,7 @@ import { autoPayment, legalIntentsForView, waitingOnView, type Intent, type Inte
 import type { GameStatePayload } from '@deal-city/protocol';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { MotionStage } from '../motion/MotionStage';
-import { useStage, useStaged } from '../motion/stage-context';
+import { useStage, useStaged, useStageEffect } from '../motion/stage-context';
 import { moveOptions, playBlocker, playOptions } from '../game/choices';
 import { meAsPlayer, myRole, namesFrom } from '../game/derive';
 import { cardName } from '../game/log';
@@ -74,6 +74,7 @@ function TableScene({ game }: { game: GameStatePayload }) {
   const stage = useStage();
   const busy = useStaged((s) => s.busy);
   const counts = useStaged((s) => s.counts);
+  const turnPulse = useStageEffect('turn');
   // The stage starts a payload's scenes once the table shows it.
   useLayoutEffect(() => stage.committed(game));
   const rootRef = useRef<HTMLDivElement>(null);
@@ -205,6 +206,11 @@ function TableScene({ game }: { game: GameStatePayload }) {
         <div ref={rootRef} className={`tabletop players-${places.length}`} onClick={onBackground}>
           <h1 className="sr-only">{heading}</h1>
           <Narrator line={line} prompt={aim?.prompt ?? null} onCancel={cancel} />
+          {turnPulse && (
+            <p className="turn-pulse" aria-hidden="true">
+              Your turn
+            </p>
+          )}
           <PendingStage view={view} name={name} waiting={waitingOnView(view)} />
           <HandFan cards={view.hand} me={view.me} />
           {myTurn && !role && (

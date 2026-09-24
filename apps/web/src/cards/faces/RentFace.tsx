@@ -21,10 +21,12 @@ export function RentFace({ card, label, className }: FaceProps<'rent'>) {
         RENT
       </text>
       <ValueBadge value={card.value} />
-      {card.colors.map((c, i) => (
-        <path key={c} data-slice={c} d={slicePath(W / 2, cy, 68, start + i * step, start + (i + 1) * step)} fill={COLORS[c].hex} stroke={PAPER} strokeWidth={2} />
-      ))}
-      <circle cx={W / 2} cy={cy} r={68} fill="none" stroke={INK} strokeWidth={2} />
+      <g className="rent-wheel">
+        {card.colors.map((c, i) => (
+          <path key={c} data-slice={c} d={slicePath(W / 2, cy, 68, start + i * step, start + (i + 1) * step)} fill={COLORS[c].hex} stroke={PAPER} strokeWidth={2} />
+        ))}
+        <circle cx={W / 2} cy={cy} r={68} fill="none" stroke={INK} strokeWidth={2} />
+      </g>
       <circle cx={W / 2} cy={cy} r={26} fill={PAPER} stroke={INK} strokeWidth={2} />
       <text x={W / 2} y={cy} textAnchor="middle" dominantBaseline="central" fontFamily={FONT_NUM} fontWeight={700} fontSize={22} fill={INK}>
         M

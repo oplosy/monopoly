@@ -549,6 +549,7 @@
 .gameover-title { margin: 0; font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 800; }
 .gameover-sets { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
 .gameover-set { display: flex; }
-.gameover-set .card-svg { width: 64px; height: auto; }
-.gameover-set .card-svg + .card-svg { margin-left: -32px; }
+.gameover-card { display: block; width: 64px; }
+.gameover-card .card-svg { display: block; width: 100%; height: auto; }
+.gameover-card + .gameover-card { margin-left: -32px; }
 .gameover-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; align-items: center; }
