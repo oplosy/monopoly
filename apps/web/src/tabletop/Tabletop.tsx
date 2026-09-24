@@ -1,4 +1,4 @@
-import { autoPayment, legalIntentsForView, waitingOnView, type Intent } from '@deal-city/engine';
+import { autoPayment, legalIntentsForView, waitingOnView, type Intent, type IntentOf } from '@deal-city/engine';
 import type { GameStatePayload } from '@deal-city/protocol';
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { moveOptions, playBlocker, playOptions } from '../game/choices';
@@ -11,6 +11,8 @@ import { PlaneAnchor, ProjectionProvider } from '../scene/projection';
 import { useGameStore } from '../store/context';
 import { CenterPiles } from './CenterPiles';
 import { Countdown } from './Countdown';
+import { CounterTray } from './CounterTray';
+import { DiscardTray } from './DiscardTray';
 import { HandFan } from './HandFan';
 import { Hud } from './Hud';
 import { InspectProvider, useInspect } from './inspect';
@@ -19,11 +21,13 @@ import { LogDrawer } from './LogDrawer';
 import { MoveActions } from './MoveActions';
 import { useNarration } from './narration';
 import { Narrator } from './Narrator';
+import { PayTray } from './PayTray';
 import { PendingStage } from './PendingStage';
 import { PlayActions } from './PlayActions';
 import { startOption } from './play-flow';
 import { Popover } from './Popover';
 import { resolveInteraction } from './resolve';
+import { RespondTray } from './RespondTray';
 import { Seat } from './Seat';
 import { useKeyedSelection } from './selection';
 import { Tableau } from './Tableau';
@@ -134,6 +138,9 @@ function TableScene({ game }: { game: GameStatePayload }) {
   const heading = view.winner ? `${name(view.winner)} won` : myTurn ? 'Your turn' : `${name(view.turn.playerId)}'s turn`;
   const anchorOf = (zone: string, card: string): Element | null =>
     rootRef.current?.querySelector(`[data-zone="${zone}"][data-card="${card}"]`) ?? null;
+  const responseDeadline = deadlines.responseEndsAt[view.me] ?? null;
+  const jsnCard = legal.find((i): i is IntentOf<'respondJustSayNo'> => i.type === 'respondJustSayNo')?.card;
+  const jsnAnchor = jsnCard ? anchorOf('hand', jsnCard) : null;
 
   const clockFor = (id: string) => {
     const who = id === view.me ? 'Your' : `${name(id)}'s`;
@@ -189,6 +196,26 @@ function TableScene({ game }: { game: GameStatePayload }) {
             <button type="button" className="end-turn" onClick={() => send({ type: 'endTurn' })}>
               End turn
             </button>
+          )}
+          {role?.kind === 'pay' && (
+            <PayTray
+              view={view}
+              amount={role.amount}
+              picked={payPicked}
+              name={name}
+              deadline={responseDeadline}
+              onAuto={() => setPayPicked(() => autoPayment(meAsPlayer(view), role.amount))}
+              onPay={() => send({ type: 'pay', cards: [...payPicked] })}
+            />
+          )}
+          {role?.kind === 'discard' && (
+            <DiscardTray count={role.count} picked={discardPicked} deadline={deadlines.turnEndsAt} onDiscard={() => send({ type: 'discard', cards: [...discardPicked] })} />
+          )}
+          {role?.kind === 'respond' && (
+            <RespondTray view={view} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} onSend={send} />
+          )}
+          {role?.kind === 'counter' && (
+            <CounterTray pending={role.pending} targets={role.targets} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} onSend={send} />
           )}
           <PicnicScene players={places.length}>
             {places.map(({ playerId, spot }) => (
