@@ -239,4 +239,17 @@ describe('createStage', () => {
     stage.receive(null);
     expect(stage.getState()).toMatchObject({ game: null, busy: false, clones: [] });
   });
+
+  it('keeps the hidden and counter maps while they do not change, so the table does not redraw for nothing', () => {
+    const s0 = makeState({ players: [{ id: 'p1', hand: ['money-1-1'] }, { id: 'p2', hand: ['money-2-1'] }] });
+    const { stage } = setup(payload(s0, 'p1'));
+    show(stage, next(s0, 'p1', { type: 'endTurn' }).game);
+    const hidden = stage.getState().hidden;
+    // The first back leaves the deck: a counter moves, nothing is revealed.
+    vi.advanceTimersByTime(1);
+    expect(stage.getState().hidden).toBe(hidden);
+    const counts = stage.getState().counts;
+    vi.advanceTimersByTime(1);
+    expect(stage.getState().counts).toBe(counts);
+  });
 });

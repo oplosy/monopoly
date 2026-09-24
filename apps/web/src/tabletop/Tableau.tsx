@@ -1,7 +1,7 @@
 import { COLOR_KEYS, COLORS, isComplete, totalValue, type PropertyGroup, type PublicPlayer } from '@deal-city/engine';
 import type { CSSProperties } from 'react';
 import { useAnchor } from '../motion/anchor-context';
-import { useCountUp, useStaged, useStageEffect } from '../motion/stage-context';
+import { CountUp, useLanded, useStageEffect } from '../motion/stage-context';
 import { discardJitter, type PlanePoint } from '../scene/geometry';
 import { useTableInteraction } from './interaction';
 import { dropClass, useDropState } from './drag';
@@ -20,11 +20,9 @@ const byColor = (a: PropertyGroup, b: PropertyGroup) => COLOR_KEYS.indexOf(a.col
 /** One player's cards on the table: property groups in color order, then a loose bank pile. */
 export function Tableau({ player, name, isMe, at }: Props) {
   const groups = [...player.groups].sort(byColor);
-  const hidden = useStaged((s) => s.hidden);
-  const landed = (id: string) => !((hidden.get(`card:${id}`) ?? 0) > 0);
   const total = totalValue(player.bank);
   // The shown total counts only the notes that have landed, and counts up as each one does.
-  const shownTotal = useCountUp(totalValue(player.bank.filter(landed)));
+  const landedTotal = totalValue(useLanded(player.bank));
   const area = useAnchor<HTMLElement>(`tableau:${player.id}`);
   const bank = useAnchor<HTMLDivElement>(`bank:${player.id}`);
   const areaDrop = isMe ? 'table' : `player:${player.id}`;
@@ -50,7 +48,9 @@ export function Tableau({ player, name, isMe, at }: Props) {
         data-drop={isMe ? 'bank' : undefined}
         role="group"
         aria-label={`${isMe ? 'Your' : `${name}'s`} bank, ${total}M`}>
-        <span className="bank-total" aria-hidden="true">{`${shownTotal}M`}</span>
+        <span className="bank-total" aria-hidden="true">
+          <CountUp value={landedTotal} suffix="M" />
+        </span>
         {player.bank.map((id) => {
           const rotate = discardJitter(id).rotate / 3;
           return <TableCard key={id} id={id} zone="bank" owner={player.id} rotation={rotate} style={{ '--rot': `${rotate}deg` } as CSSProperties} />;
@@ -65,9 +65,8 @@ function GroupStack({ group, owner, mine, whose }: { group: PropertyGroup; owner
   const info = COLORS[group.color];
   const complete = isComplete(group);
   const celebrating = useStageEffect(`group:${group.id}`) !== null;
-  const hidden = useStaged((s) => s.hidden);
   // The set glows and gets its stamp once its last card has landed; its name says complete at once.
-  const looksComplete = isComplete({ ...group, cards: group.cards.filter((id) => !((hidden.get(`card:${id}`) ?? 0) > 0)) });
+  const looksComplete = isComplete({ ...group, cards: [...useLanded(group.cards)] });
   const pick = useTableInteraction().group(group.id, owner);
   const buildings = [group.house, group.hotel].filter((id): id is string => id !== null);
   const anchor = useAnchor<HTMLDivElement>(`group:${group.id}`);

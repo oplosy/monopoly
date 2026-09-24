@@ -3,7 +3,7 @@ import { useRef, type CSSProperties } from 'react';
 import { CardBack } from '../cards/CardBack';
 import { cardName, plural } from '../game/log';
 import { useAnchor } from '../motion/anchor-context';
-import { useCountShift, useCountUp } from '../motion/stage-context';
+import { CountUp, useCountShift } from '../motion/stage-context';
 import { discardJitter } from '../scene/geometry';
 import { dropClass, useDropState } from './drag';
 import { TableCard } from './TableCard';
@@ -22,7 +22,7 @@ export function CenterPiles({ view, activeAngle }: { view: GameView; activeAngle
   const discard = useAnchor<HTMLDivElement>('discard');
   const dropState = useDropState('center');
   // The deck still counts cards that have not left it yet.
-  const deckCount = useCountUp(view.deckCount + useCountShift('deck'));
+  const deckCount = view.deckCount + useCountShift('deck');
   const top = view.discard.at(-1);
   const turn = useRef<number | null>(null);
   const target = 90 - (activeAngle ?? 90);
@@ -36,7 +36,7 @@ export function CenterPiles({ view, activeAngle }: { view: GameView; activeAngle
       <div ref={deck} className="deck" role="group" aria-label={`Deck, ${plural(view.deckCount, 'card')}`}>
         {deckCount > 0 ? <CardBack className="card-svg" /> : <span className="pile-empty" />}
         <span className="count-badge" aria-hidden="true">
-          {deckCount}
+          <CountUp value={deckCount} />
         </span>
       </div>
       <div ref={discard} className="discard" role="group" aria-label={top ? `Discard pile, top card ${cardName(top)}` : 'Discard pile, empty'}>

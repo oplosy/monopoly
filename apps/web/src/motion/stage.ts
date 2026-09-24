@@ -87,6 +87,13 @@ function bump(map: Map<string, number>, key: string, n: number): void {
   map.set(key, (map.get(key) ?? 0) + n);
 }
 
+/** `next`, or `prev` itself when both hold the same entries: readers then see no change. */
+function same(prev: ReadonlyMap<string, number>, next: Map<string, number>): ReadonlyMap<string, number> {
+  if (prev.size !== next.size) return next;
+  for (const [key, n] of next) if (prev.get(key) !== n) return next;
+  return prev;
+}
+
 function firstPose(poses: ReadonlyMap<string, Pose>, keys: readonly string[]): Pose | null {
   for (const key of keys) {
     const pose = poses.get(key);
@@ -150,7 +157,7 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
       for (const [key, n] of batch.counts) if (n !== 0) bump(counts, key, n);
     }
     for (const [key, n] of counts) if (n === 0) counts.delete(key);
-    return { hidden, counts, busy: current !== null || waiting.length > 0 };
+    return { hidden: same(state.hidden, hidden), counts: same(state.counts, counts), busy: current !== null || waiting.length > 0 };
   };
 
   const reset = (game: GameStatePayload | null) => {

@@ -76,7 +76,6 @@ function TableScene({ game }: { game: GameStatePayload }) {
   const inspect = useInspect();
   const stage = useStage();
   const busy = useStaged((s) => s.busy);
-  const counts = useStaged((s) => s.counts);
   const turnPulse = useStageEffect('turn');
   // The stage starts a payload's scenes once the table shows it.
   useLayoutEffect(() => stage.committed(game));
@@ -307,8 +306,7 @@ function TableScene({ game }: { game: GameStatePayload }) {
                   active={playerId === active}
                   connected={seats.get(playerId)?.connected ?? false}
                   handCount={handCount}
-                  shownCount={handCount + (counts.get(`hand:${playerId}`) ?? 0)}
-                  playsLeft={playerId === view.me && myTurn && view.turn.phase === 'play' ? view.turn.playsLeft : null}
+                    playsLeft={playerId === view.me && myTurn && view.turn.phase === 'play' ? view.turn.playsLeft : null}
                   clock={clockFor(playerId)}
                 />
               );

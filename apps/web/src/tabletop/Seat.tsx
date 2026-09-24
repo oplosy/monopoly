@@ -4,7 +4,7 @@ import { Avatar } from '../avatars/Avatar';
 import { CardBack } from '../cards/CardBack';
 import { plural } from '../game/log';
 import { useAnchor } from '../motion/anchor-context';
-import { useCountUp } from '../motion/stage-context';
+import { CountUp, useCountShift } from '../motion/stage-context';
 import { fanLayout } from '../scene/geometry';
 import { useProjected } from '../scene/projection';
 import { dropClass, useDropState } from './drag';
@@ -23,8 +23,6 @@ interface Props {
   active: boolean;
   connected: boolean;
   handCount: number;
-  /** The count to show while cards fly to or from this hand; defaults to handCount. */
-  shownCount?: number;
   /** Plays left, shown as pips; null hides them. */
   playsLeft: number | null;
   /** The timer ring, when this player is on the clock. */
@@ -32,10 +30,11 @@ interface Props {
 }
 
 /** A player at the table (flat UI): ribbon, character, hand badge, timer ring. A button while they are a target. */
-export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, handCount, shownCount, playsLeft, clock }: Props) {
+export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, handCount, playsLeft, clock }: Props) {
   const at = useProjected(anchor);
   const pick = useTableInteraction().player(playerId);
-  const shown = useCountUp(Math.max(0, shownCount ?? handCount));
+  // While cards fly to or from this hand, the badge and the back fan still show them where they were.
+  const shown = Math.max(0, handCount + useCountShift(`hand:${playerId}`));
   const frame = useAnchor<HTMLSpanElement>(`seat:${playerId}`);
   const dropState = useDropState(isMe ? null : `player:${playerId}`);
   const face = (
@@ -43,7 +42,9 @@ export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, 
       <Avatar index={avatar} className="avatar-svg" />
       {clock}
       <span className="hand-badge">
-        <span aria-hidden="true">{shown}</span>
+        <span aria-hidden="true">
+          <CountUp value={shown} />
+        </span>
         <span className="sr-only">{`${handCount} ${handCount === 1 ? 'card' : 'cards'} in hand`}</span>
       </span>
     </span>

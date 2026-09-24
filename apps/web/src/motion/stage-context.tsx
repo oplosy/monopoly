@@ -39,6 +39,17 @@ export function useStageEffect(slot: string): ActiveEffect | null {
   return useStaged((s) => s.effects.get(slot) ?? null);
 }
 
+/** True while a flight still has to land on any of `keys`. */
+function anyHidden(s: StageState, keys: readonly string[]): boolean {
+  return keys.some((key) => (s.hidden.get(key) ?? 0) > 0);
+}
+
+/** The ids among `ids` whose cards have landed, as one string, so a reader redraws only when that changes. */
+export function useLanded(ids: readonly string[]): readonly string[] {
+  const landed = useStaged((s) => ids.filter((id) => !anyHidden(s, [`card:${id}`])).join('|'));
+  return landed === '' ? [] : landed.split('|');
+}
+
 /** How long a counter takes to count to a new value. */
 export const COUNT_MS = 350;
 
@@ -64,4 +75,9 @@ export function useCountUp(value: number): number {
     return () => cancelAnimationFrame(frame);
   }, [value, animate]);
   return animate ? shown : value;
+}
+
+/** A number counting toward `value`: only this text redraws on each frame, not the piece around it. */
+export function CountUp({ value, suffix = '' }: { value: number; suffix?: string }) {
+  return <>{`${useCountUp(value)}${suffix}`}</>;
 }
