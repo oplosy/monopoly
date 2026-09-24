@@ -252,4 +252,20 @@ describe('createStage', () => {
     vi.advanceTimersByTime(1);
     expect(stage.getState().counts).toBe(counts);
   });
+
+  it('gives a flight waiting past the clone cap its clone once an earlier one has landed', () => {
+    const bank = [
+      'money-1-1', 'money-1-2', 'money-1-3', 'money-1-4', 'money-1-5', 'money-1-6', 'money-2-1',
+      'money-2-2', 'money-2-3', 'money-2-4', 'money-2-5', 'money-3-1', 'money-3-2', 'money-3-3',
+    ];
+    const s0 = makeState({ players: [{ id: 'p1' }, { id: 'p2' }, { id: 'p3', bank }] });
+    const r = removePlayer(s0, 'p3');
+    const { stage } = setup(payload(s0, 'p1'));
+    show(stage, payload(r.state, 'p1', { events: r.events }));
+    expect(stage.getState().clones.map((c) => c.card)).not.toContain('money-3-2');
+    // The first card lands; the 13th (leaving 50 ms apart) has not left yet, and now gets a clone.
+    vi.advanceTimersByTime(STYLE_MS.slide);
+    expect(stage.getState().clones).toContainEqual(expect.objectContaining({ card: 'money-3-2', delay: 12 * 50 - STYLE_MS.slide }));
+    expect(stage.getState().clones.length).toBeLessThanOrEqual(MAX_CLONES);
+  });
 });

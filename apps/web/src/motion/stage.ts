@@ -169,10 +169,11 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
     set({ game, hidden: NONE, counts: NONE, clones: [], effects: new Map(), busy: false });
   };
 
-  /** Past the cap, the extra cards simply appear when their flight's time is up (spec §9.4). */
-  const addClones = (clones: readonly Clone[]) => {
+  /** Adds what fits under the cap (spec §9.4) and returns the rest. */
+  const addClones = (clones: readonly Clone[]): Clone[] => {
     const room = Math.max(0, MAX_CLONES - state.clones.length);
     if (room > 0 && clones.length > 0) set({ clones: [...state.clones, ...clones.slice(0, room)] });
+    return clones.slice(room);
   };
 
   const startNext = () => {
@@ -190,6 +191,19 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
       from && to ? { key, card: f.card, color: f.color, face: f.face, style: f.style, from, to, center, delay, duration } : null;
 
     const clones: Clone[] = [];
+    const started = Date.now();
+    // Clones past the cap wait for room: a flight that has not left yet gets its clone once an
+    // earlier one lands; one already under way simply appears when its time is up.
+    let overflow: Clone[] = [];
+    const refill = () => {
+      const now = Date.now() - started;
+      overflow = overflow.filter((c) => c.delay > now);
+      const room = Math.max(0, MAX_CLONES - state.clones.length);
+      if (room === 0 || overflow.length === 0) return;
+      const next = overflow.slice(0, room).map((c) => ({ ...c, delay: c.delay - now }));
+      overflow = overflow.slice(room);
+      set({ clones: [...state.clones, ...next] });
+    };
     for (const { flight: f, delay, duration } of timeline.flights) {
       const key = `${batch.id}:${f.id}`;
       if (f.fromLive) {
@@ -213,6 +227,7 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
         if (f.reveals) bump(batch.hides, f.reveals, -1);
         if (f.enters) bump(batch.counts, f.enters, 1);
         set({ ...tally(), clones: state.clones.filter((c) => c.key !== key) });
+        refill();
       });
     }
 
@@ -231,7 +246,7 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
       });
     }
 
-    addClones(clones);
+    overflow = addClones(clones);
     set(tally());
     later(timeline.total, () => {
       if (current !== batch) return;
