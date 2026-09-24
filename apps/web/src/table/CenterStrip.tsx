@@ -1,7 +1,7 @@
 import { PLAYS_PER_TURN, type GameView } from '@deal-city/engine';
 import type { Deadlines } from '@deal-city/protocol';
 import { CardBack } from '../cards/CardBack';
-import { cardName, type Names } from '../game/log';
+import { cardName, plural, type Names } from '../game/log';
 import { CardView } from './CardView';
 import { secondsLeft, useNow } from './useNow';
 
@@ -37,7 +37,7 @@ export function CenterStrip({ view, deadlines, name, waiting, canEndTurn, onEndT
       <div className="turn-info">
         <p className="turn-name">{heading}</p>
         <p className="plays">
-          <span className="sr-only">{`${view.turn.playsLeft} plays left`}</span>
+          <span className="sr-only">{`${plural(view.turn.playsLeft, 'play')} left`}</span>
           {Array.from({ length: PLAYS_PER_TURN }, (_, i) => (
             <span key={i} aria-hidden="true" className={i < view.turn.playsLeft ? 'pip on' : 'pip'} />
           ))}

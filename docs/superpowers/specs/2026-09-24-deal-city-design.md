@@ -315,6 +315,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 - **`sets.ts`** — group completeness, rentability, rent amount and the win check.
 - **`payment.ts`** — payment validation and automatic payment.
 - **`legal.ts`** — `legalIntents(state, playerId)`, which lists every legal intent. The UI uses it to enable controls and the fuzz tests use it to pick moves.
+- **`legalIntentsForView(view)`** and **`waitingOnView(view)`** run the same checks on a redacted view. `stateFromView` rebuilds a stand-in state that leaves hidden cards out, which is faithful for the viewer's own decisions. The web client uses them to enable controls, and a fuzz test checks they agree with the full-state versions.
 - **`auto.ts`** — `autoIntent(state, playerId)` (§3.7) and `removePlayer` (§3.9).
 - **`view.ts`** — `viewFor(state, playerId)` builds a redacted snapshot:
   - the player's own hand in full;
@@ -352,15 +353,16 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 
 | Direction | Event | Payload | Reply |
 |---|---|---|---|
-| Client → server | `room:create` | `{nickname}` | ack `{code, sessionToken}` |
-| Client → server | `room:join` | `{code, nickname}` | ack `{sessionToken}` |
-| Client → server | `room:resume` | `{sessionToken}` | ack with the room/game state |
-| Client → server | `room:start` | — | host only; needs 2–3 seated players |
-| Client → server | `room:leave` | — | |
-| Client → server | `room:rematch` | — | host only, after `gameOver`; returns to the lobby with the same seats |
+| Client → server | `room:create` | `{nickname}` | ack `{code, playerId, token}` |
+| Client → server | `room:join` | `{code, nickname}` | ack `{code, playerId, token}` |
+| Client → server | `room:resume` | `{token}` | ack `{code, playerId, token}`; the room and game state are pushed just before the ack |
+| Client → server | `room:start` | `{seed?}` (the seed is honoured only when `NODE_ENV=test`) | host only; needs 2–3 seated players |
+| Client → server | `room:leave` | `{}` | |
+| Client → server | `room:rematch` | `{}` | host only, after `gameOver`; returns to the lobby with the same seats |
 | Client → server | `game:intent` | `{intent, expectedVersion}` | ack `{ok: true}` or `{ok: false, error}` |
-| Server → client | `room:state` | `{code, status: 'lobby' \| 'playing' \| 'finished', seats: [{nickname, connected, isHost}]}` | |
+| Server → client | `room:state` | `{code, status: 'lobby' \| 'playing' \| 'finished', hostId, seats: [{playerId, nickname, connected}]}` | |
 | Server → client | `game:state` | `{view, deadlines: {turnEndsAt, responseEndsAt}, events}` | |
+| Server → client | `room:replaced` | — | sent to the old socket when its seat is resumed from another one |
 
 - `game:intent` is rejected if `expectedVersion` does not match, so stale clicks are ignored.
 - Every change sends one `game:state` message holding the full redacted snapshot **and** the events that produced it (empty on attach/resume), so state and animation cues arrive atomically. The state is small, and sending all of it avoids diffing bugs.
@@ -379,7 +381,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
   - Each response or payment has a **20 s** window per player.
   - When a timer expires, the server applies `autoIntent`.
 - **Reconnect**
-  - Joining a room issues a random 128-bit `sessionToken`, which the client keeps in `localStorage`.
+  - Joining a room issues a random 128-bit session token. The client keeps it in `sessionStorage`, so each browser tab is its own player and a reload keeps the seat; the nickname is remembered in `localStorage`.
   - A disconnected seat is held for **120 s**, and timers keep running while it is empty.
   - After 120 s the server calls `removePlayer`.
   - In the lobby, a disconnected player is removed after the same grace period.
@@ -404,14 +406,14 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
   - The player's own area is at the bottom: bank, groups and hand.
   - A game log sits at the side.
 - **Interactions**
-  - Clicking a card in hand opens a menu of the legal options for it, from `legalIntents`.
+  - Clicking a card in hand opens a menu of the legal options for it, from `legalIntentsForView`.
   - Targets such as players, cards or groups are highlighted on the table so the player can pick them.
   - Modals:
     - **Pay:** shows the running total against the amount owed and warns on overpay.
     - **Respond / Just Say No:** has a countdown.
     - **Discard.**
     - **Wildcard color picker.**
-- **Animations:** Motion (Framer Motion) animates cards between zones, driven by the `events` carried in each `game:state`.
+- **Animations:** Motion gives every table card a `layoutId` equal to its card id, so any snapshot that moves a card animates it between zones. The `events` in each `game:state` drive the game log. The OS reduced-motion setting is respected.
 - **Layout:** Desktop first. On narrow screens the hand scrolls sideways.
 
 ---
@@ -422,7 +424,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 
 - `CardFace` renders one card from its definition in `cards.ts`.
 - The viewBox is `0 0 250 350`, matching the 63×88 mm playing-card ratio.
-- Each card has rounded corners, a white inner frame and a value badge in the top-left corner.
+- Each card has rounded corners, an ink border on cream card stock, and a value badge in the top-left corner (the multicolor wildcard, worth nothing, has none).
 
 **Templates by card type**
 
@@ -443,7 +445,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
   - A central disc split into the two colors, or a 10-slice wheel for the wild rent.
   - Text stating who pays.
 - **Action**
-  - A title, a central original icon, and one line of effect text.
+  - A title, a central original icon, and its effect text (up to four short lines).
 - **Card back**
   - Navy background with a repeating "Deal City" skyline pattern and a logo lockup.
 
@@ -464,7 +466,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 
 **Design tokens**
 
-- CSS variables for the 10 property colors and 6 money tints, plus neutral surfaces.
+- Property colors come from the engine's `COLORS` and money tints from `apps/web/src/cards/theme.ts`, so each has one source. CSS variables cover the neutral surfaces and fonts.
 - Typography from Google Fonts: a condensed display face for titles (Bricolage Grotesque) and a font with tabular numerals for values (IBM Plex Mono or Inter with `tnum`).
 
 **Review.** `/gallery` renders all 106 cards plus the card back and sample wildcard orientations. It is reviewed in the browser during development; Plan 5 adds a Playwright screenshot of it.
