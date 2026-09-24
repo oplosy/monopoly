@@ -433,9 +433,9 @@ Each plan gets its own implementation plan (writing-plans), its own branch and i
 
 ## 14. Mockups (docs/superpowers/specs/table-redesign/mockups/)
 
-These are rough wireframes for layout decisions, not final art. The chosen option has a green outline.
+These are rough wireframes for layout decisions, not final art. Each file is a standalone HTML page, and the chosen option has a green outline with a "Chosen: …" note on top. **PNG snapshots of every file are in `mockups/png/`** (same names), so they can be viewed on GitHub or read as images without running anything.
 
-| File | Shows | Chosen |
+| File (HTML and PNG) | Shows | Chosen |
 |---|---|---|
 | `01-layout.html` | A: opponents across the top, cards upright. B: opponents on the side edges, rotated. | A |
 | `02-seating.html` | A: the table shape changes with the player count. B: always the same round table (2 = face to face, 3 = 120°). | B |
@@ -461,3 +461,15 @@ These are rough wireframes for layout decisions, not final art. The chosen optio
    - A final review by a fresh reviewer on the most capable model.
    - The user writes in Turkish; answer in Turkish. Documents stay in English.
 5. Do not re-open the decisions in §3 unless the user asks. They were made explicitly.
+6. **Seeing the mockups again, quickly:**
+   - Fastest: read the PNGs in `docs/superpowers/specs/table-redesign/mockups/png/`. They are images, so an agent can read them directly.
+   - Interactive in the browser pane: serve the folder and open a file:
+     - `python -m http.server 8765 --bind 127.0.0.1`, run in the background from `docs/superpowers/specs/table-redesign/mockups`;
+     - then `preview_start` with `http://127.0.0.1:8765/03-perspective-2_5d.html`.
+
+     The pane cannot open `file://` paths directly.
+   - Headless render, when the pane will not draw because the window is behind another:
+     - `"C:/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --hide-scrollbars --window-size=1100,1900 --screenshot=<out.png> file:///<abs path to html>`
+   - The user can also just double-click any HTML file.
+   - To continue brainstorming in the visual companion, start it (`skills/brainstorming/scripts/start-server.sh --project-dir <repo> --open`, backgrounded on Windows), then copy a mockup's inner content (everything after the `mock-note` div) into a new file in its `content/` directory.
+7. **Reference images:** `for_table/` (local only, not in git) holds the five UNO screenshots described in §2.3. If it is missing in a new checkout, §2.3 is the source of truth.
