@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { ACTIONS, CARDS, COLORS, PROPERTY_NAMES, rentRuleText, type ActionKind } from '@deal-city/engine';
 import { CardBack } from '../src/cards/CardBack';
 import { CardFace, type CardFaceProps } from '../src/cards/CardFace';
+import { MoneyFace } from '../src/cards/faces/MoneyFace';
 import { slicePath } from '../src/cards/faces/RentFace';
 import { cardLabel } from '../src/cards/labels';
 import { EFFECT_WRAP, NAME_WRAP, RENT_WRAP, TITLE_WRAP, wrapLines } from '../src/cards/text';
@@ -149,6 +150,17 @@ describe('CardBack', () => {
     expect(html).toContain('aria-label="Card back"');
     expect(html).toContain('>DEAL<');
     expect(html).toContain('>CITY<');
+  });
+});
+
+describe('money art coverage', () => {
+  it('has a tint for every denomination in the deck', () => {
+    for (const c of CARDS) if (c.type === 'money') expect(MONEY_TINTS[c.value], c.id).toBeDefined();
+  });
+
+  it('refuses a denomination it has no tint for instead of drawing it as 1M', () => {
+    const card = { id: 'money-7-1', type: 'money', value: 7 } as const;
+    expect(() => renderToStaticMarkup(<MoneyFace card={card} label="7M" />)).toThrow('No tint for 7M');
   });
 });
 
