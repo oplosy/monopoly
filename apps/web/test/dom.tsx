@@ -28,13 +28,14 @@ export interface RenderOptions {
   state?: Partial<AppState>;
   saved?: SavedSession | null;
   nickname?: string;
+  avatar?: number | null;
 }
 
 /** Renders the whole app at `path` with a fake, already-connected socket. */
 export function renderApp(path: string, opts: RenderOptions = {}) {
   const socket = new FakeSocket();
   socket.connected = true;
-  const store = createGameStore(socket, memoryStorage(opts.saved ?? null, opts.nickname ?? ''));
+  const store = createGameStore(socket, memoryStorage(opts.saved ?? null, opts.nickname ?? '', opts.avatar ?? null));
   if (opts.state) store.setState(opts.state);
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   const view = render(

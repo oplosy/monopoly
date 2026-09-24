@@ -1,3 +1,5 @@
+import { AVATAR_COUNT } from '@deal-city/protocol/constants';
+
 export interface SavedSession {
   code: string;
   playerId: string;
@@ -10,14 +12,24 @@ export interface SessionStore {
   clear(): void;
   loadNickname(): string;
   saveNickname(nickname: string): void;
+  /** The character this browser likes to play as, or null. */
+  loadAvatar(): number | null;
+  saveAvatar(avatar: number): void;
 }
 
 const SESSION_KEY = 'dealcity.session';
 const NICKNAME_KEY = 'dealcity.nickname';
+const AVATAR_KEY = 'dealcity.avatar';
 
 function isSaved(x: unknown): x is SavedSession {
   const s = x as Partial<SavedSession> | null;
   return !!s && typeof s.code === 'string' && typeof s.playerId === 'string' && typeof s.token === 'string';
+}
+
+function toAvatar(raw: string | null): number | null {
+  if (raw === null || !/^\d{1,2}$/.test(raw)) return null;
+  const n = Number(raw);
+  return n < AVATAR_COUNT ? n : null;
 }
 
 /** Reads and writes that never throw: storage can be blocked (private mode, disabled site data). */
@@ -43,7 +55,7 @@ function safe(area: () => Storage) {
 
 /**
  * The seat token lives in sessionStorage, so each tab is its own player and a reload keeps the seat.
- * The nickname is shared across tabs through localStorage.
+ * The nickname and the preferred character are shared across tabs through localStorage.
  */
 export function browserStorage(): SessionStore {
   const tab = safe(() => window.sessionStorage);
@@ -71,12 +83,19 @@ export function browserStorage(): SessionStore {
     saveNickname(nickname) {
       shared.set(NICKNAME_KEY, nickname);
     },
+    loadAvatar() {
+      return toAvatar(shared.get(AVATAR_KEY));
+    },
+    saveAvatar(avatar) {
+      shared.set(AVATAR_KEY, String(avatar));
+    },
   };
 }
 
-export function memoryStorage(initial: SavedSession | null = null, nickname = ''): SessionStore {
+export function memoryStorage(initial: SavedSession | null = null, nickname = '', avatar: number | null = null): SessionStore {
   let session = initial;
   let nick = nickname;
+  let character = avatar;
   return {
     load: () => session,
     save: (s) => {
@@ -88,6 +107,10 @@ export function memoryStorage(initial: SavedSession | null = null, nickname = ''
     loadNickname: () => nick,
     saveNickname: (n) => {
       nick = n;
+    },
+    loadAvatar: () => character,
+    saveAvatar: (a) => {
+      character = a;
     },
   };
 }
