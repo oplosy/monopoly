@@ -34,6 +34,6 @@ export function Shell() {
         <Outlet />
       )}
       <Toast />
-  </MotionConfig>
+    </MotionConfig>
   );
 }

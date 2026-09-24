@@ -84,7 +84,7 @@ export function propLayout(playerCount: number): PropSpot[] {
 }
 
 /** FNV-1a hash of a string, as an unsigned 32-bit number. */
-export function hashString(text: string): number {
+function hashString(text: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
     h ^= text.charCodeAt(i);
