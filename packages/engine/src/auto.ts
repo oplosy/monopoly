@@ -24,8 +24,9 @@ export function autoIntent(s: GameState, playerId: string): Intent | null {
 
 /** Removes a player (e.g. after the reconnect grace period). Their cards go to the discard pile (spec §3.9). */
 export function removePlayer(state: GameState, playerId: string): { state: GameState; events: GameEvent[] } {
+  // A finished game is final: the result and the winner's table stay as they are.
   const leaving = state.players.find((p) => p.id === playerId);
-  if (!leaving) return { state, events: [] };
+  if (!leaving || state.winner) return { state, events: [] };
   const ctx: Ctx = { s: cloneState(state), events: [] };
   const s = ctx.s;
   const p = getPlayer(s, playerId);

@@ -17,6 +17,7 @@ export function spendPlays(ctx: Ctx, n: number): void {
 }
 
 export function requireAction(cardId: string, kind: ActionKind): void {
+  getCard(cardId); // unknownCard for ids that are not in the deck
   if (!isAction(cardId, kind)) throw new RuleError('wrongCard');
 }
 

@@ -1,6 +1,6 @@
-import { COLORS } from '@deal-city/engine';
+import { COLORS, rentRuleText } from '@deal-city/engine';
 import { CardSvg, Lines, ValueBadge, W, type FaceProps } from '../parts';
-import { round2, wrapLines } from '../text';
+import { RENT_WRAP, round2, wrapLines } from '../text';
 import { FONT_DISPLAY, FONT_NUM, INK, PAPER } from '../theme';
 
 /** SVG path for a pie slice from angle a0 to a1 (radians, clockwise from +x). */
@@ -14,9 +14,6 @@ export function RentFace({ card, label, className }: FaceProps<'rent'>) {
   const cy = 162;
   const step = (2 * Math.PI) / card.colors.length;
   const start = -Math.PI / 2;
-  const text = card.any
-    ? 'One player of your choice pays you rent for properties you own in any one color.'
-    : `Every other player pays you rent for your ${card.colors.map((c) => COLORS[c].name).join(' or ')} properties.`;
   return (
     <CardSvg label={label} className={className}>
       <rect width={W} height={64} fill={INK} />
@@ -32,7 +29,7 @@ export function RentFace({ card, label, className }: FaceProps<'rent'>) {
       <text x={W / 2} y={cy} textAnchor="middle" dominantBaseline="central" fontFamily={FONT_NUM} fontWeight={700} fontSize={22} fill={INK}>
         M
       </text>
-      <Lines lines={wrapLines(text, 30)} x={W / 2} y={262} lineHeight={17} textAnchor="middle" fontFamily={FONT_DISPLAY} fontSize={13} fill={INK} />
+      <Lines lines={wrapLines(rentRuleText(card), RENT_WRAP)} x={W / 2} y={262} lineHeight={17} textAnchor="middle" fontFamily={FONT_DISPLAY} fontSize={13} fill={INK} />
     </CardSvg>
   );
 }

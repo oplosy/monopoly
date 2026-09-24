@@ -53,6 +53,11 @@ export function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
+/** Black or white for small labels on `hex`: ink and paper are too soft to reach 4.5:1 on Red and Pink. */
+export function labelOn(hex: string): string {
+  return contrast(hex, '#000000') >= contrast(hex, '#FFFFFF') ? '#000000' : '#FFFFFF';
+}
+
 /** Ink or paper, whichever reads better on `hex`. */
 export function inkOn(hex: string): string {
   return contrast(hex, INK) >= contrast(hex, PAPER) ? INK : PAPER;

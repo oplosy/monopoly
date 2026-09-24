@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyIntent } from '../src/apply';
+import { autoIntent, removePlayer } from '../src/auto';
 import { COLORS } from '../src/cards';
 import { candidateIntents, waitingOn } from '../src/legal';
 import { nextRandom, rngFromSeed, shuffle } from '../src/rng';
@@ -67,5 +68,45 @@ describe('fuzz: random bots', () => {
       if (state.winner) finished++;
     }
     expect(finished / GAMES).toBeGreaterThanOrEqual(0.9);
+  }, 120_000);
+});
+
+describe('fuzz: timeouts and players leaving', () => {
+  it('always accepts the automatic intent and survives removals', () => {
+    const GAMES = 100;
+    const CAP = 3000;
+    let removals = 0;
+    for (let seed = 1; seed <= GAMES; seed++) {
+      let state = createGame(['a', 'b', 'c'], seed).state;
+      let rng = rngFromSeed(seed * 104729);
+      for (let steps = 0; !state.winner && steps < CAP; steps++) {
+        const actors = waitingOn(state);
+        invariant(actors.length > 0, `seed ${seed}: nobody to act`);
+        const [coin, r1] = nextRandom(rng);
+        const [pick, r2] = nextRandom(r1);
+        rng = r2;
+        if (coin < 0.004 && state.players.length > 2) {
+          // A player's reconnect grace period runs out.
+          state = removePlayer(state, state.players[Math.floor(pick * state.players.length)]!.id).state;
+          removals++;
+        } else {
+          // A timer runs out for whoever the game waits on, or they pick a random legal move.
+          const pid = actors[Math.floor(pick * actors.length)]!;
+          const auto = autoIntent(state, pid);
+          invariant(auto !== null, `seed ${seed}: no automatic intent for ${pid} in phase ${state.turn.phase}`);
+          let res = applyIntent(state, pid, auto!);
+          invariant(res.ok, `seed ${seed}: automatic ${auto!.type} rejected: ${res.ok ? '' : res.error}`);
+          if (coin > 0.3) {
+            const [shuffled, r3] = shuffle(candidateIntents(state, pid), rng);
+            rng = r3;
+            const legal = shuffled.map((i) => applyIntent(state, pid, i)).find((r) => r.ok);
+            if (legal) res = legal;
+          }
+          if (res.ok) state = res.state;
+        }
+        checkInvariants(state, seed);
+      }
+    }
+    expect(removals).toBeGreaterThan(0);
   }, 120_000);
 });

@@ -28,5 +28,10 @@ export function CardFace({ id, activeColor, className }: CardFaceProps) {
       return <RentFace card={card} label={label} className={className} />;
     case 'action':
       return <ActionFace card={card} label={label} className={className} />;
+    default: {
+      // A new card type must get a face here; this stops the build until it does.
+      const unhandled: never = card;
+      throw new Error(`No face for card ${(unhandled as { id: string }).id}`);
+    }
   }
 }

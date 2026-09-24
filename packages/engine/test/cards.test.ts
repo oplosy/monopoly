@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CARDS, CARD_BY_ID, COLORS, COLOR_KEYS } from '../src/cards';
+import { CARDS, CARD_BY_ID, COLORS, COLOR_KEYS, MULTICOLOR_WILD_TEXT, rentRuleText } from '../src/cards';
 
 describe('deck composition', () => {
   it('has 106 unique cards', () => {
@@ -59,5 +59,20 @@ describe('deck composition', () => {
     ]) {
       expect(CARD_BY_ID.has(id)).toBe(true);
     }
+  });
+});
+
+describe('rule text', () => {
+  it('describes every rent card by who pays and for which colors', () => {
+    for (const c of CARDS) {
+      if (c.type !== 'rent') continue;
+      const text = rentRuleText(c);
+      if (c.any) expect(text).toMatch(/^One player of your choice pays/);
+      else for (const color of c.colors) expect(text).toContain(COLORS[color].name);
+    }
+  });
+
+  it('says the multicolor wildcard cannot pay debts', () => {
+    expect(MULTICOLOR_WILD_TEXT).toMatch(/can.t pay debts/);
   });
 });

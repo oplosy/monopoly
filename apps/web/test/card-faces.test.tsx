@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { ACTIONS, CARDS, COLORS, PROPERTY_NAMES, type ActionKind } from '@deal-city/engine';
+import { ACTIONS, CARDS, COLORS, PROPERTY_NAMES, rentRuleText, type ActionKind } from '@deal-city/engine';
 import { CardBack } from '../src/cards/CardBack';
 import { CardFace, type CardFaceProps } from '../src/cards/CardFace';
+import { MoneyFace } from '../src/cards/faces/MoneyFace';
 import { slicePath } from '../src/cards/faces/RentFace';
 import { cardLabel } from '../src/cards/labels';
-import { EFFECT_WRAP, NAME_WRAP, TITLE_WRAP, wrapLines } from '../src/cards/text';
+import { EFFECT_WRAP, NAME_WRAP, RENT_WRAP, TITLE_WRAP, wrapLines } from '../src/cards/text';
 import { MONEY_TINTS } from '../src/cards/theme';
 
 /** React escapes attribute text; mirror it to compare labels. */
@@ -152,6 +153,17 @@ describe('CardBack', () => {
   });
 });
 
+describe('money art coverage', () => {
+  it('has a tint for every denomination in the deck', () => {
+    for (const c of CARDS) if (c.type === 'money') expect(MONEY_TINTS[c.value], c.id).toBeDefined();
+  });
+
+  it('refuses a denomination it has no tint for instead of drawing it as 1M', () => {
+    const card = { id: 'money-7-1', type: 'money', value: 7 } as const;
+    expect(() => renderToStaticMarkup(<MoneyFace card={card} label="7M" />)).toThrow('No tint for 7M');
+  });
+});
+
 describe('the whole deck', () => {
   it('renders all 106 cards', () => {
     for (const c of CARDS) {
@@ -161,11 +173,25 @@ describe('the whole deck', () => {
   });
 
   it('all generated text fits its line budget', () => {
-    for (const names of Object.values(PROPERTY_NAMES)) for (const n of names) expect(wrapLines(n, NAME_WRAP).length, n).toBeLessThanOrEqual(2);
+    /** At most `lines` lines, none longer than the budget (an over-long word gets a line of its own). */
+    const fits = (text: string, budget: number, lines: number) => {
+      const wrapped = wrapLines(text, budget);
+      expect(wrapped.length, text).toBeLessThanOrEqual(lines);
+      for (const line of wrapped) expect(line.length, line).toBeLessThanOrEqual(budget);
+    };
+    for (const names of Object.values(PROPERTY_NAMES)) for (const n of names) fits(n, NAME_WRAP, 2);
     for (const a of Object.values(ACTIONS)) {
-      expect(wrapLines(a.name, TITLE_WRAP).length, a.name).toBeLessThanOrEqual(2);
-      expect(wrapLines(a.text, EFFECT_WRAP).length, a.text).toBeLessThanOrEqual(4);
-      for (const line of wrapLines(a.text, EFFECT_WRAP)) expect(line.length, line).toBeLessThanOrEqual(EFFECT_WRAP);
+      fits(a.name, TITLE_WRAP, 2);
+      fits(a.text, EFFECT_WRAP, 4);
+    }
+    for (const c of CARDS) if (c.type === 'rent') fits(rentRuleText(c), RENT_WRAP, 4);
+  });
+
+  it('prints the engine rule text on rent cards', () => {
+    for (const c of CARDS) {
+      if (c.type !== 'rent') continue;
+      const html = render({ id: c.id });
+      for (const line of wrapLines(rentRuleText(c), RENT_WRAP)) expect(html, c.id).toContain(esc(line));
     }
   });
 });

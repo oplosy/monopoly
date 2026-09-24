@@ -2,7 +2,7 @@ import { ACTIONS } from '@deal-city/engine';
 import { ACTION_ICONS } from '../icons';
 import { CardSvg, Lines, ValueBadge, W, type FaceProps } from '../parts';
 import { EFFECT_WRAP, TITLE_WRAP, wrapLines } from '../text';
-import { ACTION_FAMILY, FAMILY_COLORS, FONT_DISPLAY, INK, inkOn } from '../theme';
+import { ACTION_FAMILY, FAMILY_COLORS, FONT_DISPLAY, INK, inkOn, labelOn } from '../theme';
 
 /** Action: family-colored header, icon medallion, effect text. */
 export function ActionFace({ card, label, className }: FaceProps<'action'>) {
@@ -14,7 +14,7 @@ export function ActionFace({ card, label, className }: FaceProps<'action'>) {
   return (
     <CardSvg label={label} className={className}>
       <rect width={W} height={96} fill={family.band} />
-      <text x={W / 2} y={24} textAnchor="middle" fontFamily={FONT_DISPLAY} fontSize={9} letterSpacing={3} fill={on} opacity={0.85}>
+      <text x={W / 2} y={24} textAnchor="middle" fontFamily={FONT_DISPLAY} fontSize={9} letterSpacing={3} fill={labelOn(family.band)}>
         ACTION
       </text>
       <Lines lines={title} x={W / 2} y={title.length === 1 ? 62 : 52} lineHeight={24} textAnchor="middle" fontFamily={FONT_DISPLAY} fontWeight={800} fontSize={22} fill={on} />

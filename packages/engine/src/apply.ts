@@ -40,16 +40,17 @@ export type ApplyResult =
 export function applyIntent(state: GameState, playerId: string, intent: Intent): ApplyResult {
   if (state.winner) return { ok: false, error: 'gameOver' };
   if (!state.players.some((p) => p.id === playerId)) return { ok: false, error: 'unknownPlayer' };
-  const handler = HANDLERS[intent.type] as Handler<Intent['type']> | undefined;
+  // Own keys only: a type such as "constructor" must not reach Object.prototype.
+  const handler = Object.hasOwn(HANDLERS, intent.type) ? (HANDLERS[intent.type] as Handler<Intent['type']>) : undefined;
   if (!handler) return { ok: false, error: 'unknownIntent' };
   const ctx: Ctx = { s: cloneState(state), events: [] };
   try {
     handler(ctx, playerId, intent);
+    if (ctx.s.turn.phase === 'play') checkWin(ctx);
   } catch (err) {
     if (err instanceof RuleError) return { ok: false, error: err.code };
     throw err;
   }
-  if (ctx.s.turn.phase === 'play') checkWin(ctx);
   ctx.s.version += 1;
   return { ok: true, state: ctx.s, events: ctx.events };
 }

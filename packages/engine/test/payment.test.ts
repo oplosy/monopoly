@@ -104,3 +104,18 @@ describe('buildings in payment', () => {
     expect(validatePayment(b, pay, 4)).toBeNull();
   });
 });
+
+describe('autoPayment keeps complete sets when it can', () => {
+  it('pays with a building before breaking up its full set', () => {
+    const p = player(makeState({ players: [{ id: 'a', groups: [{ color: 'green', cards: ['prop-green-1', 'prop-green-2', 'prop-green-3'], house: 'act-house-1' }] }, { id: 'b' }] }), 'a');
+    expect(autoPayment(p, 3)).toEqual(['act-house-1']);
+  });
+
+  it('pays the Hotel before its House', () => {
+    const p = player(
+      makeState({ players: [{ id: 'a', groups: [{ color: 'green', cards: ['prop-green-1', 'prop-green-2', 'prop-green-3'], house: 'act-house-1', hotel: 'act-hotel-1' }] }, { id: 'b' }] }),
+      'a',
+    );
+    expect(autoPayment(p, 4)).toEqual(['act-hotel-1']);
+  });
+});

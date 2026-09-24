@@ -42,6 +42,15 @@ describe('sanitizeNickname', () => {
     expect(sanitizeNickname('  Ann   Lee ')).toBe('Ann Lee');
     expect(sanitizeNickname('Bo\u0000b​')).toBe('Bob');
   });
+  it('counts characters as people see them, not UTF-16 units', () => {
+    expect(sanitizeNickname('😀'.repeat(16))).toBe('😀'.repeat(16));
+    expect(sanitizeNickname('😀'.repeat(17))).toBeNull();
+    expect(sanitizeNickname('José')).toBe('José');
+  });
+  it('strips private-use and unassigned characters and caps stacked accents', () => {
+    expect(sanitizeNickname('Ann͸')).toBe('Ann');
+    expect(sanitizeNickname(`A${'́'.repeat(40)}`)).toBe('Á́'.normalize('NFC'));
+  });
   it('enforces 1-16 characters', () => {
     expect(sanitizeNickname('   ')).toBeNull();
     expect(sanitizeNickname('x'.repeat(17))).toBeNull();
@@ -58,5 +67,14 @@ describe('createRateLimiter', () => {
     expect(allow()).toBe(false);
     t = 1000;
     expect(allow()).toBe(true);
+  });
+  it('never allows more than `limit` calls in any window, even across a boundary', () => {
+    let t = 0;
+    const allow = createRateLimiter(3, 1000, () => t);
+    expect(allow()).toBe(true);
+    t = 999;
+    expect([allow(), allow(), allow()]).toEqual([true, true, false]);
+    t = 1000;
+    expect([allow(), allow()]).toEqual([true, false]);
   });
 });

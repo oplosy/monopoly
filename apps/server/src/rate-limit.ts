@@ -1,14 +1,14 @@
-/** Fixed-window limiter: returns true while fewer than `limit` calls happened in the current window. */
+/**
+ * Sliding-window limiter: returns true while fewer than `limit` calls were allowed in the last
+ * `windowMs`. Unlike a fixed window, a burst straddling a window boundary cannot double the rate.
+ */
 export function createRateLimiter(limit: number, windowMs = 1000, now: () => number = Date.now): () => boolean {
-  let windowStart = now();
-  let count = 0;
+  const allowed: number[] = [];
   return () => {
     const t = now();
-    if (t - windowStart >= windowMs) {
-      windowStart = t;
-      count = 0;
-    }
-    count += 1;
-    return count <= limit;
+    while (allowed.length > 0 && t - allowed[0]! >= windowMs) allowed.shift();
+    if (allowed.length >= limit) return false;
+    allowed.push(t);
+    return true;
   };
 }

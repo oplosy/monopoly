@@ -1,4 +1,4 @@
-import { COLORS, COLOR_KEYS, type Color } from '@deal-city/engine';
+import { COLORS, COLOR_KEYS, MULTICOLOR_WILD_TEXT, type Color } from '@deal-city/engine';
 import { CardSvg, GlyphChip, H, RentLadder, ValueBadge, W, type FaceProps } from '../parts';
 import { round2 } from '../text';
 import { FONT_DISPLAY, INK, MUTED, PAPER, inkOn } from '../theme';
@@ -11,7 +11,7 @@ function WildHalf({ color, value }: { color: Color; value: number }) {
   return (
     <g>
       <rect width={W} height={58} fill={info.hex} />
-      <text x={W / 2} y={36} textAnchor="middle" fontFamily={FONT_DISPLAY} fontWeight={800} fontSize={18} letterSpacing={2} fill={on}>
+      <text x={W / 2} y={36} textAnchor="middle" fontFamily={FONT_DISPLAY} fontWeight={800} fontSize={19} letterSpacing={2} fill={on}>
         {info.name.toUpperCase()}
       </text>
       <GlyphChip glyph={info.glyph} x={206} y={29} />
@@ -57,7 +57,7 @@ function MultiColorWild({ label, className, activeColor }: WildProps) {
         Any color
       </text>
       <text x={W / 2} y={172} textAnchor="middle" fontFamily={FONT_DISPLAY} fontSize={12} fill={MUTED}>
-        No cash value · can’t pay debts
+        {MULTICOLOR_WILD_TEXT}
       </text>
       {COLOR_KEYS.map((c, i) => {
         const angle = (i / COLOR_KEYS.length) * 2 * Math.PI - Math.PI / 2;

@@ -3,7 +3,8 @@ import { FONT_DISPLAY, FONT_NUM, MONEY_TINTS } from '../theme';
 
 /** Banknote: denomination tint, guilloché rosette, big numeral. */
 export function MoneyFace({ card, label, className }: FaceProps<'money'>) {
-  const tint = MONEY_TINTS[card.value] ?? MONEY_TINTS[1]!;
+  const tint = MONEY_TINTS[card.value];
+  if (!tint) throw new Error(`No tint for ${card.value}M money`);
   return (
     <CardSvg label={label} className={className}>
       <rect x={10} y={10} width={W - 20} height={H - 20} rx={9} fill={tint.fill} />
