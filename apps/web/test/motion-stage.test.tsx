@@ -78,4 +78,16 @@ describe('MotionStage', () => {
       animations.restore();
     }
   });
+
+  it('plays nothing that arrives while the page is hidden, so coming back finds the table ready', () => {
+    const animations = stubAnimations();
+    try {
+      const store = mount({ game: payload(s0(), 'p1') });
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+      act(() => store.setState({ game: banked() }));
+      expect(screen.getByText('v1 idle')).toBeInTheDocument();
+    } finally {
+      animations.restore();
+    }
+  });
 });
