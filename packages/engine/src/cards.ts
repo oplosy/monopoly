@@ -112,3 +112,13 @@ function buildDeck(): CardDef[] {
 
 export const CARDS: readonly CardDef[] = buildDeck();
 export const CARD_BY_ID: ReadonlyMap<string, CardDef> = new Map(CARDS.map((c) => [c.id, c]));
+
+/** Rule text printed on a rent card. */
+export function rentRuleText(card: Extract<CardDef, { type: 'rent' }>): string {
+  return card.any
+    ? 'One player of your choice pays you rent for properties you own in any one color.'
+    : `Every other player pays you rent for your ${card.colors.map((c) => COLORS[c].name).join(' or ')} properties.`;
+}
+
+/** Rule text printed on the multicolor property wildcard. */
+export const MULTICOLOR_WILD_TEXT = 'No cash value · can’t pay debts';

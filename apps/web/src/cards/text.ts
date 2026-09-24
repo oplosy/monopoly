@@ -23,3 +23,4 @@ export function round2(n: number): number {
 export const NAME_WRAP = 14;
 export const TITLE_WRAP = 13;
 export const EFFECT_WRAP = 28;
+export const RENT_WRAP = 30;
