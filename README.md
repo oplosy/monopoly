@@ -70,7 +70,12 @@ The server reads these environment variables:
 | `WEB_DIST` | `apps/web/dist` | Built web app to serve (set in the Docker image) |
 | `NODE_ENV` | | `test` lets clients choose the deck seed. Never set it to `test` in production. |
 
-docker compose also reads `DOMAIN` (default `localhost`), `HTTP_PORT` (default `80`) and `HTTPS_PORT` (default `443`).
+With docker compose, put any of these in a `.env` file next to `docker-compose.yml`. Compose passes that file to the server, and also reads `DOMAIN` (default `localhost`), `HTTP_PORT` (default `80`) and `HTTPS_PORT` (default `443`) from it. For example:
+
+```
+DOMAIN=cards.example.com
+TURN_MS=90000
+```
 
 ## Project layout
 

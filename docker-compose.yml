@@ -3,6 +3,10 @@ services:
     build: .
     image: deal-city
     restart: unless-stopped
+    # Server settings (TURN_MS, MAX_ROOMS, ...) come from an optional .env file next to this one.
+    env_file:
+      - path: .env
+        required: false
     # Only Caddy is published; the app listens on 3000 inside the compose network.
     expose:
       - "3000"
