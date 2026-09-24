@@ -51,7 +51,8 @@ export function TableCard({ id, zone, owner, activeColor, style, rotation = 0, d
       aria-pressed={pressed}
       aria-disabled={busy || undefined}
       onClick={(e) => {
-        if (busy || drag?.consumeClick(id)) return;
+        // A pointer click has a detail (the click count); Enter and Space do not.
+        if (busy || drag?.consumeClick(id, e.detail > 0)) return;
         if (!onActivate) return inspect.toggle(card, e.currentTarget);
         inspect.hide();
         onActivate();

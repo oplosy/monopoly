@@ -37,8 +37,11 @@ export interface DragApi {
   x: MotionValue<number>;
   y: MotionValue<number>;
   handlers(card: string): DragHandlers;
-  /** True once, for the click that ends a drag: it must not also open the card's popover. */
-  consumeClick(card: string): boolean;
+  /**
+   * True once, for the pointer click that ends a drag: it must not also open the card's popover.
+   * A keyboard click (`pointer` false) is never swallowed, and it ends the wait for that pointer click.
+   */
+  consumeClick(card: string, pointer: boolean): boolean;
   /** Ends a held or landing drag: the table changed, or the choice was cancelled. */
   clear(): void;
   /** The play of a held drop went out: the card keeps waiting where it was dropped, so it flies from there. */
@@ -109,10 +112,10 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
       state,
       x,
       y,
-      consumeClick(card) {
+      consumeClick(card, pointer) {
         if (swallow.current !== card) return false;
         swallow.current = null;
-        return true;
+        return pointer;
       },
       clear() {
         if (live.current && live.current.phase !== 'dragging') update(null);

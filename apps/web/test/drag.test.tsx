@@ -24,8 +24,8 @@ function dragAway(card: HTMLElement): void {
 }
 function release(card: HTMLElement): void {
   fireEvent.pointerUp(card, { ...mouse, clientX: 140, clientY: 300 });
-  // A real pointer clicks the card it pressed once the drag ends.
-  fireEvent.click(card);
+  // A real pointer clicks the card it pressed once the drag ends (a pointer click has a detail).
+  fireEvent.click(card, { detail: 1 });
 }
 const handCard = (name: RegExp) => within(screen.getByRole('list', { name: /^Your hand/ })).getByRole('button', { name });
 const tableWith = (hand: string[], opponent: Parameters<typeof play>[0]['players'][number] = { id: 'p2' }) =>
@@ -135,5 +135,16 @@ describe('drag and drop', () => {
     if (!r.ok) throw new Error(r.error);
     act(() => store.setState({ game: payload(r.state, 'p1', { events: r.events }) }));
     expect(document.querySelector('.drag-ghost')).toBeNull();
+  });
+
+  it('opens the card from the keyboard after a drag whose closing click never came', () => {
+    renderTabletop({ state: tableWith(['money-2-1']) });
+    under(null);
+    const card = handCard(/^2M money/);
+    dragAway(card);
+    fireEvent.pointerUp(card, { ...mouse, clientX: 140, clientY: 300 });
+    // Enter on the focused card: a keyboard click has no detail.
+    fireEvent.click(card, { detail: 0 });
+    expect(screen.getByRole('dialog', { name: /^Play / })).toBeInTheDocument();
   });
 });
