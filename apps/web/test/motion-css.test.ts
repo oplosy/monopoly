@@ -47,4 +47,8 @@ describe('motion.css', () => {
     expect(reduced.outside).toMatch(/\.end-turn\[aria-disabled='true'\]/);
     expect(reduced.outside).toMatch(/\.tray-actions button\[aria-disabled='true'\]/);
   });
+
+  it('keeps the red pulse going under the last-seconds shake', () => {
+    expect(moving.inside).toMatch(/\.timer-ring\.is-critical\s*\{\s*animation:\s*ring-pulse[^;]*,\s*ring-shake/);
+  });
 });
