@@ -7,6 +7,7 @@ import { useAnchor } from '../motion/anchor-context';
 import { useCountUp } from '../motion/stage-context';
 import { fanLayout } from '../scene/geometry';
 import { useProjected } from '../scene/projection';
+import { dropClass, useDropState } from './drag';
 import { useTableInteraction } from './interaction';
 
 /** At most this many card backs are drawn next to an opponent. */
@@ -36,6 +37,7 @@ export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, 
   const pick = useTableInteraction().player(playerId);
   const shown = useCountUp(Math.max(0, shownCount ?? handCount));
   const frame = useAnchor<HTMLSpanElement>(`seat:${playerId}`);
+  const dropState = useDropState(isMe ? null : `player:${playerId}`);
   const face = (
     <span ref={frame} className="avatar-frame">
       <Avatar index={avatar} className="avatar-svg" />
@@ -49,8 +51,9 @@ export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, 
   return (
     <div
       role="group"
+      data-drop={isMe ? undefined : `player:${playerId}`}
       aria-label={`${isMe ? 'Your seat' : `${name}'s seat`}${active ? ', playing now' : ''}`}
-      className={['seat', isMe && 'is-me', active && 'is-active', pick.target && 'is-target', !connected && 'is-offline']
+      className={['seat', isMe && 'is-me', active && 'is-active', pick.target && 'is-target', !connected && 'is-offline', dropClass(dropState)]
         .filter(Boolean)
         .join(' ')}
       // A rim point can fall off a narrow screen; the seat stays inside it.

@@ -5,6 +5,7 @@ import { cardName, plural } from '../game/log';
 import { useAnchor } from '../motion/anchor-context';
 import { useCountShift, useCountUp } from '../motion/stage-context';
 import { discardJitter } from '../scene/geometry';
+import { dropClass, useDropState } from './drag';
 import { TableCard } from './TableCard';
 
 /** How many discards stay visible in the messy pile. */
@@ -19,6 +20,7 @@ export function CenterPiles({ view, activeAngle }: { view: GameView; activeAngle
   const center = useAnchor<HTMLElement>('center');
   const deck = useAnchor<HTMLDivElement>('deck');
   const discard = useAnchor<HTMLDivElement>('discard');
+  const dropState = useDropState('center');
   // The deck still counts cards that have not left it yet.
   const deckCount = useCountUp(view.deckCount + useCountShift('deck'));
   const top = view.discard.at(-1);
@@ -27,7 +29,7 @@ export function CenterPiles({ view, activeAngle }: { view: GameView; activeAngle
   if (turn.current === null) turn.current = target;
   else turn.current += (((target - turn.current) % 360) + 360) % 360;
   return (
-    <section ref={center} className="center-piles" aria-label="Table center">
+    <section ref={center} className={['center-piles', dropClass(dropState)].filter(Boolean).join(' ')} data-drop="center" aria-label="Table center">
       <div className="turn-ring" aria-hidden="true" style={{ '--turn': `${turn.current}deg` } as CSSProperties}>
         {activeAngle !== null && <span className="turn-wedge" />}
       </div>

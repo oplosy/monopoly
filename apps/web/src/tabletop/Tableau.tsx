@@ -4,6 +4,7 @@ import { useAnchor } from '../motion/anchor-context';
 import { useCountUp, useStaged, useStageEffect } from '../motion/stage-context';
 import { discardJitter, type PlanePoint } from '../scene/geometry';
 import { useTableInteraction } from './interaction';
+import { dropClass, useDropState } from './drag';
 import { TableCard } from './TableCard';
 
 interface Props {
@@ -26,20 +27,29 @@ export function Tableau({ player, name, isMe, at }: Props) {
   const shownTotal = useCountUp(totalValue(player.bank.filter(landed)));
   const area = useAnchor<HTMLElement>(`tableau:${player.id}`);
   const bank = useAnchor<HTMLDivElement>(`bank:${player.id}`);
+  const areaDrop = isMe ? 'table' : `player:${player.id}`;
+  const areaState = useDropState(areaDrop);
+  const bankState = useDropState(isMe ? 'bank' : null);
   return (
     <section
       ref={area}
-      className={`tableau ${isMe ? 'is-mine' : ''}`}
+      className={['tableau', isMe && 'is-mine', dropClass(areaState)].filter(Boolean).join(' ')}
+      data-drop={areaDrop}
       style={{ left: `${at.x}%`, top: `${at.y}%` }}
       aria-label={isMe ? 'Your area' : `${name}'s area`}
     >
       <div className="tableau-groups">
         {groups.map((g) => (
-          <GroupStack key={g.id} group={g} owner={player.id} whose={isMe ? 'your' : `${name}'s`} />
+          <GroupStack key={g.id} group={g} owner={player.id} mine={isMe} whose={isMe ? 'your' : `${name}'s`} />
         ))}
         {groups.length === 0 && <p className="tableau-empty">No properties yet</p>}
       </div>
-      <div ref={bank} className="bank-pile" role="group" aria-label={`${isMe ? 'Your' : `${name}'s`} bank, ${total}M`}>
+      <div
+        ref={bank}
+        className={['bank-pile', dropClass(bankState)].filter(Boolean).join(' ')}
+        data-drop={isMe ? 'bank' : undefined}
+        role="group"
+        aria-label={`${isMe ? 'Your' : `${name}'s`} bank, ${total}M`}>
         <span className="bank-total" aria-hidden="true">{`${shownTotal}M`}</span>
         {player.bank.map((id) => {
           const rotate = discardJitter(id).rotate / 3;
@@ -51,7 +61,7 @@ export function Tableau({ player, name, isMe, at }: Props) {
   );
 }
 
-function GroupStack({ group, owner, whose }: { group: PropertyGroup; owner: string; whose: string }) {
+function GroupStack({ group, owner, mine, whose }: { group: PropertyGroup; owner: string; mine: boolean; whose: string }) {
   const info = COLORS[group.color];
   const complete = isComplete(group);
   const celebrating = useStageEffect(`group:${group.id}`) !== null;
@@ -61,16 +71,18 @@ function GroupStack({ group, owner, whose }: { group: PropertyGroup; owner: stri
   const pick = useTableInteraction().group(group.id, owner);
   const buildings = [group.house, group.hotel].filter((id): id is string => id !== null);
   const anchor = useAnchor<HTMLDivElement>(`group:${group.id}`);
+  const dropState = useDropState(`group:${group.id}`);
   return (
     <div
       ref={anchor}
       role="group"
+      data-drop={`group:${group.id}`}
       aria-label={`${info.name} group, ${group.cards.length} of ${info.setSize}${complete ? ', complete' : ''}`}
-      className={['group-stack', looksComplete && 'is-complete', celebrating && 'is-celebrating', pick.target && 'is-target'].filter(Boolean).join(' ')}
+      className={['group-stack', looksComplete && 'is-complete', celebrating && 'is-celebrating', pick.target && 'is-target', dropClass(dropState)].filter(Boolean).join(' ')}
       style={{ '--band': info.hex } as CSSProperties}
     >
       {group.cards.map((id) => (
-        <TableCard key={id} id={id} zone="tableau" owner={owner} activeColor={group.color} />
+        <TableCard key={id} id={id} zone="tableau" owner={owner} activeColor={group.color} drop={mine ? undefined : `card:${id}`} />
       ))}
       {buildings.map((id) => (
         <TableCard key={id} id={id} zone="tableau" owner={owner} />

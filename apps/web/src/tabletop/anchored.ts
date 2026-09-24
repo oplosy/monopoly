@@ -7,6 +7,16 @@ export interface Box {
   bottom: number;
 }
 
+/** Anything with a screen box: an element, or a point (where a card was dropped). */
+export interface AnchorLike {
+  getBoundingClientRect(): Box;
+}
+
+/** A zero-size anchor at a screen point. */
+export function pointAnchor(at: { x: number; y: number }): AnchorLike {
+  return { getBoundingClientRect: () => ({ left: at.x, top: at.y, right: at.x, bottom: at.y }) };
+}
+
 export interface Placement {
   left: number;
   top: number;
@@ -40,7 +50,7 @@ export function placeBeside(
 }
 
 /** Keeps the element in `ref` placed beside `anchor` (in viewport coordinates, for position: fixed). */
-export function useAnchoredPosition(anchor: Element | null, ref: RefObject<HTMLElement | null>): Placement {
+export function useAnchoredPosition(anchor: AnchorLike | null, ref: RefObject<HTMLElement | null>): Placement {
   const [place, setPlace] = useState<Placement>({ left: MARGIN, top: MARGIN, side: 'above' });
   useLayoutEffect(() => {
     const el = ref.current;
