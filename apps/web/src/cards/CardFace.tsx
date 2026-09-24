@@ -16,7 +16,7 @@ export interface CardFaceProps {
 /** Draws any of the 106 cards from its engine definition. Throws RuleError('unknownCard') for bad ids. */
 export function CardFace({ id, activeColor, className }: CardFaceProps) {
   const card = getCard(id);
-  const label = cardLabel(id);
+  const label = cardLabel(id, activeColor);
   switch (card.type) {
     case 'money':
       return <MoneyFace card={card} label={label} className={className} />;

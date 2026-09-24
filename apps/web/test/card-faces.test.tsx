@@ -81,6 +81,12 @@ describe('WildFace', () => {
     expect(render({ id: 'wild-pink-orange-1', activeColor: 'pink' })).toContain('data-flipped="false"');
   });
 
+  it('labels a wildcard with its active color', () => {
+    const html = render({ id: 'wild-pink-orange-1', activeColor: 'orange' });
+    expect(html).toContain(`aria-label="${esc(cardLabel('wild-pink-orange-1', 'orange'))}"`);
+    expect(html).toContain('currently Orange');
+  });
+
   it('keeps the WILD pill outside the flipped group so it always reads upright', () => {
     const html = render({ id: 'wild-pink-orange-1', activeColor: 'orange' });
     // Walk <g> nesting from the flipped group's opening tag to its matching close.

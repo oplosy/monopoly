@@ -46,4 +46,10 @@ describe('cardLabel', () => {
     expect(cardLabel('rent-any-1')).toBe('Wild rent, any color, worth 3M');
     expect(cardLabel('act-passGo-1')).toBe('Payday, action, worth 1M');
   });
+
+  it("names a wildcard's current color when it has one", () => {
+    expect(cardLabel('wild-pink-orange-1', 'orange')).toBe('Property wildcard, Pink or Orange, worth 2M, currently Orange');
+    expect(cardLabel('wild-any-1', 'green')).toBe('Property wildcard, any color, no cash value, currently Green');
+    expect(cardLabel('prop-red-1', 'red')).toBe('Crimson Plaza, Red property, worth 3M');
+  });
 });
