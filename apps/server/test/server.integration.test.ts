@@ -190,5 +190,16 @@ describe('server', () => {
     await b.emitWithAck('room:join', { code: ra.code, nickname: 'Bob' });
     expect((await seen).seats[0]).toMatchObject({ playerId: 'p1', connected: true });
   });
-});
 
+  it('lets a lobby player pick a free character and tells the room', async () => {
+    const { a, b } = await threePlayerRoom();
+    // The defaults for p1, p2 and p3 are 10, 11 and 0, so 4 is free.
+    const seen = waitRoom(b, (s) => s.seats[0]!.avatar === 4);
+    expect(await a.emitWithAck('room:avatar', { avatar: 4 })).toEqual({ ok: true });
+    await seen;
+    expect(await b.emitWithAck('room:avatar', { avatar: 4 })).toEqual({ ok: false, error: 'avatarTaken' });
+    expect(await b.emitWithAck('room:avatar', { avatar: 12 })).toEqual({ ok: false, error: 'badRequest' });
+    const d = await client();
+    expect(await d.emitWithAck('room:avatar', { avatar: 3 })).toEqual({ ok: false, error: 'noSession' });
+  });
+});

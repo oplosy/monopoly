@@ -3,9 +3,10 @@ import {
   type GameEvent, type GameState, type Intent,
 } from '@deal-city/engine';
 import {
-  MAX_SEATS, MIN_PLAYERS,
+  AVATAR_COUNT, MAX_SEATS, MIN_PLAYERS,
   type Ack, type Deadlines, type GameStatePayload, type RoomState, type RoomStatus,
 } from '@deal-city/protocol';
+import { defaultAvatar } from './avatar';
 import type { Config } from './config';
 import { gameSeed, sessionToken } from './ids';
 
@@ -35,6 +36,7 @@ export interface RoomHooks {
 interface Seat {
   playerId: string;
   nickname: string;
+  avatar: number;
   token: string;
   conn: Connection | null;
   graceTimer: Timer | null;
@@ -80,7 +82,9 @@ export class Room {
   join(nickname: string): Ack<{ playerId: string; token: string }> {
     if (this.status !== 'lobby') return { ok: false, error: 'gameInProgress' };
     if (this.seats.length >= MAX_SEATS) return { ok: false, error: 'roomFull' };
-    const seat: Seat = { playerId: `p${this.nextSeat++}`, nickname, token: sessionToken(), conn: null, graceTimer: null };
+    const playerId = `p${this.nextSeat++}`;
+    const avatar = defaultAvatar(playerId, new Set(this.seats.map((s) => s.avatar)));
+    const seat: Seat = { playerId, nickname, avatar, token: sessionToken(), conn: null, graceTimer: null };
     seat.graceTimer = setTimeout(() => this.safely(() => this.dropSeat(seat.playerId)), this.config.graceMs);
     this.seats.push(seat);
     this.hostId ??= seat.playerId;
@@ -148,6 +152,20 @@ export class Room {
     return { ok: true };
   }
 
+  /** Picks a character in the lobby; characters are unique within the room. */
+  setAvatar(playerId: string, avatar: number): Ack {
+    const seat = this.seat(playerId);
+    if (!seat) return { ok: false, error: 'noSession' };
+    if (!Number.isInteger(avatar) || avatar < 0 || avatar >= AVATAR_COUNT) return { ok: false, error: 'badRequest' };
+    if (this.status !== 'lobby') return { ok: false, error: 'notInLobby' };
+    if (this.seats.some((s) => s !== seat && s.avatar === avatar)) return { ok: false, error: 'avatarTaken' };
+    if (seat.avatar !== avatar) {
+      seat.avatar = avatar;
+      this.broadcastRoom();
+    }
+    return { ok: true };
+  }
+
   seatByToken(token: string): string | null {
     return this.seats.find((s) => s.token === token)?.playerId ?? null;
   }
@@ -161,7 +179,7 @@ export class Room {
       code: this.code,
       status: this.status,
       hostId: this.hostId,
-      seats: this.seats.map((s) => ({ playerId: s.playerId, nickname: s.nickname, connected: s.conn !== null })),
+      seats: this.seats.map((s) => ({ playerId: s.playerId, nickname: s.nickname, connected: s.conn !== null, avatar: s.avatar })),
     };
   }
 
