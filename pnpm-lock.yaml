@@ -88,6 +88,9 @@ importers:
         specifier: ^5
         version: 5.0.15(@types/react@19.3.0)(react@19.3.0)
     devDependencies:
+      '@deal-city/server':
+        specifier: workspace:^
+        version: link:../server
       '@testing-library/dom':
         specifier: ^10.4.2
         version: 10.4.2

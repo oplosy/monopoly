@@ -21,6 +21,7 @@
     "zustand": "^5"
   },
   "devDependencies": {
+    "@deal-city/server": "workspace:^",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
