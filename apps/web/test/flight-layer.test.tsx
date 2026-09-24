@@ -2,7 +2,7 @@
 import { render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { FlightLayer } from '../src/motion/FlightLayer';
-import { flightKeyframes, REVEAL_KEYFRAMES } from '../src/motion/keyframes';
+import { flightKeyframes, REVEAL_KEYFRAMES, revealKeyframes } from '../src/motion/keyframes';
 import type { Pose } from '../src/motion/pose';
 import type { Clone } from '../src/motion/stage';
 import { StageProvider } from '../src/motion/stage-context';
@@ -45,6 +45,13 @@ describe('FlightLayer', () => {
     expect(animations.calls[1]!.keyframes).toEqual(REVEAL_KEYFRAMES);
     expect(document.querySelector('svg[aria-label="Card back"]')).not.toBeNull();
     expect(document.querySelector('svg[aria-label="5M money"]')).not.toBeNull();
+  });
+
+  it("shows an opponent's action card face-up by the time it pauses at the center", () => {
+    layer([clone({ face: 'reveal', style: 'action' })]);
+    expect(animations.calls[0]!.options).toMatchObject({ easing: 'linear' });
+    expect(animations.calls[1]!.keyframes).toEqual(revealKeyframes('action'));
+    expect(animations.calls[1]!.options).toMatchObject({ easing: 'linear' });
   });
 
   it('keeps a face-down card a back', () => {

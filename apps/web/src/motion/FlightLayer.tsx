@@ -3,7 +3,7 @@ import { CardBack } from '../cards/CardBack';
 import { CardFace } from '../cards/CardFace';
 import { useAnchorRegistry } from './anchor-context';
 import { celebrate } from './confetti';
-import { EASE, flightKeyframes, poseTransform, REVEAL_KEYFRAMES } from './keyframes';
+import { flightEasing, flightKeyframes, poseTransform, revealKeyframes } from './keyframes';
 import type { Pose } from './pose';
 import type { Clone } from './stage';
 import { useStaged } from './stage-context';
@@ -35,12 +35,13 @@ function Flight({ clone }: { clone: Clone }) {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el || typeof el.animate !== 'function') return;
-    const timing: KeyframeAnimationOptions = { duration: clone.duration, delay: clone.delay, easing: EASE, fill: 'both' };
+    const easing = flightEasing(clone.style);
+    const timing: KeyframeAnimationOptions = { duration: clone.duration, delay: clone.delay, easing, fill: 'both' };
     const path = el.animate(
       flightKeyframes({ from: clone.from, to: clone.to, style: clone.style, center: clone.center, viewportWidth: window.innerWidth }),
       timing,
     );
-    const turn = clone.face === 'reveal' ? card.current?.animate(REVEAL_KEYFRAMES, { ...timing, easing: 'ease-in-out' }) : undefined;
+    const turn = clone.face === 'reveal' ? card.current?.animate(revealKeyframes(clone.style), { ...timing, easing: easing === 'linear' ? 'linear' : 'ease-in-out' }) : undefined;
     return () => {
       path.cancel();
       turn?.cancel();

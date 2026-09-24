@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flightKeyframes, poseTransform, readable, REVEAL_KEYFRAMES } from '../src/motion/keyframes';
+import { EASE, flightEasing, flightKeyframes, poseTransform, readable, REVEAL_KEYFRAMES, revealKeyframes } from '../src/motion/keyframes';
 import type { Pose } from '../src/motion/pose';
 import type { FlightStyle } from '../src/motion/scenes';
 
@@ -53,5 +53,31 @@ describe('REVEAL_KEYFRAMES', () => {
   it('shows the back first and the face by the end', () => {
     expect(REVEAL_KEYFRAMES[0]!.transform).toContain('rotateY(180deg)');
     expect(REVEAL_KEYFRAMES.at(-1)!.transform).toContain('rotateY(0deg)');
+  });
+});
+
+describe('revealKeyframes', () => {
+  it('turns an action card face-up before it pauses, readable, at the center', () => {
+    for (const style of ['action', 'slam'] as const) {
+      const faceUp = revealKeyframes(style).find((f) => String(f.transform).includes('rotateY(0deg)'))!;
+      expect(faceUp.offset, style).toBeLessThanOrEqual(0.3);
+    }
+  });
+
+  it('turns every other card over mid-flight', () => {
+    expect(revealKeyframes('slide')).toEqual(REVEAL_KEYFRAMES);
+  });
+});
+
+describe('flightEasing', () => {
+  it('runs paths with a pause on real time, easing each leg, so the pause lasts as long as its offsets say', () => {
+    for (const style of ['action', 'slam', 'float'] as const) {
+      expect(flightEasing(style), style).toBe('linear');
+      for (const frame of path(style).slice(0, -1)) expect(frame.easing, style).toBe(EASE);
+    }
+  });
+
+  it('eases a one-leg path as a whole', () => {
+    for (const style of ['slide', 'arc', 'flip', 'gather'] as const) expect(flightEasing(style), style).toBe(EASE);
   });
 });

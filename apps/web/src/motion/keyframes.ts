@@ -50,8 +50,23 @@ export interface FlightPath {
   viewportWidth: number;
 }
 
+/**
+ * The easing of a whole flight. A path that pauses (an action card read at the center, a slam, a
+ * Deal Breaker's float) runs on real time with each leg eased, so its pause lasts as long as its
+ * offsets say; a one-leg path is eased as a whole.
+ */
+export function flightEasing(style: FlightStyle): string {
+  return style === 'action' || style === 'slam' || style === 'float' ? 'linear' : EASE;
+}
+
 /** The path of each flight style (spec §6.2, §6.3). Every path ends exactly on the landing pose. */
-export function flightKeyframes({ from, to, style, center, viewportWidth }: FlightPath): Keyframe[] {
+export function flightKeyframes(path: FlightPath): Keyframe[] {
+  const frames = legs(path);
+  if (flightEasing(path.style) !== 'linear') return frames;
+  return frames.map((f, i) => (i < frames.length - 1 ? { ...f, easing: EASE } : f));
+}
+
+function legs({ from, to, style, center, viewportWidth }: FlightPath): Keyframe[] {
   const start: Keyframe = { transform: poseTransform(from) };
   const end: Keyframe = { transform: poseTransform(to) };
   // A small bounce as the card lands.
@@ -94,3 +109,16 @@ export const REVEAL_KEYFRAMES: Keyframe[] = [
   { offset: 0.75, transform: 'perspective(600px) rotateY(0deg)' },
   { transform: 'perspective(600px) rotateY(0deg)' },
 ];
+
+/** An action card is shown face-up before it pauses at the center, so the pause is readable. */
+const EARLY_REVEAL: Keyframe[] = [
+  { transform: 'perspective(600px) rotateY(180deg)' },
+  { offset: 0.05, transform: 'perspective(600px) rotateY(180deg)' },
+  { offset: 0.28, transform: 'perspective(600px) rotateY(0deg)' },
+  { transform: 'perspective(600px) rotateY(0deg)' },
+];
+
+/** How a back turns face-up in a flight of `style`. */
+export function revealKeyframes(style: FlightStyle): Keyframe[] {
+  return style === 'action' || style === 'slam' ? EARLY_REVEAL : REVEAL_KEYFRAMES;
+}
