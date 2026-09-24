@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import type { Stage, StageState } from '../src/motion/stage';
 
 export interface AnimateCall {
   el: Element;
@@ -41,4 +42,10 @@ export function reduceMotion(): { restore(): void } {
       }) as unknown as MediaQueryList,
   );
   return { restore: () => spy.mockRestore() };
+}
+
+/** A stage that always shows `patch`, for pieces rendered away from a real table. */
+export function staticStage(patch: Partial<StageState> = {}): Stage {
+  const state: StageState = { game: null, hidden: new Map(), counts: new Map(), clones: [], effects: new Map(), busy: false, ...patch };
+  return { getState: () => state, subscribe: () => () => undefined, receive: vi.fn(), committed: vi.fn(), snap: vi.fn() };
 }
