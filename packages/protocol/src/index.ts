@@ -83,6 +83,9 @@ export interface Deadlines {
   turnEndsAt: number | null;
   /** Epoch ms per player who owes a response or payment. */
   responseEndsAt: Record<string, number>;
+  /** Full length of a turn and of an answer window, so a client can show how much of a clock is left. */
+  turnMs: number;
+  responseMs: number;
 }
 
 export interface GameStatePayload {

@@ -236,6 +236,13 @@ describe('TimerRing', () => {
     expect(ring(container)).toHaveTextContent("Ann's turn, paused");
   });
 
+  it('shows the real share of time left right after a reload, when the full length is known', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(0);
+    const { container } = render(<TimerRing deadline={5_000} total={20_000} drainKey="t:p1" kind="turn" label="Ann's turn" />);
+    expect(ring(container).style.getPropertyValue('--p')).toBe('0.250');
+  });
+
   it('draws nothing before any deadline, and starts full for a new key', () => {
     vi.useFakeTimers();
     vi.setSystemTime(0);

@@ -17,16 +17,17 @@ export function secondsLeft(deadline: number | null | undefined, now: number): n
 }
 
 /**
- * How much of a countdown is left, from 1 to 0. The server sends deadlines, not durations, so the full
- * length is the longest remaining time seen under `key`. While the deadline is null (the turn clock
- * pauses for responses) the last fraction is kept. Null until a deadline has been seen for `key`.
+ * How much of a countdown is left, from 1 to 0, measured against `total` (the full length the server
+ * sends). Without it, the full length is the longest remaining time seen under `key`. While the deadline
+ * is null (the turn clock pauses for responses) the last fraction is kept. Null until a deadline has
+ * been seen for `key`.
  */
-export function useDrain(deadline: number | null, key: string, now: number): number | null {
+export function useDrain(deadline: number | null, key: string, now: number, total?: number): number | null {
   const memo = useRef<{ key: string; total: number; last: number | null }>({ key, total: 0, last: null });
   if (memo.current.key !== key) memo.current = { key, total: 0, last: null };
   if (deadline === null) return memo.current.last;
   const remaining = Math.max(0, deadline - now);
-  memo.current.total = Math.max(memo.current.total, remaining);
+  memo.current.total = Math.max(memo.current.total, total ?? 0, remaining);
   memo.current.last = memo.current.total > 0 ? remaining / memo.current.total : 0;
   return memo.current.last;
 }

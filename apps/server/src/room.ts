@@ -187,6 +187,8 @@ export class Room {
     return {
       turnEndsAt: this.turnDeadline,
       responseEndsAt: Object.fromEntries([...this.responses].map(([id, clock]) => [id, clock.at])),
+      turnMs: this.config.turnMs,
+      responseMs: this.config.responseMs,
     };
   }
 

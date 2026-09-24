@@ -147,8 +147,8 @@ function TableScene({ game }: { game: GameStatePayload }) {
   const clockFor = (id: string) => {
     const who = id === view.me ? 'Your' : `${name(id)}'s`;
     const answer = deadlines.responseEndsAt[id];
-    if (answer !== undefined) return <TimerRing deadline={answer} drainKey={`r:${id}:${answer}`} kind="response" label={`${who} answer`} />;
-    if (id === active) return <TimerRing deadline={deadlines.turnEndsAt} drainKey={`t:${id}`} kind="turn" label={`${who} turn`} />;
+    if (answer !== undefined) return <TimerRing deadline={answer} total={deadlines.responseMs} drainKey={`r:${id}:${answer}`} kind="response" label={`${who} answer`} />;
+    if (id === active) return <TimerRing deadline={deadlines.turnEndsAt} total={deadlines.turnMs} drainKey={`t:${id}`} kind="turn" label={`${who} turn`} />;
     return null;
   };
 

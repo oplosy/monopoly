@@ -35,7 +35,7 @@ export interface PayloadOptions {
 export function payload(state: GameState, me: string, opts: PayloadOptions = {}): GameStatePayload {
   return {
     view: viewFor(state, me),
-    deadlines: { turnEndsAt: null, responseEndsAt: {}, ...opts.deadlines },
+    deadlines: { turnEndsAt: null, responseEndsAt: {}, turnMs: 60_000, responseMs: 20_000, ...opts.deadlines },
     events: opts.events ?? [],
   };
 }

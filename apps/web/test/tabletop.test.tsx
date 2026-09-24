@@ -74,6 +74,12 @@ describe('the table', () => {
     expect(screen.getByRole('group', { name: 'Your seat, playing now' })).toHaveTextContent(/Your turn, 30s left/);
   });
 
+  it('draws the turn ring from the full turn length, not full, after a reload', () => {
+    renderTabletop({ state: atTable(base(), 'p1', { deadlines: { turnEndsAt: Date.now() + 15_000, turnMs: 60_000 } }) });
+    const ring = document.querySelector<HTMLElement>('.seat.is-me .timer-ring')!;
+    expect(Number(ring.style.getPropertyValue('--p'))).toBeCloseTo(0.25, 2);
+  });
+
   it("names the other player's turn and hides End turn", () => {
     renderTabletop({ state: atTable(base(), 'p2') });
     expect(screen.getByRole('heading', { level: 1, name: "Ann's turn" })).toBeInTheDocument();

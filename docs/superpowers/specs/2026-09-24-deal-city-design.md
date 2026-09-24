@@ -362,7 +362,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 | Client → server | `room:avatar` | `{avatar}` (0–11) | lobby only; unique per room |
 | Client → server | `game:intent` | `{intent, expectedVersion}` | ack `{ok: true}` or `{ok: false, error}` |
 | Server → client | `room:state` | `{code, status: 'lobby' \| 'playing' \| 'finished', hostId, seats: [{playerId, nickname, connected, avatar}]}` | |
-| Server → client | `game:state` | `{view, deadlines: {turnEndsAt, responseEndsAt}, events}` | |
+| Server → client | `game:state` | `{view, deadlines: {turnEndsAt, responseEndsAt, turnMs, responseMs}, events}` (the full lengths let a client that just arrived draw how much of a clock is left) | |
 | Server → client | `room:replaced` | — | sent to the old socket when its seat is resumed from another one |
 
 - `game:intent` is rejected if `expectedVersion` does not match, so stale clicks are ignored.
