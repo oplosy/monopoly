@@ -359,14 +359,16 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 | Client → server | `room:start` | `{seed?}` (the seed is honoured only when `NODE_ENV=test`) | host only; needs 2–3 seated players |
 | Client → server | `room:leave` | `{}` | |
 | Client → server | `room:rematch` | `{}` | host only, after `gameOver`; returns to the lobby with the same seats |
+| Client → server | `room:avatar` | `{avatar}` (0–11) | lobby only; unique per room |
 | Client → server | `game:intent` | `{intent, expectedVersion}` | ack `{ok: true}` or `{ok: false, error}` |
-| Server → client | `room:state` | `{code, status: 'lobby' \| 'playing' \| 'finished', hostId, seats: [{playerId, nickname, connected}]}` | |
-| Server → client | `game:state` | `{view, deadlines: {turnEndsAt, responseEndsAt}, events}` | |
+| Server → client | `room:state` | `{code, status: 'lobby' \| 'playing' \| 'finished', hostId, seats: [{playerId, nickname, connected, avatar}]}` | |
+| Server → client | `game:state` | `{view, deadlines: {turnEndsAt, responseEndsAt, turnMs, responseMs}, events}` (the full lengths let a client that just arrived draw how much of a clock is left) | |
 | Server → client | `room:replaced` | — | sent to the old socket when its seat is resumed from another one |
 
 - `game:intent` is rejected if `expectedVersion` does not match, so stale clicks are ignored.
 - Every change sends one `game:state` message holding the full redacted snapshot **and** the events that produced it (empty on attach/resume), so state and animation cues arrive atomically. The state is small, and sending all of it avoids diffing bugs.
-- Every client→server event is acknowledged with `{ ok: true, ... }` or `{ ok: false, error }`. Server error codes: `badRequest`, `rateLimited`, `internal`, `serverBusy`, `badNickname`, `roomNotFound`, `roomFull`, `gameInProgress`, `sessionNotFound`, `noSession`, `alreadyInRoom`, `notHost`, `notEnoughPlayers`, `notPlaying`, `notFinished`, `staleVersion`, plus every engine rule error code.
+- Every client→server event is acknowledged with `{ ok: true, ... }` or `{ ok: false, error }`. Server error codes: `badRequest`, `rateLimited`, `internal`, `serverBusy`, `badNickname`, `roomNotFound`, `roomFull`, `gameInProgress`, `sessionNotFound`, `noSession`, `alreadyInRoom`, `notHost`, `notEnoughPlayers`, `notPlaying`, `notFinished`, `staleVersion`, `avatarTaken`, `notInLobby`, plus every engine rule error code.
+- Every seat has a character (`avatar`, 0–11, unique in the room). On join the server gives the first free one, starting from a hash of the player id; `room:avatar` changes it in the lobby.
 
 ### 4.3 `apps/server`
 
@@ -399,6 +401,8 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
   - Frontend and backend share one port.
 
 ### 4.4 `apps/web`
+
+> **Superseded for look, layout, interaction and motion** by `2026-09-24-table-redesign-design.md` (the picnic-table redesign, Plans 6–8). The routes and the store described here still apply.
 
 - **Stack:** React, Vite, a Zustand store that owns the socket, and React Router.
 - **Routes:** `/` (home), `/room/:code` (lobby, game and game over) and `/gallery` (the card sheet, for development and review).

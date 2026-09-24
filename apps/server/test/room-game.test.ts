@@ -47,6 +47,8 @@ describe('Room game flow', () => {
   it('ends the turn automatically when the turn timer expires', () => {
     const { room, conns } = roomWith({ players: [{ id: 'p1', hand: ['money-1-1'] }, { id: 'p2', hand: ['money-2-1'] }] });
     expect(conns[0]!.lastGame().deadlines.turnEndsAt).toBe(Date.now() + config.turnMs);
+    // The full lengths travel with the deadlines, so a client that just arrived can draw how much is left.
+    expect(conns[0]!.lastGame().deadlines).toMatchObject({ turnMs: config.turnMs, responseMs: config.responseMs });
     vi.advanceTimersByTime(config.turnMs - 1);
     expect(room.game!.turn.playerId).toBe('p1');
     vi.advanceTimersByTime(1);

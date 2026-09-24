@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { legalIntentsForView, viewFor, type GameEvent, type IntentOf } from '@deal-city/engine';
-import { findRent, maxDoubles, moveOptions, playOptions, rentColors, rentTargets } from '../src/game/choices';
+import { findRent, maxDoubles, moveOptions, playBlocker, playOptions, rentColors, rentTargets } from '../src/game/choices';
 import { colorOf, describeAction, meAsPlayer, myRole, namesFrom, opponentsInOrder } from '../src/game/derive';
 import { cardName, describeEvent } from '../src/game/log';
 import { play } from './fixtures';
@@ -163,5 +163,20 @@ describe('play options', () => {
     const groups = view.players[0]!.groups;
     expect(moveOptions(legal, 'wild-darkBlue-green-1', groups).map((o) => o.label)).toEqual(['Flip to Navy']);
     expect(moveOptions(legal, 'prop-red-1', groups)).toEqual([]);
+  });
+});
+
+describe('playBlocker', () => {
+  it('says why a card cannot be played', () => {
+    const s = play({ players: [{ id: 'p1', hand: ['money-1-1'] }, { id: 'p2', hand: ['money-2-1'] }] });
+    const mine = viewFor(s, 'p1');
+    expect(playBlocker(mine, playOptions(legalIntentsForView(mine), 'money-1-1'))).toBeNull();
+    expect(playBlocker(mine, [])).toBe("This card can't be played right now.");
+    expect(playBlocker(viewFor(s, 'p2'), [])).toBe("It's not your turn.");
+    const spent = viewFor(play({ players: [{ id: 'p1', hand: ['money-1-1'] }, { id: 'p2' }], playsLeft: 0 }), 'p1');
+    expect(playBlocker(spent, [])).toBe('You have no plays left this turn.');
+    const dc = { type: 'playDebtCollector', card: 'act-debtCollector-1', target: 'p2' } as const;
+    const waiting = viewFor(play({ players: [{ id: 'p1', hand: ['act-debtCollector-1', 'money-1-1'] }, { id: 'p2', bank: ['money-5-1'] }] }, [['p1', dc]]), 'p1');
+    expect(playBlocker(waiting, [])).toBe("You can't play cards right now.");
   });
 });

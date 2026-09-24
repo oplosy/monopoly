@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AVATAR_COUNT, type RoomState } from '@deal-city/protocol';
 import { loadConfig } from '../src/config';
 import { Room } from '../src/room';
 import { fakeConn } from './fakes';
@@ -96,5 +97,74 @@ describe('Room lobby', () => {
     expect(room.idleSince).toBeNull();
     room.detach('p1', a.conn);
     expect(room.idleSince).toBe(Date.now());
+  });
+});
+
+function firstFree(state: RoomState): number {
+  const taken = new Set(state.seats.map((s) => s.avatar));
+  return Array.from({ length: AVATAR_COUNT }, (_, i) => i).find((i) => !taken.has(i))!;
+}
+
+describe('Room avatars', () => {
+  it('seats players with distinct default characters', () => {
+    const room = new Room('ABCDEF', config);
+    const a = joined(room, 'Ann');
+    joined(room, 'Bob');
+    joined(room, 'Cy');
+    const avatars = a.lastRoom().seats.map((s) => s.avatar);
+    expect(new Set(avatars).size).toBe(3);
+    expect(avatars.every((v) => Number.isInteger(v) && v >= 0 && v < AVATAR_COUNT)).toBe(true);
+  });
+
+  it('changes a character in the lobby and tells everyone', () => {
+    const room = new Room('ABCDEF', config);
+    const a = joined(room, 'Ann');
+    const b = joined(room, 'Bob');
+    const free = firstFree(a.lastRoom());
+    expect(room.setAvatar('p2', free)).toEqual({ ok: true });
+    expect(a.lastRoom().seats[1]!.avatar).toBe(free);
+    expect(b.lastRoom().seats[1]!.avatar).toBe(free);
+  });
+
+  it('refuses a character another seat has', () => {
+    const room = new Room('ABCDEF', config);
+    const a = joined(room, 'Ann');
+    joined(room, 'Bob');
+    expect(room.setAvatar('p2', a.lastRoom().seats[0]!.avatar)).toEqual({ ok: false, error: 'avatarTaken' });
+  });
+
+  it('refuses changes once the game has started', () => {
+    const room = new Room('ABCDEF', config);
+    const a = joined(room, 'Ann');
+    joined(room, 'Bob');
+    room.start('p1');
+    expect(room.setAvatar('p1', firstFree(a.lastRoom()))).toEqual({ ok: false, error: 'notInLobby' });
+  });
+
+  it('refuses characters out of range and seats that do not exist', () => {
+    const room = new Room('ABCDEF', config);
+    joined(room, 'Ann');
+    for (const bad of [-1, AVATAR_COUNT, 1.5]) expect(room.setAvatar('p1', bad)).toEqual({ ok: false, error: 'badRequest' });
+    expect(room.setAvatar('p9', 3)).toEqual({ ok: false, error: 'noSession' });
+  });
+
+  it('frees the character of a seat that leaves', () => {
+    const room = new Room('ABCDEF', config);
+    joined(room, 'Ann');
+    const b = joined(room, 'Bob');
+    const bobs = b.lastRoom().seats[1]!.avatar;
+    room.leave('p2');
+    expect(room.setAvatar('p1', bobs)).toEqual({ ok: true });
+  });
+
+  it('keeps characters through a rematch', () => {
+    const room = new Room('ABCDEF', config);
+    const a = joined(room, 'Ann');
+    joined(room, 'Bob');
+    const anns = a.lastRoom().seats[0]!.avatar;
+    room.start('p1');
+    room.leave('p2');
+    expect(room.rematch('p1')).toEqual({ ok: true });
+    expect(a.lastRoom().seats.map((s) => s.avatar)).toEqual([anns]);
   });
 });

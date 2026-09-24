@@ -167,4 +167,35 @@ describe('Lobby', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/'));
     expect(socket.sentOf('room:leave')).toEqual([{}]);
   });
+
+  it('seats players at the table and keeps empty chairs', () => {
+    lobby(['p1']);
+    const players = screen.getByRole('list', { name: 'Players' });
+    expect(within(players).getAllByRole('listitem')).toHaveLength(1);
+    expect(screen.getAllByText('Waiting…')).toHaveLength(2);
+    expect(screen.getByRole('heading', { name: 'Players (1/3)' })).toBeInTheDocument();
+  });
+
+  it('picks a free character and blocks taken ones', async () => {
+    const user = userEvent.setup();
+    const { socket } = lobby(['p1', 'p2']);
+    const picker = screen.getByRole('group', { name: 'Your character' });
+    expect(within(picker).getByRole('button', { name: 'Fox' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(picker).getByRole('button', { name: 'Bear, taken by Bob' })).toBeDisabled();
+    await user.click(within(picker).getByRole('button', { name: 'Owl' }));
+    expect(socket.sentOf('room:avatar')).toEqual([{ avatar: 4 }]);
+  });
+});
+
+describe('picnic pages', () => {
+  it('previews the remembered character on the home page', () => {
+    renderApp('/', { avatar: 3 });
+    expect(screen.getByRole('img', { name: 'Your character: Frog' })).toBeInTheDocument();
+    expect(screen.getByText('You can change it in the lobby.')).toBeInTheDocument();
+  });
+
+  it('says where to pick a character when none is remembered', () => {
+    renderApp('/');
+    expect(screen.getByText('You pick your character in the lobby.')).toBeInTheDocument();
+  });
 });

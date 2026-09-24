@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8"><title>03-perspective-2_5d</title>
+<style>
+  body { margin: 0; padding: 24px; background: #1d1d1f; color: #eee; font-family: system-ui, sans-serif; }
+  h2 { margin: 0 0 6px; } h3 { margin: 0 0 8px; font-size: 15px; }
+  .subtitle { color: #aaa; margin: 0 0 16px; }
+  .options { display: grid; gap: 16px; }
+  .option { display: flex; gap: 12px; background: #2a2a2d; border: 1px solid #3a3a3e; border-radius: 12px; padding: 14px; }
+  .option .letter { flex: none; width: 26px; height: 26px; border-radius: 6px; background: #3a3a3e; display: grid; place-items: center; font-weight: 800; }
+  .option .content { flex: 1; min-width: 0; }
+  .chosen { outline: 3px solid #7ddf64; }
+  .mock-note { background: #203a20; border: 1px solid #7ddf64; color: #cfe; padding: 8px 12px; border-radius: 8px; margin-bottom: 16px; }
+</style></head><body>
+<div class="mock-note">Chosen: 2.5D (tilted CSS-3D table plane + flat UI layer). Rough sketch; props become SVG illustrations.</div>
+<style>
+  .stage { position: relative; width: 100%; max-width: 820px; margin: 0 auto; aspect-ratio: 16 / 9; border-radius: 1.71cqw; overflow: hidden;
+    font-family: system-ui, sans-serif; container-type: inline-size;
+    background: radial-gradient(ellipse at 50% 30%, #8cc463 0%, #5e9a3c 55%, #3f7a2c 100%); }
+  .stage::before { content: ''; position: absolute; inset: 0; opacity: .35;
+    background: repeating-linear-gradient(100deg, rgba(255,255,255,.16) 0 2px, transparent 2px 0.85cqw),
+                repeating-linear-gradient(80deg, rgba(0,0,0,.08) 0 1px, transparent 1px 1.34cqw); }
+  /* the tilted table plane */
+  .persp { position: absolute; left: 0; right: 0; top: -6%; bottom: 0; perspective: 109.76cqw; perspective-origin: 50% 0%; }
+  .surface { position: absolute; left: 50%; top: 50%; width: 73.17cqw; height: 73.17cqw; margin: -36.59cqw 0 0 -36.59cqw;
+    transform: rotateX(56deg) translateY(4.88cqw); transform-style: preserve-3d; }
+  .table { position: absolute; inset: 0; border-radius: 50%;
+    background: repeating-linear-gradient(90deg, rgba(90,50,20,.35) 0 2px, transparent 2px 9.02cqw),
+      radial-gradient(circle at 40% 35%, #e7c08e, #c99461 60%, #a8733f);
+    box-shadow: 0 0 0 1.22cqw #8a5a2e, 0 4.88cqw 7.32cqw rgba(0,0,0,.55); }
+  .dapple { position: absolute; inset: 0; border-radius: 50%; opacity: .35;
+    background: radial-gradient(circle at 25% 30%, rgba(255,255,230,.9) 0 6%, transparent 7%),
+      radial-gradient(circle at 62% 22%, rgba(255,255,230,.8) 0 4%, transparent 5%),
+      radial-gradient(circle at 70% 60%, rgba(255,255,230,.7) 0 5%, transparent 6%),
+      radial-gradient(circle at 35% 70%, rgba(255,255,230,.7) 0 3%, transparent 4%); }
+  .cloth { position: absolute; left: -8%; top: 8%; width: 55%; height: 84%; border-radius: 50% 18% 18% 50% / 50% 30% 30% 50%;
+    background: repeating-linear-gradient(0deg, rgba(205,40,40,.6) 0 2.44cqw, transparent 2.44cqw 4.88cqw),
+      repeating-linear-gradient(90deg, rgba(205,40,40,.6) 0 2.44cqw, transparent 2.44cqw 4.88cqw), #fbf3e6;
+    box-shadow: 0.73cqw 0.98cqw 1.71cqw rgba(0,0,0,.25); transform: rotate(-8deg); }
+  .on { position: absolute; transform: translate(-50%, -50%); }
+  .card { width: 5.37cqw; height: 7.56cqw; border-radius: 0.49cqw; background: #fbf7ee; border: 1px solid #333; position: absolute; box-shadow: 2px 3px 0.49cqw rgba(0,0,0,.35); }
+  .card::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2.07cqw; background: var(--k); border-radius: 3px 3px 0 0; }
+  .back { width: 5.37cqw; height: 7.56cqw; border-radius: 0.49cqw; background: #1f2d5c; border: 3px solid #f4d35e; position: absolute; box-shadow: 3px 3px 0 #13204a, 0.73cqw 0.73cqw 0 #0c1636, 0.98cqw 1.22cqw 1.22cqw rgba(0,0,0,.4); }
+  .note { width: 6.34cqw; height: 3.66cqw; border-radius: 3px; background: #cde8d2; border: 1px solid #275e34; position: absolute; box-shadow: 1px 2px 3px rgba(0,0,0,.3); }
+  .plate { position: absolute; border-radius: 50%; background: radial-gradient(circle, #fff 0 55%, #e4e4ea 56% 100%); box-shadow: 0.49cqw 0.73cqw 0.98cqw rgba(0,0,0,.35); }
+  .melon { position: absolute; width: 7.32cqw; height: 3.66cqw; border-radius: 0 0 7.32cqw 7.32cqw; background: linear-gradient(#e2464b 0 70%, #f5f0d0 70% 80%, #3d8b37 80%); }
+  .chips { position: absolute; border-radius: 50%; background: radial-gradient(circle, #f2b63c 0 50%, #e89a1f 51% 62%, #c8322f 63% 100%); box-shadow: 0.49cqw 0.73cqw 0.98cqw rgba(0,0,0,.35); }
+  .glass { position: absolute; border-radius: 50%; background: radial-gradient(circle, #ffb13b 0 55%, rgba(255,255,255,.8) 56% 100%); box-shadow: 3px 0.49cqw 0.73cqw rgba(0,0,0,.3); }
+  /* flat UI layer */
+  .ui { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .av { width: 5.61cqw; height: 5.61cqw; border-radius: 1.22cqw; border: 3px solid #fff; display: grid; place-items: center; font-weight: 800; font-size: 2.2cqw; color: #3b2a10; box-shadow: 0 3px 0.98cqw rgba(0,0,0,.35); position: relative; }
+  .glow { box-shadow: 0 0 0 3px #ffd84a, 0 0 2.68cqw 0.73cqw rgba(255,216,74,.95); }
+  .ring { position: absolute; inset: -1.22cqw; border-radius: 1.95cqw; background: conic-gradient(#ff7a1a 0 64%, rgba(255,255,255,.3) 64% 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; padding: 0.49cqw; }
+  .tag { background: linear-gradient(90deg, #1aa3c8, #58d3ee); color: #fff; font-size: 1.34cqw; font-weight: 800; padding: 2px 1.22cqw; border-radius: 0.49cqw; text-shadow: 0 1px 0 rgba(0,0,0,.3); }
+  .badge { position: absolute; right: -1.95cqw; bottom: -0.49cqw; background: #fff; color: #222; font-size: 1.46cqw; font-weight: 900; border-radius: 0.49cqw; padding: 0 0.61cqw; border: 2px solid #333; }
+  .hand { position: absolute; left: 50%; bottom: -3.17cqw; transform: translateX(-50%); display: flex; }
+  .h { width: 9.51cqw; height: 13.41cqw; border-radius: 0.85cqw; background: #fbf7ee; border: 1px solid #333; margin-left: -2.2cqw; position: relative;
+    box-shadow: 0 0.49cqw 1.22cqw rgba(0,0,0,.4); transform-origin: 50% 200%; }
+  .h::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3.66cqw; background: var(--k); border-radius: 0.73cqw 0.73cqw 0 0; }
+  .h.up { transform: translateY(-2.68cqw) rotate(var(--r)); box-shadow: 0 0 0 3px #ffd84a, 0 1.71cqw 2.68cqw rgba(0,0,0,.5); }
+  .say { background: rgba(255,251,232,.96); color: #3b2a10; font-size: 1.46cqw; font-weight: 800; padding: 0.61cqw 1.46cqw; border-radius: 1.71cqw; box-shadow: 0 3px 1.22cqw rgba(0,0,0,.3); }
+</style>
+
+<h2>2.5D: eğik masa + düz arayüz</h2>
+<p class="subtitle">Masa ve üstündeki her şey (setler, bankalar, deste, discard, tabaklar) perspektifle yatıyor. Avatarlar, isimler, el ve anlatıcı balonu düz katmanda. 3 kişi, sıra Ann'de. Kaba bir kroki: dekor ileride SVG illüstrasyon olarak çizilecek.</p>
+
+<div class="stage">
+  <div class="persp"><div class="surface">
+    <div class="table"></div><div class="dapple"></div>
+    <div class="cloth"></div>
+    <!-- props on the table edge -->
+    <div class="plate" style="left:4%;top:30%;width:10.98cqw;height:10.98cqw"><div class="melon" style="left:1.83cqw;top:3.66cqw;transform:rotate(-20deg)"></div></div>
+    <div class="chips" style="left:78%;top:62%;width:10.49cqw;height:10.49cqw"></div>
+    <div class="glass" style="left:22%;top:12%;width:4.15cqw;height:4.15cqw"></div>
+    <div class="glass" style="left:80%;top:18%;width:3.66cqw;height:3.66cqw"></div>
+    <!-- Bob's tableau (upper left, 120°) -->
+    <div class="on" style="left:28%;top:34%">
+      <div class="card" style="--k:#d93a2b;left:0;top:0"></div><div class="card" style="--k:#d93a2b;left:0;top:1.71cqw"></div><div class="card" style="--k:#d93a2b;left:0;top:3.41cqw"></div>
+      <div class="card" style="--k:#1f3a93;left:6.34cqw;top:0"></div><div class="card" style="--k:#1f3a93;left:6.34cqw;top:1.71cqw"></div>
+      <div class="note" style="left:12.68cqw;top:0.98cqw"></div><div class="note" style="left:12.93cqw;top:1.71cqw"></div>
+    </div>
+    <!-- Cy's tableau (upper right) -->
+    <div class="on" style="left:70%;top:34%">
+      <div class="note" style="left:-7.32cqw;top:0.98cqw"></div>
+      <div class="card" style="--k:#d9469a;left:0;top:0"></div><div class="card" style="--k:#d9469a;left:0;top:1.71cqw"></div>
+    </div>
+    <!-- center deck + messy discard -->
+    <div class="on" style="left:45%;top:50%"><div class="back"></div></div>
+    <div class="on" style="left:56%;top:52%">
+      <div class="card" style="--k:#f28c28;transform:rotate(-18deg)"></div>
+      <div class="card" style="--k:#2e9e5b;transform:rotate(12deg);left:0.73cqw"></div>
+      <div class="card" style="--k:#1b1b1f;transform:rotate(-4deg);left:3px;top:3px"></div>
+    </div>
+    <!-- my tableau (bottom) -->
+    <div class="on" style="left:40%;top:72%">
+      <div class="card" style="--k:#f28c28;left:0;top:0"></div><div class="card" style="--k:#f28c28;left:0;top:1.71cqw"></div><div class="card" style="--k:#f28c28;left:0;top:3.41cqw"></div>
+      <div class="card" style="--k:#2e9e5b;left:6.34cqw;top:0"></div>
+      <div class="note" style="left:12.68cqw;top:1.22cqw"></div><div class="note" style="left:12.93cqw;top:1.95cqw"></div><div class="note" style="left:13.17cqw;top:2.68cqw"></div>
+    </div>
+  </div></div>
+
+  <!-- flat UI layer -->
+  <div class="ui" style="left:13%;top:20%"><span class="tag">Bob</span><div class="av" style="background:#7cc6f2">B<span class="badge">5</span></div></div>
+  <div class="ui" style="left:87%;top:20%"><span class="tag">Cy</span><div class="av" style="background:#b9e27c">C<span class="badge">3</span></div></div>
+  <div class="ui" style="left:11%;top:78%"><span class="tag">Ann · 2 plays</span><div class="av glow" style="background:#f29fb9"><div class="ring"></div>A<span class="badge">6</span></div></div>
+  <div class="ui" style="left:50%;top:40%"><span class="say">Bob charged you 4M rent</span></div>
+  <div class="hand">
+    <div class="h" style="--k:#d9469a;transform:rotate(-12deg)"></div>
+    <div class="h" style="--k:#1b1b1f;transform:rotate(-7deg)"></div>
+    <div class="h up" style="--k:#2e9e5b;--r:-2deg"></div>
+    <div class="h" style="--k:#0f766e;transform:rotate(3deg)"></div>
+    <div class="h" style="--k:#b3261e;transform:rotate(8deg)"></div>
+    <div class="h" style="--k:#cde8d2;transform:rotate(13deg)"></div>
+  </div>
+</div>
+
+</body></html>

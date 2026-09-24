@@ -11,7 +11,8 @@ export function roomOf(ids: readonly string[], status: RoomStatus = 'playing'): 
     code: 'ABCDEF',
     status,
     hostId: ids[0] ?? null,
-    seats: ids.map((id) => ({ playerId: id, nickname: NAMES[id] ?? id, connected: true })),
+    // Seat i plays character i: p1 Fox, p2 Bear, p3 Cat.
+    seats: ids.map((id, i) => ({ playerId: id, nickname: NAMES[id] ?? id, connected: true, avatar: i })),
   };
 }
 
@@ -34,7 +35,7 @@ export interface PayloadOptions {
 export function payload(state: GameState, me: string, opts: PayloadOptions = {}): GameStatePayload {
   return {
     view: viewFor(state, me),
-    deadlines: { turnEndsAt: null, responseEndsAt: {}, ...opts.deadlines },
+    deadlines: { turnEndsAt: null, responseEndsAt: {}, turnMs: 60_000, responseMs: 20_000, ...opts.deadlines },
     events: opts.events ?? [],
   };
 }

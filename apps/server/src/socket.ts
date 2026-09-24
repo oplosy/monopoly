@@ -1,6 +1,6 @@
 import type { Server, Socket } from 'socket.io';
 import {
-  CreateRoomSchema, EmptySchema, IntentPayloadSchema, JoinRoomSchema, ResumeSchema, StartSchema,
+  AvatarSchema, CreateRoomSchema, EmptySchema, IntentPayloadSchema, JoinRoomSchema, ResumeSchema, StartSchema,
   type Ack, type ClientToServerEvents, type JoinedRoom, type ServerToClientEvents,
 } from '@deal-city/protocol';
 import type { Config } from './config';
@@ -109,6 +109,7 @@ function handleConnection(socket: IoSocket, rooms: RoomManager, config: Config):
   );
 
   socket.on('room:rematch', withSession(EmptySchema, (s) => s.room.rematch(s.playerId)));
+  socket.on('room:avatar', withSession(AvatarSchema, (s, { avatar }) => s.room.setAvatar(s.playerId, avatar)));
 
   socket.on(
     'game:intent',

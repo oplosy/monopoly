@@ -8,6 +8,8 @@ const MESSAGES: Record<string, string> = {
   alreadyInRoom: 'You already have a seat in a room.',
   notHost: 'Only the host can do that.',
   notEnoughPlayers: 'You need at least 2 players to start.',
+  avatarTaken: 'Someone else picked that one.',
+  notInLobby: 'You can only change your character in the lobby.',
   sessionNotFound: 'Your seat expired while you were away. Join the room again to play.',
   staleVersion: 'The table changed. Try again.',
   timeout: 'The server did not answer. Check your connection.',

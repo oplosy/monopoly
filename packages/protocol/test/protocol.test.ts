@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CreateRoomSchema, IntentPayloadSchema, IntentSchema, JoinRoomSchema, ResumeSchema, StartSchema } from '../src/index';
+import { AVATAR_COUNT, AvatarSchema, CreateRoomSchema, IntentPayloadSchema, IntentSchema, JoinRoomSchema, ResumeSchema, StartSchema } from '../src/index';
 
 describe('IntentSchema', () => {
   it('accepts engine intent shapes', () => {
@@ -50,5 +50,15 @@ describe('payload schemas', () => {
     expect(IntentPayloadSchema.safeParse({ intent: { type: 'endTurn' }, expectedVersion: 3 }).success).toBe(true);
     expect(IntentPayloadSchema.safeParse({ intent: { type: 'endTurn' }, expectedVersion: -1 }).success).toBe(false);
     expect(CreateRoomSchema.safeParse({ nickname: 'x'.repeat(65) }).success).toBe(false);
+  });
+});
+
+describe('AvatarSchema', () => {
+  it('accepts the 12 character indices only', () => {
+    expect(AVATAR_COUNT).toBe(12);
+    expect(AvatarSchema.safeParse({ avatar: 0 }).success).toBe(true);
+    expect(AvatarSchema.safeParse({ avatar: 11 }).success).toBe(true);
+    for (const avatar of [-1, 12, 1.5, '3', null]) expect(AvatarSchema.safeParse({ avatar }).success, String(avatar)).toBe(false);
+    expect(AvatarSchema.safeParse({}).success).toBe(false);
   });
 });

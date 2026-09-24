@@ -21,6 +21,8 @@ export interface AppState {
   /** Another tab resumed this seat; this tab no longer plays. */
   replaced: boolean;
   nickname: string;
+  /** The character this browser asks for after joining a room; null until one is picked. */
+  preferredAvatar: number | null;
   room: RoomState | null;
   /** Every nickname seen in this room, kept after players leave so the log can still name them. */
   names: Record<string, string>;
@@ -37,6 +39,7 @@ export interface AppState {
   start(seed?: number): Promise<Ack>;
   leave(): Promise<Ack>;
   rematch(): Promise<Ack>;
+  setAvatar(avatar: number): Promise<Ack>;
   sendIntent(intent: Intent): Promise<Ack>;
   clearError(): void;
 }
@@ -88,6 +91,15 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
       set({ session: null, savedCode: null, room: null, names: {}, game: null, log: [] });
     }
 
+    /** After joining, asks once for the remembered character if nobody at the table has it. Failures stay silent. */
+    async function claimPreferredAvatar(playerId: string): Promise<void> {
+      const want = get().preferredAvatar;
+      const room = get().room;
+      if (want === null || !room || room.status !== 'lobby') return;
+      if (room.seats.some((s) => s.avatar === want) || !room.seats.some((s) => s.playerId === playerId)) return;
+      await call('room:avatar', { avatar: want });
+    }
+
     return {
       connected: socket.connected,
       session: null,
@@ -95,6 +107,7 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
       resuming: false,
       replaced: false,
       nickname: storage.loadNickname(),
+      preferredAvatar: storage.loadAvatar(),
       room: null,
       names: {},
       game: null,
@@ -105,12 +118,16 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
       async createRoom(nickname) {
         storage.saveNickname(nickname);
         set({ nickname });
-        return enter(await call('room:create', { nickname }));
+        const res = enter(await call('room:create', { nickname }));
+        if (res.ok) await claimPreferredAvatar(res.playerId);
+        return res;
       },
       async joinRoom(code, nickname) {
         storage.saveNickname(nickname);
         set({ nickname });
-        return enter(await call('room:join', { code: code.toUpperCase(), nickname }));
+        const res = enter(await call('room:join', { code: code.toUpperCase(), nickname }));
+        if (res.ok) await claimPreferredAvatar(res.playerId);
+        return res;
       },
       async resume() {
         const saved = storage.load();
@@ -138,6 +155,16 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
       },
       async rematch() {
         return offline() ?? toast(await call('room:rematch', {}));
+      },
+      async setAvatar(avatar) {
+        const refused = offline();
+        if (refused) return refused;
+        const res = toast(await call('room:avatar', { avatar }));
+        if (res.ok) {
+          storage.saveAvatar(avatar);
+          set({ preferredAvatar: avatar });
+        }
+        return res;
       },
       async sendIntent(intent) {
         const { game, sending } = get();

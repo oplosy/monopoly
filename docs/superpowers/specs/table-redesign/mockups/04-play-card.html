@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8"><title>04-play-card</title>
+<style>
+  body { margin: 0; padding: 24px; background: #1d1d1f; color: #eee; font-family: system-ui, sans-serif; }
+  h2 { margin: 0 0 6px; } h3 { margin: 0 0 8px; font-size: 15px; }
+  .subtitle { color: #aaa; margin: 0 0 16px; }
+  .options { display: grid; gap: 16px; }
+  .option { display: flex; gap: 12px; background: #2a2a2d; border: 1px solid #3a3a3e; border-radius: 12px; padding: 14px; }
+  .option .letter { flex: none; width: 26px; height: 26px; border-radius: 6px; background: #3a3a3e; display: grid; place-items: center; font-weight: 800; }
+  .option .content { flex: 1; min-width: 0; }
+  .chosen { outline: 3px solid #7ddf64; }
+  .mock-note { background: #203a20; border: 1px solid #7ddf64; color: #cfe; padding: 8px 12px; border-radius: 8px; margin-bottom: 16px; }
+</style></head><body>
+<div class="mock-note">Chosen: A as the base (card lifts, actions anchored beside it) with B (drag and drop) as a bonus.</div>
+<style>
+  .sc { position: relative; width: 100%; aspect-ratio: 16 / 8; border-radius: 12px; overflow: hidden; container-type: inline-size; font-family: system-ui, sans-serif;
+    background: linear-gradient(180deg, #d9ae7b 0%, #c99461 60%, #a8733f 100%); }
+  .sc::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(90,50,20,.25) 0 2px, transparent 2px 12cqw); }
+  .dim::after { content: ''; position: absolute; inset: 0; background: rgba(20,10,0,.35); pointer-events: none; z-index: 1; }
+  .hand { position: absolute; left: 50%; bottom: -6cqw; transform: translateX(-50%); display: flex; z-index: 3; }
+  .h { width: 11cqw; height: 15.5cqw; border-radius: 1cqw; background: #fbf7ee; border: 1px solid #333; margin-left: -2.6cqw; position: relative;
+    box-shadow: 0 .6cqw 1.4cqw rgba(0,0,0,.4); }
+  .h::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4.2cqw; background: var(--k); border-radius: .9cqw .9cqw 0 0; }
+  .h .t { position: absolute; top: 1.2cqw; left: 0; right: 0; text-align: center; font-size: 1.5cqw; font-weight: 800; color: #fff; }
+  .up { transform: translateY(-9cqw) scale(1.18); z-index: 4; box-shadow: 0 0 0 .5cqw #ffd84a, 0 2.4cqw 3cqw rgba(0,0,0,.5); }
+  .pills { position: absolute; display: flex; flex-direction: column; gap: .8cqw; z-index: 5; }
+  .pill { background: #fffbe8; color: #3b2a10; font-size: 1.7cqw; font-weight: 800; padding: 1cqw 2cqw; border-radius: 3cqw; border: .3cqw solid #3b2a10;
+    box-shadow: 0 .5cqw 1.2cqw rgba(0,0,0,.35); white-space: nowrap; }
+  .pill.main { background: #3b2a10; color: #fffbe8; }
+  .pill small { font-weight: 600; opacity: .8; }
+  .zone { position: absolute; border: .4cqw dashed #ffd84a; border-radius: 1.4cqw; background: rgba(255,216,74,.18); color: #3b2a10; font-weight: 900;
+    font-size: 1.6cqw; display: grid; place-items: center; text-align: center; z-index: 2; box-shadow: 0 0 2cqw rgba(255,216,74,.6); }
+  .ghost { position: absolute; width: 11cqw; height: 15.5cqw; border-radius: 1cqw; background: #fbf7ee; border: 1px solid #333; z-index: 6;
+    box-shadow: 0 3cqw 4cqw rgba(0,0,0,.45); transform: rotate(-8deg); }
+  .ghost::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4.2cqw; background: #2e9e5b; border-radius: .9cqw .9cqw 0 0; }
+  .trail { position: absolute; height: .5cqw; background: repeating-linear-gradient(90deg, #ffd84a 0 1.4cqw, transparent 1.4cqw 2.4cqw); transform-origin: left center; z-index: 2; }
+  .big { position: absolute; left: 50%; top: 42%; width: 22cqw; height: 31cqw; transform: translate(-50%, -50%); z-index: 4; border-radius: 1.6cqw;
+    background: #fbf7ee; border: 1px solid #333; box-shadow: 0 3cqw 5cqw rgba(0,0,0,.55); }
+  .big::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 8cqw; background: #2e9e5b; border-radius: 1.5cqw 1.5cqw 0 0; }
+  .bigt { position: absolute; top: 2.4cqw; left: 0; right: 0; text-align: center; color: #fff; font-weight: 900; font-size: 2.6cqw; }
+  .note { font-size: 12px; color: #aaa; margin-top: 6px; }
+</style>
+
+<h2>Karta basınca ne olsun?</h2>
+<p class="subtitle">Her sahnede Ann elindeki bir yeşil mülke (Ivy Crescent) dokunuyor. Seçenekleri: Green mülk olarak oynamak. Bir aksiyon kartı olsaydı hedef seçimi de gelecekti.</p>
+
+<div class="options">
+  <div class="option chosen" data-choice="a">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Kart kalkar, seçenekler kartın hemen yanında</h3>
+      <div class="sc">
+        <div class="pills" style="left:57%;top:18%">
+          <span class="pill main">Play as Green property</span>
+          <span class="pill">Bank it <small>+4M</small></span>
+        </div>
+        <div class="hand">
+          <div class="h" style="--k:#d9469a;transform:rotate(-12deg)"><span class="t">Lilac Sq</span></div>
+          <div class="h" style="--k:#1f4e9a;transform:rotate(-7deg)"><span class="t">Just Say No</span></div>
+          <div class="h up" style="--k:#2e9e5b"><span class="t">Ivy Crescent</span></div>
+          <div class="h" style="--k:#0f766e;transform:rotate(4deg)"><span class="t">Hotel</span></div>
+          <div class="h" style="--k:#d93a2b;transform:rotate(9deg)"><span class="t">Crimson</span></div>
+        </div>
+      </div>
+      <p class="note">Göz kartta kalır, menü kartla birlikte doğar ve kaybolur. Klavyeyle de tam çalışır. Hedef gereken kartlarda seçenekten sonra masadaki uygun hedefler parlar.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Sürükle-bırak: kartı masadaki hedefe at</h3>
+      <div class="sc">
+        <div class="zone" style="left:6%;top:12%;width:24%;height:30%">Your Green set<br>(play)</div>
+        <div class="zone" style="left:70%;top:12%;width:22%;height:30%">Bank<br>+4M</div>
+        <div class="trail" style="left:50%;top:70%;width:24cqw;transform:rotate(-148deg)"></div>
+        <div class="ghost" style="left:26%;top:30%"></div>
+        <div class="hand">
+          <div class="h" style="--k:#d9469a;transform:rotate(-12deg)"><span class="t">Lilac Sq</span></div>
+          <div class="h" style="--k:#1f4e9a;transform:rotate(-7deg)"><span class="t">Just Say No</span></div>
+          <div class="h" style="--k:#0f766e;transform:rotate(4deg);opacity:.35"></div>
+          <div class="h" style="--k:#0f766e;transform:rotate(4deg)"><span class="t">Hotel</span></div>
+          <div class="h" style="--k:#d93a2b;transform:rotate(9deg)"><span class="t">Crimson</span></div>
+        </div>
+      </div>
+      <p class="note">En "oyun gibi" olanı: kartı tutup bankaya ya da setine fırlatırsın. Sly Deal'i rakibin setine, kirayı rakibe sürüklersin. Ama klavye, dokunmatik ve renk seçimi (joker) için yine A'ya benzer bir yedek gerekir.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Kart ortaya büyür, masa kararır</h3>
+      <div class="sc dim">
+        <div class="big"><span class="bigt">Ivy Crescent</span></div>
+        <div class="pills" style="left:50%;top:78%;transform:translateX(-50%);flex-direction:row">
+          <span class="pill main">Play as Green property</span>
+          <span class="pill">Bank it <small>+4M</small></span>
+          <span class="pill">Cancel</span>
+        </div>
+        <div class="hand" style="z-index:0">
+          <div class="h" style="--k:#d9469a;transform:rotate(-12deg)"></div>
+          <div class="h" style="--k:#1f4e9a;transform:rotate(-7deg)"></div>
+          <div class="h" style="--k:#0f766e;transform:rotate(4deg)"></div>
+          <div class="h" style="--k:#d93a2b;transform:rotate(9deg)"></div>
+        </div>
+      </div>
+      <p class="note">Kart en okunur hâlinde, karar netleşir. Ama her hamle bir "pencere" açar; akış yavaşlar ve masa görünmez olur (Sly Deal hedefi seçerken masayı görmen lazım).</p>
+    </div>
+  </div>
+</div>
+<p class="subtitle" style="margin-top:12px">Önerim: <b>A temel, B bonus.</b> Tıklayınca A açılır (klavye ve ekran okuyucu için de tek yol bu). Sürükleyince B çalışır: kart bırakılabilecek yerler parlar, masaya bırakınca hamle gider. İkisi aynı hamle listesinden beslenir.</p>
+
+</body></html>
