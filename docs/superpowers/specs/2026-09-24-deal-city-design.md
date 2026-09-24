@@ -388,7 +388,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 - **Hardening**
   - Every payload is validated with zod.
   - Each socket is limited to about 20 messages per second.
-  - Nicknames are trimmed, limited to 1–16 characters, and stripped of control characters.
+  - Nicknames are trimmed and limited to 1–16 characters, counted as people see them (an emoji is one). Control, format, private-use and unassigned characters are stripped, and stacked accents are capped at two per letter.
   - The client is never trusted.
   - Socket messages are capped at 16 KiB.
 - **Shutdown:** `SIGTERM`/`SIGINT` close the server cleanly (rooms, timers and sockets), so `docker stop` returns at once.
@@ -469,6 +469,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 **Design tokens**
 
 - Property colors come from the engine's `COLORS` and money tints from `apps/web/src/cards/theme.ts`, so each has one source. CSS variables cover the neutral surfaces and fonts.
+- All card text meets WCAG AA contrast against what is behind it (4.5:1, or 3:1 for large text); a test checks the rendered labels. Rule text on rent cards and the multicolor wildcard comes from the engine.
 - Typography from Google Fonts: a condensed display face for titles (Bricolage Grotesque) and a font with tabular numerals for values (IBM Plex Mono or Inter with `tnum`).
 
 **Review.** `/gallery` renders all 106 cards plus the card back and sample wildcard orientations. It is reviewed in the browser during development; Plan 5 adds a Playwright screenshot of it.
