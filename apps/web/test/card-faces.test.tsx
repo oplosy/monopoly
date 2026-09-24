@@ -81,6 +81,25 @@ describe('WildFace', () => {
     expect(render({ id: 'wild-pink-orange-1', activeColor: 'pink' })).toContain('data-flipped="false"');
   });
 
+  it('keeps the WILD pill outside the flipped group so it always reads upright', () => {
+    const html = render({ id: 'wild-pink-orange-1', activeColor: 'orange' });
+    // Walk <g> nesting from the flipped group's opening tag to its matching close.
+    const start = html.indexOf('<g data-flipped="true"');
+    let depth = 0;
+    let end = start;
+    for (const m of html.slice(start).matchAll(/<g[\s>]|<\/g>/g)) {
+      depth += m[0] === '</g>' ? -1 : 1;
+      if (depth === 0) {
+        end = start + m.index + 4;
+        break;
+      }
+    }
+    const flippedGroup = html.slice(start, end);
+    expect(flippedGroup).toContain('>ORANGE<');
+    expect(flippedGroup).not.toContain('>WILD<');
+    expect(html).toContain('>WILD<');
+  });
+
   it('draws the multicolor wildcard with all ten colors, no value badge, and marks the active color', () => {
     const html = render({ id: 'wild-any-1', activeColor: 'green' });
     for (const hex of Object.values(COLORS).map((c) => c.hex)) expect(html).toContain(hex);

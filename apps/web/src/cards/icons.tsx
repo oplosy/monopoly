@@ -107,8 +107,8 @@ export const ACTION_ICONS: Record<ActionKind, (p: IconProps) => ReactNode> = {
   hotel: (p) =>
     frame('hotel', p, (
       <>
-        <rect x={34} y={2} width={32} height={14} rx={3} />
-        <text x={50} y={9.5} textAnchor="middle" dominantBaseline="central" fontFamily={FONT_DISPLAY} fontWeight={800} fontSize={11} fill={PAPER}>
+        <rect x={27} y={3} width={46} height={13} rx={3} />
+        <text x={50} y={9.5} textAnchor="middle" dominantBaseline="central" fontFamily={FONT_DISPLAY} fontWeight={800} fontSize={9} letterSpacing={1} fill={PAPER}>
           HOTEL
         </text>
         <rect x={22} y={18} width={56} height={78} rx={3} />

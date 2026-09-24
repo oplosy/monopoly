@@ -31,12 +31,13 @@ function TwoColorWild({ card, label, className, activeColor }: WildProps) {
         <g transform={`rotate(180 ${W / 2} ${H / 2})`}>
           <WildHalf color={b} value={card.value} />
         </g>
-        <line x1={16} x2={W - 16} y1={H / 2} y2={H / 2} stroke={INK} strokeOpacity={0.25} strokeDasharray="4 4" />
-        <rect x={93} y={H / 2 - 12} width={64} height={24} rx={12} fill={INK} />
-        <text x={W / 2} y={H / 2} textAnchor="middle" dominantBaseline="central" fontFamily={FONT_DISPLAY} fontWeight={800} fontSize={12} letterSpacing={3} fill={PAPER}>
-          WILD
-        </text>
       </g>
+      {/* The centre pill stays upright whichever color is active. */}
+      <line x1={16} x2={W - 16} y1={H / 2} y2={H / 2} stroke={INK} strokeOpacity={0.25} strokeDasharray="4 4" />
+      <rect x={93} y={H / 2 - 12} width={64} height={24} rx={12} fill={INK} />
+      <text x={W / 2} y={H / 2} textAnchor="middle" dominantBaseline="central" fontFamily={FONT_DISPLAY} fontWeight={800} fontSize={12} letterSpacing={3} fill={PAPER}>
+        WILD
+      </text>
     </CardSvg>
   );
 }

@@ -453,7 +453,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 |---|---|
 | Deal Breaker | Gavel |
 | Just Say No | Shield with a stop bar |
-| Sly Deal | Reaching hand |
+| Sly Deal | Bandit mask |
 | Forced Deal | Swap arrows |
 | Debt Collector | Invoice |
 | Birthday | Cake |
@@ -467,7 +467,7 @@ deal-city/                  pnpm workspaces, TypeScript everywhere
 - CSS variables for the 10 property colors and 6 money tints, plus neutral surfaces.
 - Typography from Google Fonts: a condensed display face for titles (Bricolage Grotesque) and a font with tabular numerals for values (IBM Plex Mono or Inter with `tnum`).
 
-**Review.** `/gallery` renders all 106 cards plus the card back. A Playwright test takes a screenshot of it, and design review is done on that screenshot.
+**Review.** `/gallery` renders all 106 cards plus the card back and sample wildcard orientations. It is reviewed in the browser during development; Plan 5 adds a Playwright screenshot of it.
 
 **PNG export (optional, later).** The same components can be rendered to PNG with resvg. This is not needed for v1.
 
