@@ -35,6 +35,22 @@ describe('playing cards', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('moves focus into the card menu and back to the card when it closes', async () => {
+    const { user } = setup();
+    await user.click(handCard(/^1M money$/));
+    const menu = screen.getByRole('dialog', { name: 'Play 1M' });
+    expect(within(menu).getByRole('button', { name: 'Bank it (+1M)' })).toHaveFocus();
+    await user.click(within(menu).getByRole('button', { name: 'Close' }));
+    expect(handCard(/^1M money$/)).toHaveFocus();
+  });
+
+  it('moves focus into the move menu', async () => {
+    const { user } = setup();
+    await user.click(within(area('Your area')).getByRole('button', { name: /Navy or Green/ }));
+    const menu = screen.getByRole('dialog', { name: /^Move / });
+    expect(within(menu).getAllByRole('button')[0]).toHaveFocus();
+  });
+
   it('asks which color a wildcard is played as', async () => {
     const { user, socket } = setup();
     await user.click(handCard(/Pink or Orange/));

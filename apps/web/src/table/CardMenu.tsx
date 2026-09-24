@@ -1,9 +1,10 @@
 import { bestRent, COLORS, type Color, type GameView, type Intent, type IntentOf } from '@deal-city/engine';
-import { useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties } from 'react';
 import { CardFace } from '../cards/CardFace';
 import { findRent, maxDoubles, rentColors, rentTargets, type PlayKind, type PlayOption } from '../game/choices';
 import { meAsPlayer } from '../game/derive';
 import { cardName, type Names } from '../game/log';
+import { useDialogFocus } from '../ui/useDialogFocus';
 
 interface Props {
   cardId: string;
@@ -22,8 +23,10 @@ export function CardMenu({ cardId, options, view, name, canAct, onChoose, onSend
   const [open, setOpen] = useState<PlayKind | null>(null);
   const opened = options.find((o) => o.kind === open);
   const myTurn = view.turn.playerId === view.me;
+  const ref = useRef<HTMLDivElement>(null);
+  useDialogFocus(ref, '.card-menu-body button');
   return (
-    <div className="card-menu" role="dialog" aria-label={`Play ${cardName(cardId)}`}>
+    <div ref={ref} className="card-menu" role="dialog" aria-label={`Play ${cardName(cardId)}`}>
       <div className="card-menu-preview">
         <CardFace id={cardId} className="card-svg" />
       </div>
