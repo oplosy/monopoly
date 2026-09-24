@@ -2,6 +2,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildServer } from './app';
 import { loadConfig } from './config';
+import { closeOnSignals } from './shutdown';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const config = loadConfig();
@@ -11,3 +12,7 @@ config.webDist ??= resolve(here, '../../web/dist');
 const { app } = await buildServer(config);
 await app.listen({ port: config.port, host: '0.0.0.0' });
 console.log(`Deal City server listening on :${config.port}`);
+closeOnSignals(
+  () => app.close(),
+  (code) => process.exit(code),
+);
