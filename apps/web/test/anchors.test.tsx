@@ -5,7 +5,6 @@ import { describe, expect, it } from 'vitest';
 import { viewFor } from '@deal-city/engine';
 import { AnchorProvider } from '../src/motion/anchor-context';
 import { AnchorRegistry } from '../src/motion/anchors';
-import { fanLayout } from '../src/scene/geometry';
 import { CenterPiles } from '../src/tabletop/CenterPiles';
 import { HandFan } from '../src/tabletop/HandFan';
 import { Seat } from '../src/tabletop/Seat';
@@ -93,6 +92,7 @@ describe('anchors on the table', () => {
   it('tells flights how each hand card is turned', () => {
     const view = viewFor(state(), 'p1');
     withAnchors(<HandFan cards={view.hand} me="p1" />);
-    expect(screen.getByRole('button', { name: /^1M money/ })).toHaveAttribute('data-rot', String(fanLayout(3, 0).rotate));
+    // A hand card's slot changes its turn on focus and press: flights read the turn it is drawn with.
+    expect(screen.getByRole('button', { name: /^1M money/ })).toHaveAttribute('data-rot', 'parent');
   });
 });

@@ -20,7 +20,7 @@ export function HandFan({ cards, me }: { cards: readonly string[]; me: string })
         const f = fanLayout(cards.length, i);
         return (
           <li key={id} style={{ '--rot': `${f.rotate}deg`, '--drop': `${f.drop}px` } as CSSProperties}>
-            <TableCard id={id} zone="hand" owner={me} rotation={f.rotate} />
+            <TableCard id={id} zone="hand" owner={me} rotation="parent" />
           </li>
         );
       })}

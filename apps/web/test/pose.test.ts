@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { poseOf, unrotate } from '../src/motion/pose';
 
 describe('unrotate', () => {
@@ -26,5 +26,35 @@ describe('poseOf', () => {
     el.dataset.rot = '-4';
     el.getBoundingClientRect = () => ({ left: 0, top: 0, width: 50, height: 70, right: 50, bottom: 70, x: 0, y: 0, toJSON: () => ({}) });
     expect(poseOf(el)).toMatchObject({ cx: 25, cy: 35, rotate: -4 });
+  });
+});
+
+describe('poseOf a hand card', () => {
+  function inSlot(transform: string): HTMLElement {
+    const slot = document.createElement('li');
+    const card = document.createElement('button');
+    card.dataset.rot = 'parent';
+    card.getBoundingClientRect = () => ({ left: 0, top: 0, width: 50, height: 70, right: 50, bottom: 70, x: 0, y: 0, toJSON: () => ({}) });
+    slot.append(card);
+    const real = window.getComputedStyle.bind(window);
+    vi.spyOn(window, 'getComputedStyle').mockImplementation((el, pseudo) => (el === slot ? ({ transform } as CSSStyleDeclaration) : real(el, pseudo)));
+    return card;
+  }
+
+  it('reads the rotation its slot is drawn with right now (the fan, a lifted focus, a press)', () => {
+    try {
+      // A slot turned 30°, lifted 12 px.
+      expect(poseOf(inSlot('matrix(0.866025, 0.5, -0.5, 0.866025, 0, -12)')).rotate).toBeCloseTo(30, 3);
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it('reads an upright slot as upright', () => {
+    try {
+      expect(poseOf(inSlot('none')).rotate).toBe(0);
+    } finally {
+      vi.restoreAllMocks();
+    }
   });
 });

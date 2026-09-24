@@ -15,8 +15,8 @@ interface Props {
   owner: string;
   activeColor?: Color;
   style?: CSSProperties;
-  /** Degrees the card is drawn turned (the hand fan, the messy piles), so a flight lands on it exactly. */
-  rotation?: number;
+  /** Degrees the card is drawn turned (the messy piles), or 'parent' when its slot turns it (the hand fan). */
+  rotation?: number | 'parent';
   /** Drop-zone key when a dragged card can land on this card (an opponent's property). */
   drop?: string;
 }

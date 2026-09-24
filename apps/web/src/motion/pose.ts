@@ -37,9 +37,22 @@ export function unrotate(box: Box, degrees: number): Pose {
   };
 }
 
-/** Measures an element; `data-rot` (degrees) names the rotation it is drawn with. */
+/** The turn of an element's own CSS transform, in degrees (0 without one). */
+function turnOf(el: Element | null): number {
+  if (!el) return 0;
+  const m = /matrix(?:3d)?\(([^)]+)\)/.exec(getComputedStyle(el).transform);
+  if (!m) return 0;
+  const [a = 1, b = 0] = m[1]!.split(',').map(Number);
+  return (Math.atan2(b, a) * 180) / Math.PI;
+}
+
+/**
+ * Measures an element. `data-rot` names the rotation it is drawn with, in degrees, or `parent` when
+ * its parent's transform turns it and that turn changes (a hand card's slot straightens on focus).
+ */
 export function poseOf(el: Element): Pose {
   const r = el.getBoundingClientRect();
-  const rot = Number(el.getAttribute('data-rot') ?? 0);
+  const attr = el.getAttribute('data-rot');
+  const rot = attr === 'parent' ? turnOf(el.parentElement) : Number(attr ?? 0);
   return unrotate({ left: r.left, top: r.top, width: r.width, height: r.height }, Number.isFinite(rot) ? rot : 0);
 }
