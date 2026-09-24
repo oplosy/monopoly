@@ -3,7 +3,7 @@ import type { Deadlines } from '@deal-city/protocol';
 import { CardBack } from '../cards/CardBack';
 import { cardName, plural, type Names } from '../game/log';
 import { CardView } from './CardView';
-import { secondsLeft, useNow } from './useNow';
+import { secondsLeft, useNow } from '../ui/clock';
 
 interface Props {
   view: GameView;

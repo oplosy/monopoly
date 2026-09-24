@@ -1,4 +1,4 @@
-import { secondsLeft, useNow } from '../useNow';
+import { secondsLeft, useNow } from '../../ui/clock';
 
 export function Countdown({ deadline }: { deadline: number | null }) {
   const now = useNow(deadline !== null);
