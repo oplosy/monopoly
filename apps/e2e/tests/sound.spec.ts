@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
-import { createRoom, expectLog, joinRoom, leaveRoom, newPlayer } from './players';
+import { createRoom, expectLog, joinRoom, leaveRoom, newPlayer, playFromHand } from './players';
 
 /** Counts every sound a page starts (samples and tunes) in window.sounds, before the page's own scripts run. */
 function countSounds() {
@@ -46,26 +46,25 @@ test('the sound toggle and the volume are remembered across a reload', async ({ 
   for (const page of [bob, ann]) await leaveRoom(page);
 });
 
-// The CC0 samples (Plan 8, Task 7) are not in the repo yet, so this listens for a synthesized tune:
-// the turn chime of the player whose turn starts.
-test('the next player hears their turn start, also when they ask for less motion', async ({ browser, baseURL }) => {
+test('the other players hear a card being banked, also when they ask for less motion', async ({ browser, baseURL }) => {
   const ann = await newPlayer(browser, baseURL);
   const bob = await listener(browser, baseURL, 'reduce');
-  const cy = await newPlayer(browser, baseURL);
+  const cy = await listener(browser, baseURL, 'no-preference');
   const link = await createRoom(ann, 'Ann');
-  // Clicking Join is the gesture that switches Bob's sound on.
+  // Clicking Join is the gesture that switches their sound on.
   await joinRoom(bob, link, 'Bob');
   await joinRoom(cy, link, 'Cy');
   await expect(ann.getByRole('heading', { name: 'Players (3/3)' })).toBeVisible();
 
-  // Seed 18 (test mode only) deals the hands of game.spec.ts; Ann moves first, then Bob.
+  // Seed 18 (test mode only) deals the hands of game.spec.ts; Ann moves first.
   await ann.goto(`${link}?seed=18`);
   await ann.getByRole('button', { name: 'Start game' }).click();
   for (const page of [ann, bob, cy]) await expectLog(page, "Ann's turn");
 
-  const before = await soundsOf(bob);
-  await ann.getByRole('button', { name: 'End turn' }).click();
-  await expect.poll(() => soundsOf(bob)).toBeGreaterThan(before);
+  const [bobBefore, cyBefore] = [await soundsOf(bob), await soundsOf(cy)];
+  await playFromHand(ann, '2M money', 'Bank it (+2M)');
+  await expect.poll(() => soundsOf(bob)).toBeGreaterThan(bobBefore);
+  await expect.poll(() => soundsOf(cy)).toBeGreaterThan(cyBefore);
 
   for (const page of [cy, bob, ann]) await leaveRoom(page);
 });
