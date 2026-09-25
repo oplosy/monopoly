@@ -55,4 +55,11 @@ describe('scene.css', () => {
     expect(rule(portrait, '.lake-portrait')).toMatch(/display:\s*block/);
     expect(rule(css, '.scene-backdrop .lake')).toMatch(/display:\s*none/);
   });
+
+  it('lets each caustics layer overhang its small lake box by exactly the way it slides, so no edge ever shows', () => {
+    expect(moving.inside).toMatch(/@keyframes caustics-a\s*\{\s*to\s*\{\s*translate:\s*220px 220px;/);
+    expect(moving.inside).toMatch(/@keyframes caustics-b\s*\{\s*to\s*\{\s*translate:\s*-300px 0;/);
+    expect(rule(css, '.caustics')).toMatch(/inset:\s*-220px 0 0 -220px/);
+    expect(rule(css, '.caustics-b')).toMatch(/inset:\s*0 -300px 0 0/);
+  });
 });

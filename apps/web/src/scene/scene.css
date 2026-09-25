@@ -49,11 +49,12 @@
 }
 .scene-plate picture, .plate-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 /* The lake's shimmer: two caustics layers, masked to the water of the plate on show. */
-.lake { position: absolute; inset: 0; mix-blend-mode: screen; opacity: 0.3; pointer-events: none; }
+.lake { position: absolute; mix-blend-mode: screen; opacity: 0.3; pointer-events: none; }
 .lake-portrait { display: none; }
 .scene-backdrop .lake { display: none; }
-.caustics { position: absolute; inset: -30%; background-size: 220px 220px; will-change: transform; }
-.caustics-b { background-size: 300px 300px; opacity: 0.7; }
+/* Each layer overhangs its lake box only on the side it slides from, by exactly one tile. */
+.caustics { position: absolute; inset: -220px 0 0 -220px; background-size: 220px 220px; will-change: transform; }
+.caustics-b { inset: 0 -300px 0 0; background-size: 300px 300px; opacity: 0.7; }
 @media (orientation: portrait) {
   .scene-plate { width: max(100cqw, 66.667cqh); aspect-ratio: 2 / 3; }
   .lake-landscape { display: none; }

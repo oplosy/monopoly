@@ -1,3 +1,5 @@
+import { round2 } from '../cards/text';
+
 /** A polygon in percent of a plate's own box: [x, y] pairs. */
 export type Polygon = readonly (readonly [number, number])[];
 
@@ -11,4 +13,14 @@ export const LAKE: { landscape: Polygon; portrait: Polygon } = {
 
 export function clipPath(polygon: Polygon): string {
   return `polygon(${polygon.map(([x, y]) => `${x}% ${y}%`).join(', ')})`;
+}
+
+/** Where to draw a lake: the polygon's bounding box on the plate, and the polygon rebased into that box. */
+export function lakeBox(polygon: Polygon): { left: string; top: string; width: string; height: string; clipPath: string } {
+  const xs = polygon.map(([x]) => x);
+  const ys = polygon.map(([, y]) => y);
+  const [left, top] = [Math.min(...xs), Math.min(...ys)];
+  const [width, height] = [Math.max(...xs) - left, Math.max(...ys) - top];
+  const inBox: Polygon = polygon.map(([x, y]) => [round2(((x - left) / width) * 100), round2(((y - top) / height) * 100)]);
+  return { left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%`, clipPath: clipPath(inBox) };
 }

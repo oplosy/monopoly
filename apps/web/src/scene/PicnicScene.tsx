@@ -3,7 +3,7 @@ import { useAmbience } from '../audio/audio-context';
 import { Butterfly } from './Butterfly';
 import { DISH_ART, PORTRAIT, SCENE_ART, sceneUrl } from './art';
 import { propLayout } from './geometry';
-import { clipPath, LAKE, type Polygon } from './lake';
+import { LAKE, lakeBox, type Polygon } from './lake';
 import './scene.css';
 
 interface Props {
@@ -51,11 +51,11 @@ const Ground = memo(function Ground() {
   );
 });
 
-/** Two caustics layers sliding across each other, masked to the painted water. */
+/** Two caustics layers sliding across each other, masked to the painted water and drawn only over its box. */
 function Lake({ which, polygon }: { which: 'landscape' | 'portrait'; polygon: Polygon }) {
   const texture = { backgroundImage: `url(${sceneUrl(SCENE_ART.caustics)})` };
   return (
-    <div className={`lake lake-${which}`} style={{ clipPath: clipPath(polygon) }}>
+    <div className={`lake lake-${which}`} style={lakeBox(polygon)}>
       <div className="caustics" style={texture} />
       <div className="caustics caustics-b" style={texture} />
     </div>

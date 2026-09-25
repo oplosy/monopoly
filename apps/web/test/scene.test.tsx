@@ -94,6 +94,8 @@ describe('PicnicScene', () => {
     for (const which of ['landscape', 'portrait']) {
       const lake = plate.querySelector(`.lake-${which}`) as HTMLElement;
       expect(lake.style.clipPath).toMatch(/^polygon\(/);
+      // Only the water's box is drawn, never the whole plate.
+      expect(parseFloat(lake.style.width) * parseFloat(lake.style.height)).toBeLessThan(40 * 100);
       const layers = [...lake.querySelectorAll<HTMLElement>('.caustics')];
       expect(layers).toHaveLength(2);
       for (const layer of layers) expect(layer.style.backgroundImage).toMatch(/\/scene\/caustics\.webp/);
