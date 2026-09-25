@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
-import { createRoom, expectLog, joinRoom, leaveRoom, newPlayer, playFromHand } from './players';
+import { createRoom, expectLog, joinRoom, leaveRoom, newPlayer, openSettings, playFromHand } from './players';
 
 /** Counts every sound a page starts (samples and tunes) in window.sounds, before the page's own scripts run. */
 function countSounds() {
@@ -32,17 +32,19 @@ test('the sound toggle and the volume are remembered across a reload', async ({ 
   await joinRoom(bob, link, 'Bob');
   await ann.getByRole('button', { name: 'Start game' }).click();
 
-  const menu = ann.getByRole('navigation', { name: 'Game menu' });
-  const volume = menu.getByRole('slider', { name: 'Volume' });
+  const settings = await openSettings(ann);
+  const volume = settings.getByRole('slider', { name: 'Volume' });
   // From 60 down to 30, in steps of 5, as a keyboard player would.
   for (let i = 0; i < 6; i++) await volume.press('ArrowLeft');
   await ann.reload();
+  await openSettings(ann);
   await expect(volume).toHaveValue('30');
-  await expect(menu.getByRole('button', { name: 'Sound' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(settings.getByRole('button', { name: 'Sound' })).toHaveAttribute('aria-pressed', 'true');
 
-  await menu.getByRole('button', { name: 'Sound' }).click();
+  await settings.getByRole('button', { name: 'Sound' }).click();
   await ann.reload();
-  await expect(menu.getByRole('button', { name: 'Sound' })).toHaveAttribute('aria-pressed', 'false');
+  await openSettings(ann);
+  await expect(settings.getByRole('button', { name: 'Sound' })).toHaveAttribute('aria-pressed', 'false');
 
   for (const page of [bob, ann]) await leaveRoom(page);
 });

@@ -276,6 +276,9 @@
 .hand-fan .table-card.tone-playable { box-shadow: 0 0 0 2px var(--gold), 0 6px 14px rgb(0 0 0 / 0.4); }
 .hand-fan .table-card { width: var(--hand-w); box-shadow: 0 6px 14px rgb(0 0 0 / 0.4); }
 .hand-fan .table-card.tone-target { outline: none; box-shadow: 0 0 0 3px var(--gold), 0 0 24px 4px rgb(255 216 74 / 0.9); }
+/* A hand card that cannot be played now (no plays left, or not my turn) goes dark, not see-through: the
+   fan's overlaps stay solid (spec 2026-09-25-table-controls D2). */
+.hand-fan .table-card.tone-dim { opacity: 1; filter: brightness(0.5) saturate(0.55); }
 .hand-fan.is-empty {
   position: absolute;
   left: 50%;
@@ -361,74 +364,125 @@
 /* With 2 players the far seat sits at the top middle, where the action in play stands: the action
    stands just left of that seat instead, so it never hides who played it. */
 .tabletop.players-2 .pending-stage { left: auto; right: calc(50% + 3.2rem); transform: none; justify-items: end; max-width: calc(50% - 3.2rem - 8px); }
-.my-clock {
-  /* Just above End turn, by the hand, so a lifted hand card never runs into it. */
-  position: absolute;
-  right: 3vw;
-  bottom: calc(4vh + 4.4rem);
-  z-index: 11;
-  font: 700 1.6rem var(--font-num);
-  color: #fff;
-  text-shadow: 0 2px 6px rgb(0 0 0 / 0.6);
-}
+/* End turn: a round wooden button beside the right end of my hand, lifted off the corner, with my turn's
+   seconds inside and its clock around it (spec 2026-09-25-table-controls D5, D6). */
 .end-turn {
+  --end: 112px;
+  --ring-color: var(--gold);
   position: absolute;
-  right: 3vw;
-  bottom: 4vh;
+  right: max(20px, calc(var(--hand-reserve) / 2 - var(--end) / 2 - 1vw));
+  bottom: calc(var(--hand-w) * 0.5 + 12px);
   z-index: 11;
-  font-size: 1.15rem;
-  font-weight: 800;
-  padding: 0.8rem 1.4rem;
-  border-radius: 14px;
-  background: var(--wood-dark);
-  color: #fff8ec;
+  width: var(--end);
+  height: var(--end);
+  border-radius: 50%;
+}
+.end-turn-button {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: start center;
+  padding: calc(var(--end) * 0.27) 0.4rem 0;
+  border-radius: 50%;
   border: 3px solid #3b2410;
-  box-shadow: 0 6px 0 #3b2410, 0 10px 18px rgb(0 0 0 / 0.35);
+  background: radial-gradient(circle at 50% 35%, #7a5230, var(--wood-dark) 70%);
+  color: #fff8ec;
+  font-size: calc(var(--end) * 0.145);
+  font-weight: 800;
+  line-height: 1.05;
+  box-shadow: 0 6px 0 #3b2410, 0 12px 22px rgb(0 0 0 / 0.4);
   transition: transform 0.1s ease;
 }
-.end-turn:active { transform: translateY(3px); box-shadow: 0 3px 0 #3b2410, 0 6px 12px rgb(0 0 0 / 0.35); }
+.end-turn-button:active { transform: translateY(3px); box-shadow: 0 3px 0 #3b2410, 0 6px 12px rgb(0 0 0 / 0.35); }
+.end-turn-button:focus-visible { outline: 3px solid var(--gold); outline-offset: 12px; }
+/* The seconds sit in the lower half of the button; a tap there still reaches the button. */
+.end-turn-clock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 56%;
+  text-align: center;
+  pointer-events: none;
+  color: #fff8ec;
+  font: 700 calc(var(--end) * 0.2) var(--font-num);
+  line-height: 1;
+}
+.end-turn.is-low .end-turn-clock { color: #ffb4a8; }
+/* My turn's clock drains around it: gold, red in the last seconds, dim while paused. */
+.end-turn-ring {
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+  padding: 6px;
+  pointer-events: none;
+  background: conic-gradient(var(--ring-color) calc(var(--p) * 1turn), rgb(255 255 255 / 0.18) 0);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.end-turn.is-low { --ring-color: #d93a2b; }
+.end-turn.is-paused .end-turn-ring { opacity: 0.45; }
+/* My plays are spent: End turn glows gold (D3). */
+.end-turn.is-due { box-shadow: 0 0 0 4px var(--gold), 0 0 30px 12px rgb(255 216 74 / 0.7); }
 .hud {
   position: absolute;
   top: 12px;
   right: 12px;
   z-index: 20;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  justify-items: end;
   gap: 0.5rem;
-  align-items: center;
-  justify-content: flex-end;
-  max-width: calc(100vw - 24px);
-  padding: 0.35rem 0.5rem 0.35rem 0.9rem;
-  border-radius: 999px;
-  background: rgb(43 29 14 / 0.78);
   color: #fff8ec;
 }
-.hud button { padding: 0.3rem 0.8rem; font-size: 0.85rem; border-radius: 999px; }
-.hud button.link { color: #fff8ec; }
-.hud-room { font-size: 0.85rem; }
-.sound-control { display: inline-flex; align-items: center; gap: 0.4rem; }
+/* One round gear in the corner (spec 2026-09-25-table-controls D4). */
+.hud-gear {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid #3b2410;
+  background: var(--wood-dark);
+  color: var(--gold);
+  box-shadow: 0 4px 0 #3b2410, 0 8px 16px rgb(0 0 0 / 0.35);
+}
+.hud-gear svg { width: 26px; height: 26px; transition: rotate 0.3s ease; }
+.hud-gear:hover svg,
+.hud-gear.is-open svg { rotate: 45deg; }
+.hud-gear.is-open { border-color: var(--gold); }
+.hud-gear:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+/* Its panel opens under it: a wooden card with a row per setting, every control a thumb's size. */
+.hud-panel {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 15.5rem;
+  max-width: calc(100vw - 24px);
+  padding: 0.8rem;
+  border-radius: 18px;
+  background: rgb(43 29 14 / 0.96);
+  box-shadow: 0 14px 30px rgb(0 0 0 / 0.45);
+  transform-origin: 100% 0;
+}
+.hud-room { margin: 0 0 0.2rem; font-size: 0.85rem; opacity: 0.85; }
+.hud-room strong { font-size: 1rem; letter-spacing: 0.08em; }
+.hud-row { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; min-height: 44px; }
+.hud-label { font-weight: 700; }
+.hud-panel button { min-height: 44px; border-radius: 999px; font-size: 0.95rem; }
+.hud-item { width: 100%; }
+.hud-panel button.link { color: #fff8ec; justify-self: start; padding-inline: 0.2rem; }
+.sound-control { display: inline-flex; align-items: center; gap: 0.5rem; }
 .hud .sound-toggle,
-.hud .motion-toggle { display: inline-grid; place-items: center; padding: 0.3rem 0.55rem; }
+.hud .motion-toggle { display: inline-grid; place-items: center; min-width: 44px; padding: 0.3rem 0.6rem; }
 .sound-toggle svg,
-.motion-toggle svg { display: block; width: 1.05rem; height: 1.05rem; }
+.motion-toggle svg { display: block; width: 1.15rem; height: 1.15rem; }
 .sound-toggle[aria-pressed='false'],
 .motion-toggle[aria-pressed='false'] { opacity: 0.75; }
-.sound-control input[type='range'] { width: 5.5rem; accent-color: var(--gold); }
-/* Phones keep the speaker button; the HUD has no room for the slider there. */
-@media (max-width: 640px) {
-  .sound-control input[type='range'] { display: none; }
-}
-/* Narrow phones: tighter spacing keeps the HUD's four controls on one row. */
-@media (max-width: 480px) {
-  .hud { gap: 0.3rem; padding: 0.3rem 0.35rem 0.3rem 0.5rem; }
-  .hud button { padding-inline: 0.6rem; }
-  .hud button.link { padding-inline: 0.3rem; }
-}
-/* Up to tablet widths, and on short screens, the HUD stays one short row, clear of the seat across the
-   table: the room code is still read out, but not shown. */
+.sound-control input[type='range'] { width: 7rem; accent-color: var(--gold); }
+/* A thumb's height for the volume slider too. */
+.hud-panel input[type='range'] { min-height: 44px; }
+/* Up to tablet widths, and on short screens, the narrator and the action in play sit below the gear's row. */
 @media (max-width: 1100px), (max-height: 500px) {
-  .hud-room { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  /* There the HUD reaches the middle of the screen: the narrator and the action in play sit below it. */
   .narrator { top: calc(12px + 44px + 1.2rem); }
   .pending-stage { top: calc(12px + 44px + 4.2rem); }
 }
@@ -450,18 +504,16 @@
 .log-head h2 { margin: 0; font-size: 1.1rem; }
 .log-drawer ol { margin: 0; padding-left: 1.2rem; overflow-y: auto; display: grid; gap: 0.3rem; align-content: start; font-size: 0.9rem; }
 
-/* In portrait the hand spans the width: End turn and my clock wait above its right end (layout.ts leaves them room). */
-.tabletop[data-layout='portrait'] .end-turn { right: 8px; bottom: calc(var(--hand-h) - var(--hand-rest) + 8px); }
-.tabletop[data-layout='portrait'] .my-clock { right: 12px; bottom: calc(var(--hand-h) - var(--hand-rest) + 8px + 3.2rem); }
-.tabletop[data-layout='portrait'][data-compact] .end-turn { font-size: 1rem; padding: 0.6rem 1rem; }
-.tabletop[data-layout='portrait'][data-compact] .my-clock { font-size: 1.3rem; }
+/* In portrait the hand spans the width: End turn waits above its right end (layout.ts leaves it room). */
+.tabletop[data-layout='portrait'] .end-turn { --end: 104px; right: 24px; bottom: calc(var(--hand-h) - var(--hand-rest) + 24px); }
+.tabletop[data-layout='portrait'][data-compact] .end-turn { --end: 76px; }
 .tabletop[data-layout='portrait'][data-compact] .hud { top: 6px; right: 6px; }
 /* Over the table's middle (the deck and the discard pile), where the plane's center lands on screen: the far
-   seats stand below the HUD. */
+   seats stand below the gear. */
 .tabletop[data-layout='portrait'] .narrator { top: var(--plane-cy); transform: translate(-50%, -50%); }
 .tabletop[data-layout='portrait'][data-compact] .pending-stage { top: 7.5rem; }
 :root[data-motion='off'] .narrator,
-:root[data-motion='off'] .end-turn { transition: none; }
+:root[data-motion='off'] .end-turn-button { transition: none; }
 
 /* ---------- Card popover ---------- */
 .popover { position: fixed; z-index: 30; width: max-content; max-width: min(22rem, calc(100vw - 16px)); }
@@ -574,11 +626,8 @@
 /* Paying on a phone: the tray keeps only the meter and buttons (the action is written in the stage
    above the table, and the region is still named). */
 .tabletop[data-layout='portrait'][data-compact] .pay-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-/* The narrowest phones (320 px): the HUD keeps to one row, the trays are tighter, and my seat steps up
-   clear of a tray. */
+/* The narrowest phones (320 px): the trays are tighter, and my seat steps up clear of a tray. */
 @media (max-width: 359px) {
-  .hud { max-width: calc(100vw - 12px); gap: 0.2rem; padding: 0.3rem; }
-  .hud button { padding-inline: 0.5rem; font-size: 0.8rem; }
   .tabletop[data-layout='portrait'][data-compact] .tray { padding: 0.45rem 0.7rem; gap: 0.3rem; }
   .tabletop[data-layout='portrait'][data-compact] .tray-title { font-size: 0.75rem; }
   .tabletop[data-layout='portrait'][data-compact]:has(.tray) .seat.is-me { translate: 0 -12px; }
@@ -618,34 +667,25 @@
 
 /* ---------- Touch: every control fits a thumb (44×44 CSS px) ---------- */
 @media (pointer: coarse) {
-  .hud button,
   .tray-actions button,
   .pill,
   .pill-back,
   .popover-close,
   .chip,
   .narrator button,
-  .end-turn,
   .log-close,
   .gameover-actions button { min-height: 44px; }
-  .hud .sound-toggle,
-  .hud .motion-toggle { min-width: 44px; }
 }
 
 /* ---------- Short screens (a phone in landscape) ---------- */
 /* The room beside the table, for the narrator and the trays. */
 .tabletop[data-layout='landscape'] { --side: calc((100vw - var(--plane-w)) / 2 - 16px); }
-/* The HUD stands as a column in the top right corner, clear of the far seats; the slider waits for a
-   taller screen. */
-.tabletop[data-layout='landscape'] .hud { display: grid; grid-template-columns: auto auto; align-items: stretch; border-radius: 22px; padding: 0.4rem; }
-.tabletop[data-layout='landscape'] .hud > :not(.sound-control, .motion-toggle) { grid-column: 1 / -1; }
-.tabletop[data-layout='landscape'] .sound-control input[type='range'] { display: none; }
-/* The narrator speaks at the right, beside the table: below the HUD column (12 px + 161 px), above End turn and the trays;
-   the seats stand at the left and on the felt. */
-.tabletop[data-layout='landscape'] .narrator { left: auto; right: 8px; top: 184px; transform: none; max-width: calc(var(--side) + 8px); }
+/* The narrator speaks in the right-hand column (layout.ts keeps it clear of the table): below the gear, above
+   End turn and the trays; the seats stand at the left and on the felt. */
+.tabletop[data-layout='landscape'] .narrator { left: auto; right: 8px; top: 76px; transform: none; max-width: calc(var(--side) + 8px); }
 .tabletop[data-layout='landscape'] .narrator-text { text-align: left; border-radius: 16px; }
-.tabletop[data-layout='landscape'] .end-turn { right: 10px; bottom: 10px; font-size: 1rem; padding: 0.55rem 1rem; }
-.tabletop[data-layout='landscape'] .my-clock { right: 14px; bottom: calc(10px + 3.6rem); font-size: 1.2rem; }
+/* End turn stands in the right-hand column too, off the corner. */
+.tabletop[data-layout='landscape'] .end-turn { --end: 72px; right: max(16px, calc((var(--side) + 16px - var(--end)) / 2)); bottom: 28px; }
 /* The action in play stands at the top middle, between the far seats (which sit at the sides) and below
    nothing; the trays wait at the bottom right (End turn's corner, empty while a tray shows), beside my zone. */
 .tabletop[data-layout='landscape'] .pending-stage,

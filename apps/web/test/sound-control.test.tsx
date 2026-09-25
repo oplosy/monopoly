@@ -67,9 +67,10 @@ describe('the sound control', () => {
     }
   });
 
-  it('sits in the game menu at the table', () => {
+  it('sits in the settings of the game menu at the table', () => {
     renderTabletop({ state: atTable(play({ players: [{ id: 'p1' }, { id: 'p2' }] }), 'p1') });
     const menu = screen.getByRole('navigation', { name: 'Game menu' });
+    fireEvent.click(within(menu).getByRole('button', { name: 'Settings' }));
     expect(within(menu).getByRole('button', { name: 'Sound' })).toBeInTheDocument();
     expect(within(menu).getByRole('slider', { name: 'Volume' })).toBeInTheDocument();
   });

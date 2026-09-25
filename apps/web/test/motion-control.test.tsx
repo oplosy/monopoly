@@ -27,6 +27,7 @@ describe('the Animations switch', () => {
   it('sits in the game menu, next to Sound', () => {
     renderTabletop({ state: atTable(play({ players: [{ id: 'p1', hand: ['money-1-1'] }, { id: 'p2' }] }), 'p1') });
     const menu = screen.getByRole('navigation', { name: 'Game menu' });
+    fireEvent.click(within(menu).getByRole('button', { name: 'Settings' }));
     const names = within(menu).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent);
     expect(names.indexOf('Animations')).toBe(names.indexOf('Sound') + 1);
   });

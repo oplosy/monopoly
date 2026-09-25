@@ -40,7 +40,7 @@ describe('motion.css', () => {
 
   it('shows the controls that wait for scenes to finish as waiting, whatever the switch', () => {
     const plain = all.filter((r) => !r.selector.startsWith(ON) && !r.selector.startsWith(OFF)).map((r) => r.selector).join('\n');
-    expect(plain).toMatch(/\.end-turn\[aria-disabled='true'\]/);
+    expect(plain).toMatch(/\.end-turn-button\[aria-disabled='true'\]/);
     expect(plain).toMatch(/\.tray-actions button\[aria-disabled='true'\]/);
   });
 

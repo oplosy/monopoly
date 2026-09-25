@@ -9,9 +9,18 @@ export async function newPlayer(browser: Browser, baseURL: string | undefined, o
 
 export const hand = (page: Page): Locator => page.getByRole('list', { name: /^Your hand/ });
 
-/** Opens the log drawer from the HUD, waits for `text`, then closes it so it never covers the table. */
+/** Opens the game menu's settings panel (sound, animations, the log, leaving). */
+export async function openSettings(page: Page): Promise<Locator> {
+  const menu = page.getByRole('navigation', { name: 'Game menu' });
+  const panel = menu.getByRole('group', { name: 'Settings' });
+  if (!(await panel.isVisible())) await menu.getByRole('button', { name: 'Settings' }).click();
+  await expect(panel).toBeVisible();
+  return panel;
+}
+
+/** Opens the log drawer from the settings, waits for `text`, then closes it so it never covers the table. */
 export async function expectLog(page: Page, text: string): Promise<void> {
-  await page.getByRole('button', { name: 'Game log' }).click();
+  await (await openSettings(page)).getByRole('button', { name: 'Game log' }).click();
   const drawer = page.getByRole('complementary', { name: 'Game log' });
   await expect(drawer).toContainText(text);
   await drawer.getByRole('button', { name: 'Close' }).click();

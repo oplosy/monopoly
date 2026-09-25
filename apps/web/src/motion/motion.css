@@ -118,7 +118,7 @@
 
 /* ---------- Controls waiting for scenes to finish (spec §7.3) ---------- */
 /* They keep focus (aria-disabled, not disabled) but look like they are waiting. Cards keep their look. */
-.end-turn[aria-disabled='true'],
+.end-turn-button[aria-disabled='true'],
 .tray-actions button[aria-disabled='true'] { cursor: progress; opacity: 0.6; }
 
 /* ---------- Micro-interactions and table life (spec §6.1, §6.2, §4.1) ---------- */
@@ -133,8 +133,9 @@
 :root[data-motion='on'] .group-pick { animation: breathe 1.6s ease-in-out infinite; }
 /* A picked card ticks up. */
 :root[data-motion='on'] .tableau .table-card.is-pressed { animation: tick 0.18s ease-out; }
-/* The popover springs out of its card. */
-:root[data-motion='on'] .popover { animation: pop-in 0.18s cubic-bezier(0.3, 1.4, 0.5, 1); }
+/* The popover springs out of its card, the settings panel out of its gear. */
+:root[data-motion='on'] .popover,
+:root[data-motion='on'] .hud-panel { animation: pop-in 0.18s cubic-bezier(0.3, 1.4, 0.5, 1); }
 /* Buttons squash when pressed. */
 :root[data-motion='on'] .tray-actions button,
 :root[data-motion='on'] .hud button,
@@ -147,6 +148,9 @@
 /* The turn ring swings to the next seat. */
 :root[data-motion='on'] .turn-ring { transition: rotate 0.6s cubic-bezier(0.3, 1.2, 0.5, 1); }
 @keyframes breathe { 50% { scale: 1.035; } }
+/* My plays are spent: End turn breathes, so the turn plainly waits on it (spec 2026-09-25-table-controls D3). */
+:root[data-motion='on'] .end-turn.is-due { animation: due-breathe 1.8s ease-in-out infinite; }
+@keyframes due-breathe { 50% { scale: 1.06; } }
 @keyframes tick { from { scale: 0.9; } }
 @keyframes pop-in { from { opacity: 0; scale: 0.85; } }
 
