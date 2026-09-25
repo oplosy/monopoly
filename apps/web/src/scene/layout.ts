@@ -73,6 +73,8 @@ interface ModeRules {
   rest: number;
   /** Near table card width as a share of the hand card's width, on screen. */
   table: number;
+  /** The least a crowded tableau may shrink its near cards to, as a share of the hand card's width, on screen (spec §5.3's floors). */
+  floor: number;
   /** Screen px above the plane (the HUD's row, and the far seats in portrait). */
   top: number;
   /** Screen px between my zone's bottom and the resting hand's top. */
@@ -82,12 +84,14 @@ interface ModeRules {
 }
 
 const RULES: Record<LayoutMode, ModeRules> = {
-  desktop: { handOfH: 0.214, handOfW: 0.195, rest: 0.25, table: 0.46, top: 64, below: 14, aspect: 1.8 },
-  portrait: { handOfH: 0.214, handOfW: 0.195, rest: 0.35, table: 0.52, top: 64, below: 60, aspect: 1 },
-  landscape: { handOfH: 0.214, handOfW: 0.195, rest: 0.5, table: 0.58, top: 8, below: 6, aspect: 1.8 },
+  desktop: { handOfH: 0.214, handOfW: 0.195, rest: 0.25, table: 0.46, floor: 0.457, top: 64, below: 14, aspect: 1.8 },
+  portrait: { handOfH: 0.214, handOfW: 0.195, rest: 0.35, table: 0.52, floor: 0.44, top: 64, below: 60, aspect: 1 },
+  landscape: { handOfH: 0.214, handOfW: 0.195, rest: 0.5, table: 0.58, floor: 0.575, top: 8, below: 6, aspect: 1.8 },
 };
 /** A phone in portrait has a wider hand (a thumb needs it). */
 const PHONE_HAND_OF_W = 0.267;
+/** …and its table cards never shrink below half a hand card on screen. */
+const PHONE_FLOOR = 0.5;
 /** Extra room a tray takes between my table and my hand in portrait (px). */
 const TRAY_ROOM = 56;
 /** The fan turns each hand card about a point this many card heights below its top (`.hand-fan > li`'s transform-origin). */
@@ -206,7 +210,7 @@ export function tableLayout(viewport: { width: number; height: number }, players
   const nearScale = PERSPECTIVE / (PERSPECTIVE - NEAR_DY * Math.sin(rad(TILT)));
   const cardW = Math.round((r.table * hand.w) / nearScale);
   const card = { w: cardW, h: Math.round(cardW * CARD_RATIO) };
-  const cardFloor = Math.round(cardW * 0.85);
+  const cardFloor = Math.min(cardW, Math.ceil(((phone ? PHONE_FLOOR : r.floor) * hand.w) / nearScale));
 
   // 3. The seat UI: an avatar no taller than a far table card on screen.
   const avatar = Math.round(clamp(40, card.h * Math.cos(rad(TILT)) * 0.9, 72));

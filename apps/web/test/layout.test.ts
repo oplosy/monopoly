@@ -95,6 +95,18 @@ describe('tableLayout: the spec §5.3 targets', () => {
     }
   }
 
+  it('never lets a crowded tableau shrink its cards below the targets (the floor)', () => {
+    for (const t of TARGETS) {
+      for (const players of [2, 3]) {
+        const L = tableLayout({ width: t.width, height: t.height }, players);
+        const atFloor = { ...L, card: { w: L.cardFloor, h: Math.round(L.cardFloor * 1.4) } };
+        expect(near(atFloor), `${t.width}×${t.height} near at the floor`).toBeGreaterThanOrEqual(t.near);
+        expect(far(atFloor), `${t.width}×${t.height} far at the floor`).toBeGreaterThanOrEqual(t.far);
+        expect(L.cardFloor).toBeLessThanOrEqual(L.card.w);
+      }
+    }
+  });
+
   it('pins the 1440×900 table (update with a ruling when a rule changes)', () => {
     const L = tableLayout({ width: 1440, height: 900 }, 3);
     expect(L.hand).toEqual({ w: 193, h: 270, rest: 68 });
