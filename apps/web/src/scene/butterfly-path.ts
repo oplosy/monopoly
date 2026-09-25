@@ -2,7 +2,7 @@ import { round2 } from '../cards/text';
 import { planePoint, type PlanePoint } from './geometry';
 
 /** The butterfly's width, in percent of the plane. */
-export const BUTTERFLY_SIZE = 3.5;
+export const BUTTERFLY_SIZE = 5;
 
 export interface FlightLeg {
   points: PlanePoint[];

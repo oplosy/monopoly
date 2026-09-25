@@ -121,7 +121,7 @@
 .plane-anchor { position: absolute; width: 0; height: 0; }
 
 /* The butterfly: one image split into its two wings, each folding toward the body line. */
-.butterfly { position: absolute; left: 0; top: 0; width: 3.5%; aspect-ratio: 1; pointer-events: none; will-change: transform; }
+.butterfly { position: absolute; left: 0; top: 0; width: 5%; aspect-ratio: 1; pointer-events: none; will-change: transform; }
 .wing { position: absolute; inset: 0; width: 100%; height: 100%; }
 .wing-left { clip-path: inset(0 50% 0 0); }
 .wing-right { clip-path: inset(0 0 0 50%); }
@@ -131,8 +131,9 @@
 
 .scene-leaves { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .leaves { position: absolute; will-change: transform; }
-.leaves-left { left: 0; top: 6%; height: min(80%, 820px); width: auto; transform-origin: 0% 45%; }
-.leaves-top { top: 0; right: 8%; width: min(44%, 680px); height: auto; transform-origin: 50% 0%; }
+/* The art is cut where its branches ran on: fade those cut edges so no straight line shows. */
+.leaves-left { left: 0; top: 6%; height: min(80%, 820px); width: auto; transform-origin: 0% 45%; mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent); }
+.leaves-top { top: 0; right: 8%; width: min(44%, 680px); height: auto; transform-origin: 50% 0%; mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); }
 @media (orientation: portrait) {
   .leaves-left { top: 26%; height: 34%; }
   .leaves-top { right: -6%; width: 62%; }
