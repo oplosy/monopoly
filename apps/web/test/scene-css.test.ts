@@ -78,4 +78,17 @@ describe('the plain table (spec 2026-09-25-table-layout §3–4)', () => {
     expect(rule(table, '.back-card')).toMatch(/var\(--avatar/);
     expect(rule(table, '.pending-cards .card-svg')).toMatch(/var\(--card-w/);
   });
+
+  it('lays "No properties yet" in a card-sized slot, so a tableau never spills out of its zone', () => {
+    const table = readCss(new URL('../src/tabletop/tabletop.css', import.meta.url));
+    const empty = rule(table, '.tableau-empty');
+    expect(empty).toMatch(/width:\s*var\(--card-w\)/);
+    expect(empty).toMatch(/aspect-ratio:\s*5 \/ 7/);
+  });
+
+  it('keeps the narrator off the seats: beside the table on landscape phones, over the center in portrait', () => {
+    const table = readCss(new URL('../src/tabletop/tabletop.css', import.meta.url));
+    expect(rule(table, ".tabletop[data-layout='landscape'] .narrator")).toMatch(/right:\s*8px/);
+    expect(rule(table, ".tabletop[data-layout='portrait'] .narrator")).toMatch(/top:\s*var\(--plane-cy\)/);
+  });
 });

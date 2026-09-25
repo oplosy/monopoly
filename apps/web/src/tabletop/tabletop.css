@@ -39,13 +39,20 @@
 .tableau > .bank-pile { margin-left: calc(var(--card-w) * var(--gap, 0.18)); }
 .tableau-groups > :first-child { margin-left: 0; }
 .tableau-empty {
+  /* A card-sized slot, like the empty bank beside it: fitTableau counts it as a group. */
+  display: grid;
+  place-items: center;
+  width: var(--card-w);
+  aspect-ratio: 5 / 7;
   margin: 0;
-  padding: 0.3em 0.7em;
-  white-space: nowrap;
+  padding: 0.4em;
+  font-size: 0.6em;
   font-weight: 700;
-  color: rgb(59 42 16 / 0.75);
-  background: rgb(255 255 255 / 0.4);
-  border-radius: 999px;
+  line-height: 1.15;
+  text-align: center;
+  color: rgb(255 255 255 / 0.8);
+  border: 2px dashed rgb(255 255 255 / 0.45);
+  border-radius: 6%;
 }
 .group-stack { position: relative; display: flex; flex-direction: column; width: var(--card-w); }
 /* Each card behind shows its top `--cascade` card widths: its color band, or more while it can be picked. */
@@ -444,8 +451,9 @@
 .tabletop[data-layout='portrait'][data-compact] .end-turn { font-size: 1rem; padding: 0.6rem 1rem; }
 .tabletop[data-layout='portrait'][data-compact] .my-clock { font-size: 1.3rem; }
 .tabletop[data-layout='portrait'][data-compact] .hud { top: 6px; right: 6px; }
-/* Below the HUD, which is one row of 44 px buttons on a phone. */
-.tabletop[data-layout='portrait'][data-compact] .narrator { top: 4.5rem; }
+/* Over the table's middle (the deck and the discard pile), where the plane's center lands on screen: the far
+   seats stand below the HUD. */
+.tabletop[data-layout='portrait'] .narrator { top: var(--plane-cy); transform: translate(-50%, -50%); }
 .tabletop[data-layout='portrait'][data-compact] .pending-stage { top: 7.5rem; }
 :root[data-motion='off'] .narrator,
 :root[data-motion='off'] .end-turn { transition: none; }
@@ -626,8 +634,9 @@
 .tabletop[data-layout='landscape'] .hud { display: grid; grid-template-columns: auto auto; align-items: stretch; border-radius: 22px; padding: 0.4rem; }
 .tabletop[data-layout='landscape'] .hud > :not(.sound-control, .motion-toggle) { grid-column: 1 / -1; }
 .tabletop[data-layout='landscape'] .sound-control input[type='range'] { display: none; }
-/* The narrator speaks at the left, beside the table and below the action in play. */
-.tabletop[data-layout='landscape'] .narrator { left: 8px; top: 42%; transform: none; max-width: calc(var(--side) - 8px); }
+/* The narrator speaks at the right, beside the table: below the HUD column (12 px + 161 px), above End turn and the trays;
+   the seats stand at the left and on the felt. */
+.tabletop[data-layout='landscape'] .narrator { left: auto; right: 8px; top: 184px; transform: none; max-width: calc(var(--side) + 8px); }
 .tabletop[data-layout='landscape'] .narrator-text { text-align: left; border-radius: 16px; }
 .tabletop[data-layout='landscape'] .end-turn { right: 10px; bottom: 10px; font-size: 1rem; padding: 0.55rem 1rem; }
 .tabletop[data-layout='landscape'] .my-clock { right: 14px; bottom: calc(10px + 3.6rem); font-size: 1.2rem; }

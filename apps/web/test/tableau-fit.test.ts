@@ -35,4 +35,11 @@ describe('fitTableau', () => {
   it('fans the groups and the bank out while their cards can be picked', () => {
     expect(fitTableau({ w: 600, h: 260 }, [3], 2, 84, 71, true)).toEqual({ cardW: 84, cascade: 0.5, gap: 0.18, bankStep: 0.3, rows: 1, overflow: false });
   });
+
+  it('keeps a card-sized slot for "No properties yet" when there are no groups', () => {
+    // The slot and the bank need 1.18 card widths more than one card: in 150 px they overlap.
+    const fit = fitTableau({ w: 150, h: 200 }, [], 0, 84, 71);
+    expect(fit.gap).toBeLessThan(0);
+    expect(fit.cardW).toBe(84);
+  });
 });

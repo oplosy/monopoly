@@ -130,6 +130,8 @@ test('a phone in portrait: the narrator clears the HUD, and every control fits a
   const narrator = ann.locator('.narrator.is-shown .narrator-text');
   await expect(narrator).toContainText('2M');
   await expectApart(narrator, menu);
+  // The narrator never hides who is at the table.
+  for (const seat of [/^Bob's seat/, /^Your seat/]) await expectApart(narrator, ann.getByRole('group', { name: seat }));
 
   await menu.getByRole('button', { name: 'Game log' }).tap();
   await expectTappable(ann.getByRole('complementary', { name: 'Game log' }).getByRole('button', { name: 'Close' }));
@@ -165,6 +167,7 @@ for (const [width, height] of [[844, 390], [667, 375]] as const) test(`a phone i
   const menu = ann.getByRole('navigation', { name: 'Game menu' });
   // The bubble is always laid out (empty between lines), so this never waits for a line to show.
   await expectApart(ann.locator('.narrator-text'), menu);
+  for (const seat of [/^Bob's seat/, /^Cy's seat/, /^Your seat/]) await expectApart(ann.locator('.narrator-text'), ann.getByRole('group', { name: seat }));
   // The cards to pay with stay pickable: the tray never covers my area.
   const mine = ann.getByRole('region', { name: 'Your area' });
   await expectApart(tray, mine);

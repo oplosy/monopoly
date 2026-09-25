@@ -23,7 +23,8 @@ const ROW_GAP = 0.12;
  * Lays one player's tableau into its zone (spec §5.2): groups in a row, then the bank. When they do not fit,
  * the row tightens, wraps onto a second row where the zone is tall enough, then groups overlap (each keeps
  * half its width showing); the cards shrink only as a last resort, never below `floorW`.
- * `groups` holds each group's card count; `picking` fans groups and the bank out so each card is easy to hit.
+ * `groups` holds each group's card count (none: the "No properties yet" slot, card-sized, takes a group's place);
+ * `picking` fans groups and the bank out so each card is easy to hit.
  */
 export function fitTableau(
   zone: { w: number; h: number },
@@ -35,7 +36,8 @@ export function fitTableau(
 ): TableauFit {
   const cascade = picking ? 0.5 : 0.3;
   const bankStep = picking ? 0.3 : 0.14;
-  const items = groups.length + 1; // the bank always takes a slot, even empty
+  const slots = Math.max(1, groups.length); // an empty tableau still shows its "No properties yet" slot
+  const items = slots + 1; // the bank always takes a slot, even empty
   const deepest = Math.max(1, ...groups);
   /** Width of `n` items with `gap`, counting the bank's spread when it is among them, in card widths. */
   const rowWidth = (n: number, gap: number, withBank: boolean) => n + (withBank ? Math.max(0, bank - 1) * bankStep : 0) + (n - 1) * gap;
@@ -50,7 +52,7 @@ export function fitTableau(
     }
     // Overlap: the gap that makes one row fit, no tighter than each group showing half its width.
     const spread = 1 + Math.max(0, bank - 1) * bankStep;
-    const gap = items > 1 ? (zone.w / w - groups.length - spread) / (items - 1) : 0;
+    const gap = (zone.w / w - slots - spread) / (items - 1);
     if (gap >= GAP.overlap) return { cascade, gap: Math.min(gap, GAP.tight), bankStep, rows: 1 };
     return null;
   };
