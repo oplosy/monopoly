@@ -190,7 +190,9 @@ function GameTable({ game }: { game: GameStatePayload }) {
     rootRef.current?.querySelector(`[data-zone="${zone}"][data-card="${card}"]`) ?? null;
   const responseDeadline = deadlines.responseEndsAt[view.me] ?? null;
   const jsnCard = legal.find((i): i is IntentOf<'respondJustSayNo'> => i.type === 'respondJustSayNo')?.card;
-  const jsnAnchor = jsnCard ? anchorOf('hand', jsnCard) : null;
+  // Found after commit: on the table's first draw (a reload mid-answer) the hand is not on the page yet.
+  const [jsnAnchor, setJsnAnchor] = useState<Element | null>(null);
+  useLayoutEffect(() => setJsnAnchor(jsnCard ? anchorOf('hand', jsnCard) : null));
 
   const clockFor = (id: string) => {
     const who = id === view.me ? 'Your' : `${name(id)}'s`;
