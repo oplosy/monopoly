@@ -68,9 +68,20 @@ test('cards fly even when the OS asks for less motion, and the Animations switch
 });
 
 test('every page carries the motion setting from the first paint', async ({ page }) => {
+  // Before any of the page's scripts: note whether anything is drawn into the app before the setting is on <html>.
+  await page.addInitScript(() => {
+    const w = window as unknown as { drawnBeforeSetting: boolean };
+    w.drawnBeforeSetting = false;
+    new MutationObserver((records) => {
+      const drawn = records.some((r) => r.target instanceof Element && r.target.closest('#root') && r.addedNodes.length > 0);
+      if (drawn && !document.documentElement.dataset.motion) w.drawnBeforeSetting = true;
+    }).observe(document, { childList: true, subtree: true });
+  });
   for (const path of ['/', '/gallery']) {
     await page.goto(path);
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    await expect(page.locator('#root > *')).not.toHaveCount(0);
+    expect(await page.evaluate(() => (window as unknown as { drawnBeforeSetting: boolean }).drawnBeforeSetting), path).toBe(false);
   }
 });
 
