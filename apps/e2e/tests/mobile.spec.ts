@@ -102,3 +102,13 @@ test('a phone in landscape: paying keeps my table, the seats and the HUD in view
   await tray.getByRole('button', { name: 'Pay 2M' }).tap();
   for (const page of [cy, bob, ann]) await leaveRoom(page);
 });
+
+test('a tablet in landscape: the HUD never covers the seat across the table', async ({ browser, baseURL }) => {
+  const ann = await phonePlayer(browser, baseURL, 1024, 768);
+  const bob = await newPlayer(browser, baseURL);
+  const link = await createRoom(ann, 'Ann');
+  await joinRoom(bob, link, 'Bob');
+  await ann.getByRole('button', { name: 'Start game' }).tap();
+  await expectApart(ann.getByRole('navigation', { name: 'Game menu' }), ann.getByRole('group', { name: /^Bob's seat/ }));
+  for (const page of [bob, ann]) await leaveRoom(page);
+});

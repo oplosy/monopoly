@@ -399,8 +399,9 @@
 @media (max-width: 640px) {
   .sound-control input[type='range'] { display: none; }
 }
-/* Narrow and short screens keep the HUD on one row: the room code is still read out, but not shown. */
-@media (max-width: 480px), (max-height: 500px) {
+/* Up to tablet widths, and on short screens, the HUD stays one short row, clear of the seat across the
+   table: the room code is still read out, but not shown. */
+@media (max-width: 1100px), (max-height: 500px) {
   .hud-room { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
 .log-drawer {
