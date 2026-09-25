@@ -67,8 +67,9 @@ test('a phone in portrait: the narrator clears the HUD, and every control fits a
   for (const page of [bob, ann]) await leaveRoom(page);
 });
 
-test('a phone in landscape: paying keeps my table, the seats and the HUD in view', async ({ browser, baseURL }) => {
-  const ann = await phonePlayer(browser, baseURL, 844, 390);
+// A large phone (iPhone 13) and a small one (iPhone SE) on their side.
+for (const [width, height] of [[844, 390], [667, 375]] as const) test(`a phone in landscape (${width}×${height}): paying keeps my table, the seats and the HUD in view`, async ({ browser, baseURL }) => {
+  const ann = await phonePlayer(browser, baseURL, width, height);
   const bob = await newPlayer(browser, baseURL);
   const cy = await newPlayer(browser, baseURL);
   const link = await createRoom(ann, 'Ann');
@@ -89,15 +90,19 @@ test('a phone in landscape: paying keeps my table, the seats and the HUD in view
   await expect(tray).toBeVisible();
   await expectTappable(tray.getByRole('button', { name: 'Pay 2M' }), tray.getByRole('button', { name: 'Auto' }));
   const menu = ann.getByRole('navigation', { name: 'Game menu' });
-  await expectApart(ann.locator('.narrator.is-shown .narrator-text'), menu);
+  // The bubble is always laid out (empty between lines), so this never waits for a line to show.
+  await expectApart(ann.locator('.narrator-text'), menu);
   // The cards to pay with stay pickable: the tray never covers my area.
   const mine = ann.getByRole('region', { name: 'Your area' });
   await expectApart(tray, mine);
   await expect.poll(async () => overlap(await boxOf(mine), await boxOf(ann.getByRole('list', { name: /^Your hand/ })))).toBeLessThanOrEqual(4);
-  // The action in play never hides a seat or the HUD.
-  const stage = ann.locator('.pending-stage');
+  // Neither the action in play nor the HUD hides a seat.
+  const stage = ann.getByRole('region', { name: 'Action in play' });
   await expectApart(stage, menu);
-  for (const seat of [/^Bob's seat/, /^Cy's seat/, /^Your seat/]) await expectApart(stage, ann.getByRole('group', { name: seat }));
+  for (const seat of [/^Bob's seat/, /^Cy's seat/, /^Your seat/]) {
+    await expectApart(stage, ann.getByRole('group', { name: seat }));
+    await expectApart(menu, ann.getByRole('group', { name: seat }));
+  }
 
   await tray.getByRole('button', { name: 'Pay 2M' }).tap();
   for (const page of [cy, bob, ann]) await leaveRoom(page);
