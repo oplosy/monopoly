@@ -90,7 +90,8 @@ The source images and any processing script stay out of the repo (like `for_tabl
 - **Cloth and light.** Both are clipped to the disk: they live inside the round `.table-wood`.
 - **Plate box.** It uses container query units (`.scene-ground` has `container-type: size`).
 - **Vignette.** It needs no `z-index`: `container-type` makes no stacking context, and a z-index there lifted the ground over the whole table and took its clicks. An end-to-end test now checks that the center piles are reachable.
-- **Leaves.** Their cut edges (where the branches ran on in the art) are faded with `mask-image` gradients.
+- **Leaves.** Their cut edges (where the branches ran on in the art) are faded with `mask-image` gradients. The top branch is narrow (`min(36%, 560px)`, 4 % from the right). On portrait screens the left branch is small (22 % of the height, from 12 %). This keeps both clear of every tableau, swaying or not, in 2- and 3-player games; an end-to-end test checks it at seven sizes.
+- **Lake.** Each lake layer covers only its polygon's bounding box, not the whole plate, so the shimmer draws about a tenth of the pixels it first did.
 - **Lobby.** The lobby's ground is `position: fixed`, so the painted meadow fills the whole lobby page under the paper panel, with no plain green anywhere (the user's request).
 - **Tilt.** `--tilt` is unchanged at 55°: the plates matched it.
 
@@ -138,6 +139,7 @@ The tiled light texture drifts slowly across the table: a 40–60 s `alternate` 
 **As built.**
 - **Code.** The butterfly's pure path lives in `scene/butterfly-path.ts`: a file named `butterfly.ts` collides with `Butterfly.tsx` on case-insensitive file systems.
 - **Size.** Its size is 5 % of the plane; 3.5 % was too small to notice at play size.
+- **Turns.** Its headings are unwrapped (each within half a turn of the last, landing heading carried into the fly-off), so it never spins round mid-flight.
 - **Motion.** Leaves sway on 7 s and 9 s loops. The light drifts on a 50 s loop, and the caustics slide on 26 s and 19 s loops of exactly one tile each.
 - **Lake polygons.** Unchanged from the traced ones.
 
