@@ -67,7 +67,7 @@ test('a phone in portrait: the narrator clears the HUD, and every control fits a
   for (const page of [bob, ann]) await leaveRoom(page);
 });
 
-test('a phone in landscape: the narrator clears the HUD, and the pay tray fits a thumb', async ({ browser, baseURL }) => {
+test('a phone in landscape: paying keeps my table, the seats and the HUD in view', async ({ browser, baseURL }) => {
   const ann = await phonePlayer(browser, baseURL, 844, 390);
   const bob = await newPlayer(browser, baseURL);
   const cy = await newPlayer(browser, baseURL);
@@ -88,7 +88,16 @@ test('a phone in landscape: the narrator clears the HUD, and the pay tray fits a
   const tray = ann.getByRole('region', { name: 'You owe Bob 2M' });
   await expect(tray).toBeVisible();
   await expectTappable(tray.getByRole('button', { name: 'Pay 2M' }), tray.getByRole('button', { name: 'Auto' }));
-  await expectApart(ann.locator('.narrator.is-shown .narrator-text'), ann.getByRole('navigation', { name: 'Game menu' }));
+  const menu = ann.getByRole('navigation', { name: 'Game menu' });
+  await expectApart(ann.locator('.narrator.is-shown .narrator-text'), menu);
+  // The cards to pay with stay pickable: the tray never covers my area.
+  const mine = ann.getByRole('region', { name: 'Your area' });
+  await expectApart(tray, mine);
+  await expect.poll(async () => overlap(await boxOf(mine), await boxOf(ann.getByRole('list', { name: /^Your hand/ })))).toBeLessThanOrEqual(4);
+  // The action in play never hides a seat or the HUD.
+  const stage = ann.locator('.pending-stage');
+  await expectApart(stage, menu);
+  for (const seat of [/^Bob's seat/, /^Cy's seat/, /^Your seat/]) await expectApart(stage, ann.getByRole('group', { name: seat }));
 
   await tray.getByRole('button', { name: 'Pay 2M' }).tap();
   for (const page of [cy, bob, ann]) await leaveRoom(page);
