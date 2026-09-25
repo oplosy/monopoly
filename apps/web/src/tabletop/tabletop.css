@@ -292,7 +292,7 @@
   --hand-reserve: 26vw;
 }
 /* The whole table fits the screen: the far seats below the narrator, the near rim under my hand. */
-.tabletop .scene { --plane: min(70vw, calc((100vh - 170px) * 1.12)); --plane-shift: -9%; }
+.tabletop .scene { --plane: min(64vw, calc((100vh - 210px) * 0.9)); --plane-shift: -8%; }
 .narrator {
   position: absolute;
   left: 50%;
@@ -512,6 +512,10 @@
   box-shadow: 0 10px 24px rgb(0 0 0 / 0.35);
 }
 .tray.is-anchored { position: fixed; transform: none; bottom: auto; }
+/* Paying picks cards on my table, not in my hand: the hand tucks down and the tray sits at the bottom,
+   so the cards to pay with stay clear at the 22° tilt. */
+.tabletop:has(.pay-tray) .hand-fan { bottom: calc(var(--hand-w) * -1.12); }
+.tabletop .pay-tray { bottom: 12px; }
 .tray-title { margin: 0; font-weight: 700; font-size: 0.9rem; }
 /* The pay tray is one compact strip (mockup 05): the meter and the buttons share a row. */
 .pay-tray { grid-template-columns: minmax(8rem, 1fr) auto; grid-auto-flow: row dense; column-gap: 0.9rem; align-items: center; }
@@ -589,15 +593,22 @@
 
 /* ---------- Short screens (a phone in landscape) ---------- */
 @media (max-height: 500px) and (orientation: landscape) {
-  /* A smaller hand leaves the height to the table. */
-  .tabletop { --hand-w: 64px; --hand-reserve: 24vw; --short-plane: min(56vw, calc((100vh - 80px) * 1.3)); --side: calc((100vw - var(--short-plane)) / 2 - 16px); }
+  /* A smaller hand, resting lower, leaves the height to the table. At 22° a round table is nearly as
+     tall as it is wide: with 2 players the far seat sits on its top edge, so that table is smaller. */
+  .tabletop { --hand-w: 64px; --hand-reserve: 28vw; --short-plane: min(56vw, calc(100vh * 0.9)); --short-shift: 0%; --side: calc((100vw - var(--short-plane)) / 2 - 16px); }
+  .tabletop.players-2 { --short-plane: min(56vw, calc(100vh * 0.78)); --short-shift: 9%; }
+  .hand-fan { bottom: calc(var(--hand-w) * -0.52); }
   /* :has() matches the ≤700 px rule that lifts a portrait table while paying: landscape keeps it level. */
   .tabletop .scene,
-  .tabletop:has(.pay-tray) .scene { --plane: var(--short-plane); --plane-shift: 4%; }
-  /* The HUD keeps to the corner, clear of the far seats: the slider waits for a taller screen. */
+  .tabletop:has(.pay-tray) .scene { --plane: var(--short-plane); --plane-shift: var(--short-shift); }
+  /* The HUD stands as a column in the top right corner, clear of the far seats; the slider waits for a
+     taller screen. My seat moves left, clear of the hand. */
+  .hud { flex-direction: column; align-items: stretch; border-radius: 22px; padding: 0.4rem; }
   .sound-control input[type='range'] { display: none; }
-  /* The narrator speaks below the HUD, never under it. */
-  .narrator { top: calc(12px + 44px + 1.2rem); }
+  .seat.is-me { translate: -64px 0; }
+  /* The narrator speaks at the left, beside the table and below the action in play. */
+  .narrator { left: 8px; top: 42%; transform: none; max-width: calc(var(--side) - 8px); }
+  .narrator-text { text-align: left; border-radius: 16px; }
   .end-turn { right: 10px; bottom: 10px; font-size: 1rem; padding: 0.55rem 1rem; }
   .my-clock { right: 14px; bottom: calc(10px + 3.6rem); font-size: 1.2rem; }
   /* Beside the table, not over it: the action in play at the top left, the trays at the bottom right
@@ -606,13 +617,11 @@
   .pending-cards .card-svg { width: 48px; }
   .pending-text, .pending-wait { font-size: 0.8rem; text-align: left; border-radius: 12px; }
   /* A tray anchored beside my Just Say No card keeps its own place and size. */
-  .tray:not(.is-anchored) { left: auto; right: 8px; bottom: calc(var(--hand-w) * 1.02); transform: none; width: min(var(--side), 24rem); max-width: min(var(--side), 24rem); padding: 0.6rem 0.7rem; }
+  .tray:not(.is-anchored) { left: auto; right: 8px; bottom: 8px; transform: none; width: min(var(--side), 24rem); max-width: min(var(--side), 24rem); padding: 0.6rem 0.7rem; }
   .pay-tray { grid-template-columns: 1fr; }
   .pay-tray > .tray-meter,
   .pay-tray > .tray-actions { grid-row: auto; grid-column: 1; }
   .pay-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .tray-meter meter { min-width: 0; }
   .tray-title { font-size: 0.8rem; }
-  /* Paying picks cards on my table, not in my hand: the hand tucks down out of their way. */
-  .tabletop:has(.pay-tray) .hand-fan { bottom: calc(var(--hand-w) * -1.12); }
 }

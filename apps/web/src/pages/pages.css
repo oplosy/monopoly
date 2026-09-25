@@ -7,7 +7,6 @@
   padding: 2rem 1rem;
   isolation: isolate;
 }
-.paper-page > .scene { position: fixed; z-index: -1; }
 .paper {
   position: relative;
   width: min(32rem, 100%);
@@ -54,10 +53,10 @@
   min-height: 100dvh;
   display: grid;
   grid-template-rows: auto 1fr;
-  background: var(--grass-3);
+  background: var(--bg);
 }
 /* The whole table fits, from the far chairs to mine at the near rim; the plane is lifted to the top. */
-.lobby-table, .lobby-table .scene { --plane: min(62vw, 70vh); }
+.lobby-table, .lobby-table .scene { --plane: min(56vw, 58vh); }
 .lobby-table { position: relative; overflow: hidden; height: calc(var(--plane) * 0.78 + 150px); }
 .lobby-table .scene { --plane-shift: calc(-9% - 75px); }
 .chairs { list-style: none; margin: 0; padding: 0; }
