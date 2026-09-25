@@ -51,6 +51,25 @@ describe('PicnicScene', () => {
     expect(container.querySelector('.scenery')).toHaveAttribute('aria-hidden', 'true');
     expect(container.querySelectorAll('.prop')).toHaveLength(5);
   });
+
+  it('paints the meadow, in portrait on tall screens', () => {
+    const { container } = render(<PicnicScene players={2} />);
+    const source = container.querySelector('.scene-ground source')!;
+    expect(source).toHaveAttribute('media', '(orientation: portrait)');
+    expect(source.getAttribute('srcset')).toMatch(/\/scene\/bg-portrait\.webp$/);
+    const plate = container.querySelector('.plate-art')!;
+    expect(plate.getAttribute('src')).toMatch(/\/scene\/bg-landscape\.webp$/);
+    expect(plate).toHaveAttribute('alt', '');
+    expect(container.querySelector('.scene-ground')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('lays the painted tabletop, the cloth and the light on the table', () => {
+    const { container } = render(<PicnicScene players={2} />);
+    const wood = container.querySelector('.scenery .table-wood')!;
+    expect(wood.querySelector('.table-art')!.getAttribute('src')).toMatch(/\/scene\/table-top\.webp$/);
+    expect(wood.querySelector('.cloth')!.getAttribute('src')).toMatch(/\/scene\/cloth\.webp$/);
+    expect((wood.querySelector('.dapple') as HTMLElement).style.backgroundImage).toMatch(/\/scene\/dapple\.webp/);
+  });
 });
 
 describe('projection', () => {
