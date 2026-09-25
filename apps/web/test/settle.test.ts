@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AnchorRegistry } from '../src/motion/anchors';
 import type { Pose } from '../src/motion/pose';
 import { LAND_MS, landCard, landingTilt, settleCards, settleOffset } from '../src/motion/settle';
+import { shakeKeyframes } from '../src/motion/shake';
 import { stubAnimations } from './motion';
 
 const pose = (cx: number, cy: number): Pose => ({ cx, cy, width: 100, height: 140, rotate: 0 });
@@ -69,4 +70,11 @@ describe('landing', () => {
     expect(frames.at(-1)).toMatchObject({ rotate: '0deg' });
     expect(options).toMatchObject({ duration: LAND_MS, composite: 'add' });
   });
+});
+
+it('shakes no further than its strength and comes back to rest', () => {
+  const frames = shakeKeyframes(6);
+  const xs = frames.map((f) => Number(String(f.translate).split('px')[0]));
+  expect(Math.max(...xs.map(Math.abs))).toBe(6);
+  expect(frames.at(-1)!.translate).toBe('0px 0px');
 });

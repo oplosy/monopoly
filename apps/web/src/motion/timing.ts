@@ -38,6 +38,9 @@ export const EFFECT_MS: Record<Effect['type'], number> = {
 /** Effects that celebrate an arrival start once their scene's last flight has landed; the rest start with it. */
 const AT_LANDING: ReadonlySet<Effect['type']> = new Set(['confetti']);
 
+/** Screen shake in px for the moments that hit hard (spec 2026-09-25 §6.3: 2–8 px, scaled with the moment). */
+export const SHAKE_PX = { float: 8, slam: 6, confetti: 5, bigRent: 4, setComplete: 2 } as const;
+
 /** Sped-up flights never get shorter than this. */
 export const MIN_FLIGHT_MS = 90;
 
@@ -55,9 +58,16 @@ export interface TimedEffect {
   at: number;
 }
 
+export interface TimedShake {
+  at: number;
+  px: number;
+}
+
 export interface Timeline {
   flights: TimedFlight[];
   effects: TimedEffect[];
+  /** When the screen shakes, and how hard. */
+  shakes: TimedShake[];
   /** When the last flight lands. */
   total: number;
 }
@@ -79,19 +89,29 @@ export function schedule(scenes: readonly Scene[], waiting: number, length: (f: 
   const advance = scale < 1 ? scale * (2 / 3) : 1;
   const flights: TimedFlight[] = [];
   const effects: TimedEffect[] = [];
+  const shakes: TimedShake[] = [];
   let start = 0;
   let total = 0;
   for (const [index, scene] of scenes.entries()) {
     let landed = start;
-    scene.flights.forEach((flight, i) => {
+    const timed = scene.flights.map((flight, i): TimedFlight => {
       const delay = Math.round(start + i * scene.stagger * scale);
       const duration = Math.max(MIN_FLIGHT_MS, Math.round(length(flight) * scale));
-      flights.push({ flight, delay, duration, kind: scene.kind, scene: index });
       landed = Math.max(landed, delay + duration);
+      return { flight, delay, duration, kind: scene.kind, scene: index };
     });
+    flights.push(...timed);
     total = Math.max(total, landed);
-    for (const effect of scene.effects) effects.push({ effect, at: Math.round(AT_LANDING.has(effect.type) ? landed : start) });
+    // A Just Say No hits halfway through its slam; a Deal Breaker's set lands with its last card.
+    const slam = timed.find((f) => f.flight.style === 'slam');
+    if (slam) shakes.push({ at: slam.delay + Math.round(slam.duration / 2), px: SHAKE_PX.slam });
+    if (scene.flights.some((f) => f.style === 'float')) shakes.push({ at: landed, px: SHAKE_PX.float });
+    for (const effect of scene.effects) {
+      const at = Math.round(AT_LANDING.has(effect.type) ? landed : start);
+      effects.push({ effect, at });
+      if (effect.type in SHAKE_PX) shakes.push({ at, px: SHAKE_PX[effect.type as keyof typeof SHAKE_PX] });
+    }
     start += sceneLength(scene, length) * advance;
   }
-  return { flights, effects, total };
+  return { flights, effects, shakes, total };
 }

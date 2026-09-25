@@ -68,6 +68,8 @@ export interface StageDeps {
   tilt?(): number;
   /** The real card `key` was just revealed by a flight that landed turned by `tilt`. */
   land?(key: string, tilt: number): void;
+  /** Shakes the screen by up to `px` (spec 2026-09-25 §6.3). */
+  shake?(px: number): void;
 }
 
 export interface Stage {
@@ -280,6 +282,12 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
       // now: behind a timer, the table would show a frame without it (a Just Say No's stage blinking out).
       if (at <= 0) start();
       else later(at, start);
+    }
+
+    // Shakes run on the stage's clock too: a snapped or skipped batch never shakes the table afterwards.
+    if (deps.shake) {
+      const shake = deps.shake;
+      for (const { at, px } of timeline.shakes) later(at, () => shake(px));
     }
 
     // Each sound plays on the flights' clock: a skipped or snapped batch clears these timers, and stays silent.

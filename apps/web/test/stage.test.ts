@@ -7,7 +7,7 @@ import { DRAW_STAGGER } from '../src/motion/planner';
 import type { Pose } from '../src/motion/pose';
 import type { FlightStyle } from '../src/motion/scenes';
 import { createStage, MAX_CLONES, type Stage } from '../src/motion/stage';
-import { EFFECT_MS, flightMs, STYLE_MS } from '../src/motion/timing';
+import { EFFECT_MS, flightMs, SHAKE_PX, STYLE_MS } from '../src/motion/timing';
 import { payload } from './fixtures';
 
 const pose = (cx: number, cy: number): Pose => ({ cx, cy, width: 100, height: 140, rotate: 0 });
@@ -53,6 +53,29 @@ beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
 
 describe('createStage', () => {
+  it('shakes the table when a set completes, never after a snap, never with motion off', () => {
+    const s0 = makeState({ players: [{ id: 'p1', hand: ['prop-brown-2'], groups: [{ color: 'brown', cards: ['prop-brown-1'] }] }, { id: 'p2' }] });
+    const shake = vi.fn();
+    const poses = fakePoses({}, {}, pose(0, 0));
+    const stage = createStage({ poses, mode: () => 'fly', settle: vi.fn(), shake }, payload(s0, 'p1'));
+    const { game } = next(s0, 'p1', { type: 'playProperty', card: 'prop-brown-2', color: 'brown' });
+    show(stage, game);
+    vi.runAllTimers();
+    expect(shake).toHaveBeenCalledWith(SHAKE_PX.setComplete);
+
+    shake.mockClear();
+    const again = createStage({ poses, mode: () => 'fly', settle: vi.fn(), shake }, payload(s0, 'p1'));
+    show(again, game);
+    again.snap();
+    vi.runAllTimers();
+    expect(shake).not.toHaveBeenCalled();
+
+    const off = createStage({ poses, mode: () => 'instant', settle: vi.fn(), shake }, payload(s0, 'p1'));
+    show(off, game);
+    vi.runAllTimers();
+    expect(shake).not.toHaveBeenCalled();
+  });
+
   it('lands a revealed card with the tilt its clone carries, and nothing lands with motion off', () => {
     const s0 = banker();
     const poses = fakePoses({ 'card:money-1-1': pose(0, 0) }, { 'card:money-1-1': pose(480, 0) });

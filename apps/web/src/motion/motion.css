@@ -2,6 +2,9 @@
    :root[data-motion='on'], so the in-game Animations switch turns them all off; 'off' keeps only fades. */
 
 /* ---------- Effects layer: cards in flight ---------- */
+/* The screen shake moves this wrapper (motion/shake.ts). It holds the table and the flight layer, so
+   clones shake with the cards they land on. */
+.stage-shake { position: relative; }
 .flight-layer {
   position: fixed;
   inset: 0;
