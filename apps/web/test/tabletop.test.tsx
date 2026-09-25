@@ -133,10 +133,15 @@ describe('the table', () => {
     vi.restoreAllMocks();
   });
 
-  it('says whose turn it is and shows my countdown', () => {
-    renderTabletop({ state: atTable(base(), 'p1', { deadlines: { turnEndsAt: Date.now() + 30_000 } }) });
+  it('says whose turn it is and shows my countdown inside End turn, ringed by my clock', () => {
+    renderTabletop({ state: atTable(base(), 'p1', { deadlines: { turnEndsAt: Date.now() + 30_000, turnMs: 30_000 } }) });
     expect(screen.getByRole('heading', { level: 1, name: 'Your turn' })).toBeInTheDocument();
-    expect(document.querySelector('.my-clock')).toHaveTextContent(/30s/);
+    const end = screen.getByRole('button', { name: 'End turn' });
+    expect(end).toHaveAccessibleDescription('Turn ends in 30s');
+    const round = end.closest<HTMLElement>('.end-turn')!;
+    expect(round).toHaveTextContent(/^End turn.*30s$/);
+    expect(Number(round.style.getPropertyValue('--p'))).toBeCloseTo(1, 1);
+    expect(document.querySelector('.my-clock')).toBeNull();
     expect(screen.getByRole('group', { name: 'Your seat, playing now' })).toHaveTextContent(/Your turn, 30s left/);
   });
 
@@ -144,6 +149,8 @@ describe('the table', () => {
     renderTabletop({ state: atTable(base(), 'p1', { deadlines: { turnEndsAt: Date.now() + 15_000, turnMs: 60_000 } }) });
     const ring = document.querySelector<HTMLElement>('.seat.is-me .timer-ring')!;
     expect(Number(ring.style.getPropertyValue('--p'))).toBeCloseTo(0.25, 2);
+    const end = screen.getByRole('button', { name: 'End turn' }).closest<HTMLElement>('.end-turn')!;
+    expect(Number(end.style.getPropertyValue('--p'))).toBeCloseTo(0.25, 2);
   });
 
   it("names the other player's turn and hides End turn", () => {
@@ -151,7 +158,15 @@ describe('the table', () => {
     expect(screen.getByRole('heading', { level: 1, name: "Ann's turn" })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: "Ann's seat, playing now" })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'End turn' })).not.toBeInTheDocument();
-    expect(document.querySelector('.my-clock')).toBeNull();
+  });
+
+  it('lights End turn up once my plays are spent, not before', () => {
+    const spent = play({ players: [{ id: 'p1', hand: ['money-1-1'] }, { id: 'p2' }], playsLeft: 0 });
+    const { unmount } = renderTabletop({ state: atTable(spent, 'p1') });
+    expect(screen.getByRole('button', { name: 'End turn' }).closest('.end-turn')).toHaveClass('is-due');
+    unmount();
+    renderTabletop({ state: atTable(base(), 'p1') });
+    expect(screen.getByRole('button', { name: 'End turn' }).closest('.end-turn')).not.toHaveClass('is-due');
   });
 
   it('ends the turn', async () => {
@@ -193,18 +208,48 @@ describe('the table', () => {
     ];
     renderTabletop({ state: { ...atTable(base(), 'p1'), log } });
     expect(screen.queryByRole('complementary', { name: 'Game log' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
     await user.click(screen.getByRole('button', { name: 'Game log' }));
+    // The log takes the settings panel's place.
+    expect(screen.queryByRole('group', { name: 'Settings' })).not.toBeInTheDocument();
     const drawer = screen.getByRole('complementary', { name: 'Game log' });
     expect(within(drawer).getAllByRole('listitem').map((li) => li.textContent)).toEqual(["Ann's turn", 'Cy left the game']);
     expect(within(drawer).getByRole('button', { name: 'Close' })).toHaveFocus();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('complementary', { name: 'Game log' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Game log' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Settings' })).toHaveFocus();
+  });
+
+  it('keeps sound, animations, the room code, the log and leaving behind one Settings button', async () => {
+    const user = userEvent.setup();
+    renderTabletop({ state: atTable(base(), 'p1') });
+    const menu = screen.getByRole('navigation', { name: 'Game menu' });
+    const gear = within(menu).getByRole('button', { name: 'Settings' });
+    expect(within(menu).getAllByRole('button')).toEqual([gear]);
+    expect(gear).toHaveAttribute('aria-expanded', 'false');
+    await user.click(gear);
+    expect(gear).toHaveAttribute('aria-expanded', 'true');
+    const panel = within(menu).getByRole('group', { name: 'Settings' });
+    expect(panel).toHaveTextContent('Room ABCDEF');
+    for (const name of ['Sound', 'Animations', 'Game log', 'Leave game']) expect(within(panel).getByRole('button', { name })).toBeInTheDocument();
+    expect(within(panel).getByRole('slider', { name: 'Volume' })).toBeInTheDocument();
+    // Escape closes it and gives focus back to the gear; so does a click on the table.
+    await user.keyboard('{Escape}');
+    expect(within(menu).queryByRole('group', { name: 'Settings' })).not.toBeInTheDocument();
+    expect(gear).toHaveFocus();
+    await user.click(gear);
+    await user.click(screen.getByRole('region', { name: 'Table center' }));
+    expect(within(menu).queryByRole('group', { name: 'Settings' })).not.toBeInTheDocument();
+    // A control inside keeps it open.
+    await user.click(gear);
+    await user.click(within(menu).getByRole('button', { name: 'Animations' }));
+    expect(within(menu).getByRole('group', { name: 'Settings' })).toBeInTheDocument();
   });
 
   it('leaves the game from the HUD after confirming, and goes home', async () => {
     const user = userEvent.setup();
     const { socket, router } = renderTabletop({ state: atTable(base(), 'p1') });
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
     await user.click(screen.getByRole('button', { name: 'Leave game' }));
     expect(socket.sentOf('room:leave')).toEqual([]);
     await user.click(screen.getByRole('button', { name: 'Yes, leave' }));

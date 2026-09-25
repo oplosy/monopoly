@@ -17,11 +17,11 @@ import { PlaneAnchor, ProjectionProvider } from '../scene/projection';
 import { useGameStore } from '../store/context';
 import { pointAnchor } from './anchored';
 import { CenterPiles } from './CenterPiles';
-import { Countdown } from './Countdown';
 import { CounterTray } from './CounterTray';
 import { DiscardTray } from './DiscardTray';
 import { DragGhost, DragProvider, useDragController } from './drag';
 import { dropZones, resolveDrop } from './drop';
+import { EndTurn } from './EndTurn';
 import { GameOverStage } from './GameOverStage';
 import { HandFan } from './HandFan';
 import { Hud } from './Hud';
@@ -285,15 +285,15 @@ function GameTable({ game }: { game: GameStatePayload }) {
             )}
             <PendingStage view={view} name={name} waiting={waitingOnView(view)} />
             <HandFan cards={view.hand} me={view.me} />
-            {myTurn && !role && (
-              <div className="my-clock">
-                <Countdown deadline={deadlines.turnEndsAt} label="Turn ends in" />
-              </div>
-            )}
             {legal.some((i) => i.type === 'endTurn') && (
-              <button type="button" className="end-turn" aria-disabled={busy || undefined} onClick={() => send({ type: 'endTurn' })}>
-                End turn
-              </button>
+              <EndTurn
+                deadline={deadlines.turnEndsAt}
+                total={deadlines.turnMs}
+                drainKey={`t:${view.me}`}
+                due={view.turn.playsLeft <= 0}
+                busy={busy}
+                onEnd={() => send({ type: 'endTurn' })}
+              />
             )}
             {role?.kind === 'pay' && (
               <PayTray

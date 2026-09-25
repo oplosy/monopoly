@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test';
-import { createRoom, joinRoom, leaveRoom, newPlayer } from './players';
+import { createRoom, joinRoom, leaveRoom, newPlayer, openSettings } from './players';
 
 type Box = { x: number; y: number; width: number; height: number };
 
@@ -118,8 +118,15 @@ test('a phone in portrait: the narrator clears the HUD, and every control fits a
   await ann.getByRole('button', { name: 'Start game' }).tap();
 
   const menu = ann.getByRole('navigation', { name: 'Game menu' });
-  await expectTappable(menu.getByRole('button', { name: 'Sound' }), menu.getByRole('button', { name: 'Game log' }), menu.getByRole('button', { name: 'Leave game' }));
-  await expectTappable(ann.getByRole('button', { name: 'End turn' }));
+  await expectTappable(menu.getByRole('button', { name: 'Settings' }), ann.getByRole('button', { name: 'End turn' }));
+  const settings = await openSettings(ann);
+  await expectTappable(
+    ...['Sound', 'Animations', 'Game log', 'Leave game'].map((name) => settings.getByRole('button', { name })),
+    settings.getByRole('slider', { name: 'Volume' }),
+  );
+  // A tap on the table closes the settings.
+  await ann.getByRole('region', { name: 'Table center' }).tap();
+  await expect(settings).toBeHidden();
 
   await pressHand(ann, '2M money', 'tap');
   const popover = ann.getByRole('dialog', { name: /^Play / });
@@ -133,7 +140,7 @@ test('a phone in portrait: the narrator clears the HUD, and every control fits a
   // The narrator never hides who is at the table.
   for (const seat of [/^Bob's seat/, /^Your seat/]) await expectApart(narrator, ann.getByRole('group', { name: seat }));
 
-  await menu.getByRole('button', { name: 'Game log' }).tap();
+  await (await openSettings(ann)).getByRole('button', { name: 'Game log' }).tap();
   await expectTappable(ann.getByRole('complementary', { name: 'Game log' }).getByRole('button', { name: 'Close' }));
 
   for (const page of [bob, ann]) await leaveRoom(page);
@@ -273,5 +280,27 @@ for (const [width, height] of [[1280, 720], [390, 844]] as const) test(`${width}
   await expectApart(stage, ann.getByRole('group', { name: /^Bob's seat/ }));
   await expectApart(tray, ann.getByRole('region', { name: 'Your area' }));
   await tray.getByRole('button', { name: 'Pay 2M' }).click();
+  for (const page of [bob, ann]) await leaveRoom(page);
+});
+
+// End turn is round and big, beside my hand's right end, off the corner, and never over my seat, my table or
+// a hand card (spec 2026-09-25-table-controls D5, D6).
+for (const [width, height] of [[1280, 720], [1920, 1080], [1024, 768], [768, 1024], [390, 844], [320, 568], [844, 390], [568, 320]] as const) test(`${width}×${height}: End turn is round, big, off the corner and clear of my things`, async ({ browser, baseURL }) => {
+  const ann = await player(browser, baseURL, width, height);
+  const bob = await newPlayer(browser, baseURL);
+  const link = await createRoom(ann, 'Ann');
+  await joinRoom(bob, link, 'Bob');
+  await ann.goto(`${link}?seed=18`);
+  await ann.getByRole('button', { name: 'Start game' }).click();
+  const end = ann.getByRole('button', { name: 'End turn' });
+  await expect(end).toHaveAccessibleDescription(/^Turn ends in \d+s$/);
+  const box = await boxOf(end);
+  expect(Math.min(box.width, box.height), 'End turn is big').toBeGreaterThanOrEqual(width > 700 && height > 500 ? 100 : 64);
+  expect(Math.abs(box.width - box.height), 'End turn is round').toBeLessThanOrEqual(1);
+  expect(width - (box.x + box.width), 'End turn keeps off the right edge').toBeGreaterThanOrEqual(16);
+  expect(height - (box.y + box.height), 'End turn keeps off the bottom edge').toBeGreaterThanOrEqual(24);
+  await expectApart(end, ann.getByRole('group', { name: /^Your seat/ }));
+  await expectApart(end, ann.getByRole('region', { name: 'Your area' }));
+  await expectClear(end, handCards(ann));
   for (const page of [bob, ann]) await leaveRoom(page);
 });

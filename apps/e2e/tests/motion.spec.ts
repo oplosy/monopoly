@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
-  attachScreenshot, createRoom, dragOnto, expectLog, flightsSeen, hand, joinRoom, leaveRoom, newPlayer, playFromHand, watchFlights,
+  attachScreenshot, createRoom, dragOnto, expectLog, flightsSeen, hand, joinRoom, leaveRoom, newPlayer, openSettings, playFromHand, watchFlights,
 } from './players';
 
 // This spec is about the flights: the OS does not ask for less motion.
@@ -53,10 +53,11 @@ test('cards fly even when the OS asks for less motion, and the Animations switch
   await expect.poll(() => flightsSeen(second)).toBeGreaterThan(0);
 
   // The waiting player switches animations off; it survives a reload.
-  const menu = first.getByRole('navigation', { name: 'Game menu' });
-  await menu.getByRole('button', { name: 'Animations' }).click();
+  await (await openSettings(first)).getByRole('button', { name: 'Animations' }).click();
   await first.reload();
-  await expect(menu.getByRole('button', { name: 'Animations' })).toHaveAttribute('aria-pressed', 'false');
+  await expect((await openSettings(first)).getByRole('button', { name: 'Animations' })).toHaveAttribute('aria-pressed', 'false');
+  // Out of the way of the table again.
+  await first.keyboard.press('Escape');
   await expect(first.locator('html')).toHaveAttribute('data-motion', 'off');
   await watchFlights(first);
   await expect(second.getByRole('button', { name: 'End turn' })).not.toHaveAttribute('aria-disabled');
