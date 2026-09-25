@@ -1,4 +1,4 @@
-/** Test-state builders shared by engine and server tests. Not used by production code. */
+/** State builders shared by engine, server and web tests, and by the web app's animation lab (/lab). */
 import { applyIntent } from './apply';
 import { CARDS, CARD_BY_ID, type Color } from './cards';
 import { rngFromSeed } from './rng';
