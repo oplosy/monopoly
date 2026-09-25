@@ -53,13 +53,26 @@ export function nextDelay(first: boolean, random: () => number): number {
   return first ? between(random, 10_000, 20_000) : between(random, 30_000, 60_000);
 }
 
-/** Keyframes moving the butterfly (its own box is BUTTERFLY_SIZE % of the plane) through `points`, head first. */
-export function flightKeyframes(points: readonly PlanePoint[]): Keyframe[] {
+/**
+ * Keyframes moving the butterfly (its own box is BUTTERFLY_SIZE % of the plane) through `points`, head first.
+ * Each heading is taken within half a turn of the one before (starting from `from`, the heading it flew in with),
+ * because rotate() interpolates numerically: a jump from 270° to −90° would spin it all the way round.
+ */
+export function flightKeyframes(points: readonly PlanePoint[], from?: number): Keyframe[] {
   const at = (v: number) => round2((v / BUTTERFLY_SIZE) * 100 - 50);
+  let previous = from;
   return points.map((p, i) => {
     const [a, b] = i < points.length - 1 ? [p, points[i + 1]!] : [points[i - 1] ?? p, p];
     // The art faces up (toward -y), so a flight toward +x is a quarter turn.
-    const heading = round2((Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI + 90);
-    return { offset: points.length > 1 ? round2(i / (points.length - 1)) : 0, transform: `translate(${at(p.x)}%, ${at(p.y)}%) rotate(${heading}deg)` };
+    let heading = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI + 90;
+    if (previous !== undefined) heading += 360 * Math.round((previous - heading) / 360);
+    previous = heading;
+    return { offset: points.length > 1 ? round2(i / (points.length - 1)) : 0, transform: `translate(${at(p.x)}%, ${at(p.y)}%) rotate(${round2(heading)}deg)` };
   });
+}
+
+/** The heading (degrees) a keyframe of flightKeyframes turns the butterfly to. */
+export function headingOf(frame: Keyframe | undefined): number | undefined {
+  const turn = /rotate\((-?[\d.]+)deg\)/.exec(String(frame?.transform ?? ''));
+  return turn ? Number(turn[1]) : undefined;
 }

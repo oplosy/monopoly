@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { canAnimate } from '../motion/mode';
 import { SCENE_ART, sceneUrl } from './art';
-import { flightKeyframes, nextDelay, planVisit, type ButterflyVisit, type FlightLeg } from './butterfly-path';
+import { flightKeyframes, headingOf, nextDelay, planVisit, type ButterflyVisit, type FlightLeg } from './butterfly-path';
 import type { PlanePoint } from './geometry';
 
 /** Now and then a butterfly lands on a dish (spec 2026-09-25 §5.4). Never under reduced motion; waits while the tab is hidden. */
@@ -38,17 +38,20 @@ export const Butterfly = memo(function Butterfly({ dishes }: { dishes: readonly 
     let done = false;
     let flight: Animation | undefined;
     let rest: number | undefined;
-    const fly = (leg: FlightLeg) => {
-      flight = el.animate(flightKeyframes(leg.points), { duration: leg.ms, easing: 'ease-in-out', fill: 'forwards' });
+    // It flies off facing the way it landed, so the fly-off never starts with a spin.
+    const flyIn = flightKeyframes(visit.in.points);
+    const landed = headingOf(flyIn.at(-1));
+    const fly = (leg: FlightLeg, frames: Keyframe[]) => {
+      flight = el.animate(frames, { duration: leg.ms, easing: 'ease-in-out', fill: 'forwards' });
       return flight.finished;
     };
-    fly(visit.in).then(
+    fly(visit.in, flyIn).then(
       () => {
         if (done) return;
         setResting(true);
         rest = window.setTimeout(() => {
           setResting(false);
-          fly(visit.out).then(
+          fly(visit.out, flightKeyframes(visit.out.points, landed)).then(
             () => {
               if (!done) setVisit(null);
             },

@@ -42,6 +42,24 @@ describe('planVisit', () => {
   });
 });
 
+describe('the flight headings', () => {
+  const turns = (frames: Keyframe[]) => frames.map((f) => Number(/rotate\((-?[\d.]+)deg\)/.exec(String(f.transform))![1]));
+
+  it('never turn more than half a circle between keyframes, from flying in to flying off', () => {
+    const random = seeded(11);
+    for (const n of [1, 2, 3]) {
+      const dishes = propLayout(n).map((p) => p.at);
+      for (let i = 0; i < 300; i++) {
+        const v = planVisit(dishes, random);
+        const flyIn = turns(flightKeyframes(v.in.points));
+        const flyOff = turns(flightKeyframes(v.out.points, flyIn.at(-1)));
+        const all = [...flyIn, ...flyOff];
+        for (let k = 1; k < all.length; k++) expect(Math.abs(all[k]! - all[k - 1]!), `${n}p visit ${i} frame ${k}`).toBeLessThanOrEqual(180);
+      }
+    }
+  });
+});
+
 describe('nextDelay', () => {
   it('comes 10–20 s after the table opens, then every 30–60 s', () => {
     expect(nextDelay(true, () => 0)).toBe(10_000);
