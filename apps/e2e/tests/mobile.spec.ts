@@ -117,3 +117,17 @@ test('a tablet in landscape: the HUD never covers the seat across the table', as
   await expectApart(ann.getByRole('navigation', { name: 'Game menu' }), ann.getByRole('group', { name: /^Bob's seat/ }));
   for (const page of [bob, ann]) await leaveRoom(page);
 });
+
+test('a tablet in portrait: the narrator clears the HUD', async ({ browser, baseURL }) => {
+  const ann = await phonePlayer(browser, baseURL, 768, 1024);
+  const bob = await newPlayer(browser, baseURL);
+  const link = await createRoom(ann, 'Ann');
+  await joinRoom(bob, link, 'Bob');
+  await ann.goto(`${link}?seed=18`);
+  await ann.getByRole('button', { name: 'Start game' }).tap();
+  await tapHand(ann, '2M money', 'Bank it (+2M)');
+  const narrator = ann.locator('.narrator.is-shown .narrator-text');
+  await expect(narrator).toContainText('2M');
+  await expectApart(narrator, ann.getByRole('navigation', { name: 'Game menu' }));
+  for (const page of [bob, ann]) await leaveRoom(page);
+});

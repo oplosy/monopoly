@@ -403,6 +403,9 @@
    table: the room code is still read out, but not shown. */
 @media (max-width: 1100px), (max-height: 500px) {
   .hud-room { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  /* There the HUD reaches the middle of the screen: the narrator and the action in play sit below it. */
+  .narrator { top: calc(12px + 44px + 1.2rem); }
+  .pending-stage { top: calc(12px + 44px + 4.2rem); }
 }
 .log-drawer {
   position: absolute;
