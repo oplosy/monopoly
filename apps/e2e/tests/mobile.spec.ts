@@ -37,6 +37,44 @@ async function expectTappable(...controls: Locator[]): Promise<void> {
   }
 }
 
+const handCards = (page: Page): Locator => page.getByRole('list', { name: /^Your hand/ }).getByRole('listitem');
+
+/** `a` shares no more than a sliver with any of `others` (polled: the table settles after a move). */
+async function expectClear(a: Locator, others: Locator): Promise<void> {
+  await expect
+    .poll(async () => {
+      const box = await boxOf(a);
+      const worst = await Promise.all((await others.all()).map(async (o) => overlap(box, await boxOf(o))));
+      return Math.max(0, ...worst);
+    }, { message: `${a.toString()} overlaps ${others.toString()}` })
+    .toBeLessThanOrEqual(4);
+}
+
+/** Every box stays on screen, top to bottom. */
+async function expectOnScreen(page: Page, ...items: Locator[]): Promise<void> {
+  const height = page.viewportSize()!.height;
+  for (const item of items) {
+    const box = await boxOf(item);
+    expect(box.y, `${item.toString()} runs off the top`).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height, `${item.toString()} runs off the bottom`).toBeLessThanOrEqual(height);
+  }
+}
+
+/** Seed 18 with 2 players: Ann banks 2M (then `banked` runs) and ends her turn; Bob's It's My Birthday makes her pay. */
+async function birthdayForTwo(ann: Page, bob: Page, banked?: () => Promise<void>): Promise<Locator> {
+  await ann.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name: '2M money', exact: true }).click();
+  await ann.getByRole('dialog', { name: /^Play / }).getByRole('button', { name: 'Bank it (+2M)', exact: true }).click();
+  await expect(ann.getByRole('group', { name: 'Your bank, 2M' })).toBeVisible();
+  await banked?.();
+  await ann.getByRole('button', { name: 'End turn' }).click();
+  await expect(bob.getByRole('button', { name: 'End turn' })).toBeVisible();
+  await bob.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name: "It's My Birthday, action, worth 2M", exact: true }).click();
+  await bob.getByRole('dialog', { name: /^Play / }).getByRole('button', { name: "It's my birthday: everyone pays 2M", exact: true }).click();
+  const tray = ann.getByRole('region', { name: 'You owe Bob 2M' });
+  await expect(tray).toBeVisible();
+  return tray;
+}
+
 const tapHand = async (page: Page, card: string, option: string) => {
   await page.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name: card, exact: true }).tap();
   await page.getByRole('dialog', { name: /^Play / }).getByRole('button', { name: option, exact: true }).tap();
@@ -85,6 +123,8 @@ for (const [width, height] of [[844, 390], [667, 375]] as const) test(`a phone i
   await expectTappable(ann.getByRole('button', { name: 'End turn' }));
   await tapHand(ann, '2M money', 'Bank it (+2M)');
   await expect(ann.getByRole('group', { name: 'Your bank, 2M' })).toBeVisible();
+  // My table stays clear of my resting hand.
+  await expectClear(ann.getByRole('region', { name: 'Your area' }), handCards(ann));
   await ann.getByRole('button', { name: 'End turn' }).tap();
   await expect(bob.getByRole('button', { name: 'End turn' })).toBeVisible();
   await bob.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name: "It's My Birthday, action, worth 2M", exact: true }).click();
@@ -133,5 +173,67 @@ test('a tablet in portrait: the narrator clears the HUD', async ({ browser, base
   const narrator = ann.locator('.narrator.is-shown .narrator-text');
   await expect(narrator).toContainText('2M');
   await expectApart(narrator, ann.getByRole('navigation', { name: 'Game menu' }));
+  for (const page of [bob, ann]) await leaveRoom(page);
+});
+
+// With 2 players the far seat sits at the top middle of a round table.
+for (const [width, height] of [[844, 390], [568, 320]] as const) test(`a phone in landscape (${width}×${height}), 2 players: the far seat stays on screen and my table clear of my hand`, async ({ browser, baseURL }) => {
+  const ann = await phonePlayer(browser, baseURL, width, height);
+  const bob = await newPlayer(browser, baseURL);
+  const link = await createRoom(ann, 'Ann');
+  await joinRoom(bob, link, 'Bob');
+  await ann.goto(`${link}?seed=18`);
+  await ann.getByRole('button', { name: 'Start game' }).tap();
+  const bobSeat = ann.getByRole('group', { name: /^Bob's seat/ });
+  const mySeat = ann.getByRole('group', { name: /^Your seat/ });
+  await expectOnScreen(ann, bobSeat, mySeat);
+  await expectClear(mySeat, handCards(ann));
+  // My table clears my resting hand; paying tucks the hand away.
+  const tray = await birthdayForTwo(ann, bob, () => expectClear(ann.getByRole('region', { name: 'Your area' }), handCards(ann)));
+  await expectApart(ann.getByRole('region', { name: 'Action in play' }), bobSeat);
+  await tray.getByRole('button', { name: 'Pay 2M' }).tap();
+  for (const page of [bob, ann]) await leaveRoom(page);
+});
+
+const player = (browser: Browser, baseURL: string | undefined, width: number, height: number): Promise<Page> =>
+  width <= 700 ? phonePlayer(browser, baseURL, width, height) : browser.newContext({ baseURL, viewport: { width, height } }).then((c) => c.newPage());
+
+// Laptop screens (16:9) and a phone: the discard tray waits clear of my seat, my table and my hand.
+for (const [width, height] of [[1280, 720], [1366, 768], [360, 740]] as const) test(`${width}×${height}: the discard tray keeps my seat and my table in view`, async ({ browser, baseURL }) => {
+  const ann = await player(browser, baseURL, width, height);
+  const bob = await newPlayer(browser, baseURL);
+  const link = await createRoom(ann, 'Ann');
+  await joinRoom(bob, link, 'Bob');
+  await ann.goto(`${link}?seed=18`);
+  await ann.getByRole('button', { name: 'Start game' }).click();
+  // Payday alone: 8 cards at the end of the turn, one over the limit.
+  await ann.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name: 'Payday, action, worth 1M', exact: true }).click();
+  await ann.getByRole('dialog', { name: /^Play / }).getByRole('button', { name: 'Payday: draw 2 cards', exact: true }).click();
+  await expect(handCards(ann)).toHaveCount(8);
+  await ann.getByRole('button', { name: 'End turn' }).click();
+  const discard = ann.getByRole('region', { name: 'Discard 1 card' });
+  await expect(discard).toBeVisible();
+  await expectApart(discard, ann.getByRole('group', { name: /^Your seat/ }));
+  await expectApart(discard, ann.getByRole('region', { name: 'Your area' }));
+  await expectClear(discard, handCards(ann));
+  await ann.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name: '4M money', exact: true }).click();
+  await discard.getByRole('button', { name: 'Discard 1/1' }).click();
+  await expect(discard).toHaveCount(0);
+  for (const page of [bob, ann]) await leaveRoom(page);
+});
+
+// With 2 players Bob sits at the top middle, where the action in play stands: it never hides him.
+for (const [width, height] of [[1280, 720], [390, 844]] as const) test(`${width}×${height}, 2 players: the action in play keeps the far seat in view`, async ({ browser, baseURL }) => {
+  const ann = await player(browser, baseURL, width, height);
+  const bob = await newPlayer(browser, baseURL);
+  const link = await createRoom(ann, 'Ann');
+  await joinRoom(bob, link, 'Bob');
+  await ann.goto(`${link}?seed=18`);
+  await ann.getByRole('button', { name: 'Start game' }).click();
+  const tray = await birthdayForTwo(ann, bob);
+  const stage = ann.getByRole('region', { name: 'Action in play' });
+  await expectApart(stage, ann.getByRole('group', { name: /^Bob's seat/ }));
+  await expectApart(tray, ann.getByRole('region', { name: 'Your area' }));
+  await tray.getByRole('button', { name: 'Pay 2M' }).click();
   for (const page of [bob, ann]) await leaveRoom(page);
 });
