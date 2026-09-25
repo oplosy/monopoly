@@ -483,7 +483,8 @@ These are rough wireframes for layout decisions, not final art. Each file is a s
    - The redesign work branch is `feat/table-redesign`, which holds this spec, its mockups and a `.gitignore` entry for `.superpowers/`.
    - Plan 6 (`docs/superpowers/plans/2026-09-24-plan-6-table-world.md`) is merged to `main` (PR #6).
    - Plan 7 (`docs/superpowers/plans/2026-09-25-plan-7-motion.md`) is merged to `main` (PR #7).
-   - Plan 8 (`docs/superpowers/plans/2026-09-25-plan-8-sound.md`) is implemented on `feat/table-sound`, except its Task 7 (the CC0 sample files), which waits for a local session.
+   - Plan 8 (`docs/superpowers/plans/2026-09-25-plan-8-sound.md`) is merged to `main` (PR #8), and the phone polish with it (PR #9).
+   - Plan 9 (`docs/superpowers/plans/2026-09-25-plan-9-scene-art.md`) is implemented on `feat/scene-art`.
 3. **Next step:** read the newest file in `docs/superpowers/handoff/` (the work queue) and the repo's `CLAUDE.md` (the standing rules). With Plans 6–8 the redesign in this spec is complete. Plan 9 (the painted scene and ambient life) has its own addendum spec, `2026-09-25-scene-art-design.md`. The user has consistently chosen **native (inline) execution**.
 4. **Working conventions (from the user's global CLAUDE.md and past sessions):**
    - Never work on `main`; branch first (`feat/…`).

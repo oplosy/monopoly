@@ -1,7 +1,7 @@
 # Deal City: painted scene and ambient life (design, Plan 9)
 
 **Date:** 2026-09-25
-**Status:** Approved in conversation; written spec awaiting the user's review.
+**Status:** Implemented (Plan 9, `docs/superpowers/plans/2026-09-25-plan-9-scene-art.md`, branch `feat/scene-art`).
 **Parent spec:** `2026-09-24-table-redesign-design.md` (the picnic table redesign, Plans 6–8). This spec is an addendum: where the two disagree, this one wins for the sections it names in §9. Everything else in the parent stands, including D1–D13.
 
 ---
@@ -84,6 +84,16 @@ The originals are processed once into `apps/web/public/scene/` (resized, cut to 
 
 The source images and any processing script stay out of the repo (like `for_table/`). The plan records the exact processing commands.
 
+**As built.**
+- **Files and budget.** The 12 files weigh 1485 KB in all: a desktop downloads 1054 KB (everything but `bg-portrait`), a phone 1001 KB (everything but `bg-landscape`). The two plates are the largest (484 KB and 431 KB, WebP quality 76).
+- **Rim.** Drawn with two stacked, offset `box-shadow` copies of the disk toward the viewer, not with 3D copies.
+- **Cloth and light.** Both are clipped to the disk: they live inside the round `.table-wood`.
+- **Plate box.** It uses container query units (`.scene-ground` has `container-type: size`).
+- **Vignette.** It needs no `z-index`: `container-type` makes no stacking context, and a z-index there lifted the ground over the whole table and took its clicks. An end-to-end test now checks that the center piles are reachable.
+- **Leaves.** Their cut edges (where the branches ran on in the art) are faded with `mask-image` gradients.
+- **Lobby.** The lobby's ground is `position: fixed`, so the painted meadow fills the whole lobby page under the paper panel, with no plain green anywhere (the user's request).
+- **Tilt.** `--tilt` is unchanged at 55°: the plates matched it.
+
 ---
 
 ## 4. Props
@@ -125,6 +135,12 @@ The tiled light texture drifts slowly across the table: a 40–60 s `alternate` 
 - **Code:** a pure function builds a visit from a random source: the path's keyframes (in plane percent), the dish it lands on and the timings. It is unit-tested with a seeded random source (it lands on a dish; every point stays at 0.75 R or more from the center, or off the table). The flight runs with the Web Animations API (compositor), like Plan 7's flights.
 - **Never:** when the tab is hidden (the pending visit waits until the page is visible again), under reduced motion, where the Web Animations API is missing (jsdom), or in the backdrop variant. It never takes a click.
 
+**As built.**
+- **Code.** The butterfly's pure path lives in `scene/butterfly-path.ts`: a file named `butterfly.ts` collides with `Butterfly.tsx` on case-insensitive file systems.
+- **Size.** Its size is 5 % of the plane; 3.5 % was too small to notice at play size.
+- **Motion.** Leaves sway on 7 s and 9 s loops. The light drifts on a 50 s loop, and the caustics slide on 26 s and 19 s loops of exactly one tile each.
+- **Lake polygons.** Unchanged from the traced ones.
+
 ---
 
 ## 6. Ambient sound
@@ -140,6 +156,12 @@ This extends parent §8.
 - **No separate toggle** for now: the HUD's Sound button and Volume slider control it with everything else. A separate ambience switch is a later option if players ask for it.
 - The `/gallery` sound board gets an "Ambience" button that starts and stops it, for the listening review.
 - A unit test checks the ambience files exist, next to `sound-files.test.ts`; that test's rule that `public/sounds/` holds only the samples is unaffected, because the loop lives in `public/ambience/`.
+
+**As built.**
+- **Source.** The river recording of "Park ambiences" by Thimras (https://opengameart.org/content/park-ambiences, CC0): a small stream with bird calls.
+- **Cut.** A 30 s stretch from 7 min 48 s, chosen for bird activity without loud spikes. It was made mono at 44.1 kHz and cross-faded over 3 s into a seamless loop.
+- **Level and encoding.** Raised by a constant gain to a −3 dB peak, then encoded at 32 kbps: `meadow.ogg` is 142 KB and `meadow.mp3` 118 KB. The spec's "about 250 KB together" cannot hold 30 s at 48 kbps, and a browser downloads only one of the two.
+- **Review.** The user picked it over a water-only take and heard no loop point.
 
 ---
 
