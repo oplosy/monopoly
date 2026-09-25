@@ -198,8 +198,9 @@ for (const [width, height] of [[844, 390], [568, 320]] as const) test(`a phone i
 const player = (browser: Browser, baseURL: string | undefined, width: number, height: number): Promise<Page> =>
   width <= 700 ? phonePlayer(browser, baseURL, width, height) : browser.newContext({ baseURL, viewport: { width, height } }).then((c) => c.newPage());
 
-// Laptop screens (16:9) and a phone: the discard tray waits clear of my seat, my table and my hand.
-for (const [width, height] of [[1280, 720], [1366, 768], [360, 740]] as const) test(`${width}×${height}: the discard tray keeps my seat and my table in view`, async ({ browser, baseURL }) => {
+// Laptop screens (16:9) and phones, down to the shortest: the discard tray waits clear of my seat, my
+// table and my hand, and the table it lifts keeps the far seat clear of the HUD.
+for (const [width, height] of [[1280, 720], [1366, 768], [360, 740], [375, 667], [360, 640], [320, 568], [844, 390], [568, 320]] as const) test(`${width}×${height}: the discard tray keeps my seat and my table in view`, async ({ browser, baseURL }) => {
   const ann = await player(browser, baseURL, width, height);
   const bob = await newPlayer(browser, baseURL);
   const link = await createRoom(ann, 'Ann');
@@ -216,6 +217,11 @@ for (const [width, height] of [[1280, 720], [1366, 768], [360, 740]] as const) t
   await expectApart(discard, ann.getByRole('group', { name: /^Your seat/ }));
   await expectApart(discard, ann.getByRole('region', { name: 'Your area' }));
   await expectClear(discard, handCards(ann));
+  const menu = ann.getByRole('navigation', { name: 'Game menu' });
+  await expectApart(menu, ann.getByRole('group', { name: /^Bob's seat/ }));
+  await expectApart(menu, discard);
+  // In portrait the HUD is one row; landscape phones stand it as a column in the corner.
+  if (width < height) await expect.poll(async () => (await boxOf(menu)).height, { message: 'the HUD wraps to a second row' }).toBeLessThan(60);
   await ann.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name: '4M money', exact: true }).click();
   await discard.getByRole('button', { name: 'Discard 1/1' }).click();
   await expect(discard).toHaveCount(0);
