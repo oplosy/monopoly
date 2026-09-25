@@ -40,7 +40,7 @@ committed as the work goes. Newest state at the bottom of each section.
 | 8 e2e | `test: cover remembered sound settings and heard cues end to end` | e2e +2 |
 | 9 spec sync | `docs: sync the redesign spec with the built sound` | — |
 
-Gates after Task 9: engine 108, protocol 6, server 59, web 404; typecheck, lint, build clean; e2e 10 passed
+Gates after Task 9 (before the review fixes): engine 108, protocol 6, server 59, web 404; typecheck, lint, build clean; e2e 10 passed
 (Chromium via scratch config).
 
 ### Rulings (decisions taken on the user's behalf)
@@ -61,6 +61,31 @@ Gates after Task 9: engine 108, protocol 6, server 59, web 404; typecheck, lint,
 Chromium, `/gallery` sound board: every synthesized cue starts sources (whoosh 1, Deal Breaker 1, set
 chime 3, turn 2, win 4, lose 1). The sampled cues start none: the server answers `/sounds/*` with the SPA
 `index.html` (200 text/html), all 18 decodes fail silently, no console error. Same with MP3 forced.
+
+### Final review (fresh reviewer, most capable model)
+
+No Critical. Fixed test-first, one commit each:
+- Important: the player who opens a game heard no turn chime (the first payload arrives with no previous one,
+  so the stage reset silently). `fix: ring the turn chime for the player who opens a game`.
+- Important: a hidden tab still heard my clock's ticks and error thunks (the rule lived only in MotionStage).
+  The rule now lives in `useSound` (`BACKGROUND_CUES`). `fix: keep a hidden tab down to the turn chime everywhere`.
+- Plausible, fixed (cheap and idempotent): touch browsers count a tap as a gesture only on `pointerup`/`touchend`,
+  so sound might never unlock on iOS. Also listening there now. `fix: unlock sound when a finger lifts, …`.
+  Not verifiable here (headless Chromium ignores the autoplay policy): check on a real phone.
+- Minor, fixed: at volume 0 the Sound button said "on" and needed two presses. Ruling: at volume 0 the speaker
+  shows off and one press restores 0.6 (the manager test sequence changed accordingly; decision 9's intent kept).
+- Minor, fixed: the settings comment claimed tab sharing.
+
+Deferred minors:
+1. A leaving player's cards land 50 ms apart, above the 45 ms `place` gap: up to ~17 place cues. Inaudible until
+   the samples ship; fix with a larger gap or one place per `playerRemoved` scene.
+2. If the tab hides while my `yourTurn` batch waits behind another scene, `snap()` drops the chime (~2 s window).
+3. A repeated identical error within 4 s does not thunk again (the store's error code does not change).
+4. Settings are not synced between open tabs (no `storage` listener).
+5. `play()` creates a gain node before checking that a sample buffer exists; old Safari's callback-only
+   `decodeAudioData` would leave samples silent.
+
+Gates after the fixes: web 408 (engine 108, protocol 6, server 59); typecheck, lint, build clean; e2e 10 passed.
 
 ### Left for a local session (Plan 8 Task 7)
 
