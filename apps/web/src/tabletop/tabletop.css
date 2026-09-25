@@ -605,7 +605,8 @@
   .pending-stage { left: 8px; top: 8px; transform: none; justify-items: start; max-width: calc(var(--side) - 24px); }
   .pending-cards .card-svg { width: 48px; }
   .pending-text, .pending-wait { font-size: 0.8rem; text-align: left; border-radius: 12px; }
-  .tray { left: auto; right: 8px; bottom: calc(var(--hand-w) * 1.02); transform: none; width: var(--side); max-width: var(--side); padding: 0.6rem 0.7rem; }
+  /* A tray anchored beside my Just Say No card keeps its own place and size. */
+  .tray:not(.is-anchored) { left: auto; right: 8px; bottom: calc(var(--hand-w) * 1.02); transform: none; width: min(var(--side), 24rem); max-width: min(var(--side), 24rem); padding: 0.6rem 0.7rem; }
   .pay-tray { grid-template-columns: 1fr; }
   .pay-tray > .tray-meter,
   .pay-tray > .tray-actions { grid-row: auto; grid-column: 1; }
