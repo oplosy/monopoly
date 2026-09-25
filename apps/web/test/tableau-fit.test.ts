@@ -42,4 +42,11 @@ describe('fitTableau', () => {
     expect(fit.gap).toBeLessThan(0);
     expect(fit.cardW).toBe(84);
   });
+
+  it('fits a tall stack by tightening its fan, and keeps the row spacing its width allows (review C1)', () => {
+    // Picking fans a 3-card set to 2.4 card widths (202 px): the 180 px zone takes it at the tight cascade, no overlap.
+    expect(fitTableau({ w: 682, h: 180 }, [3, 1, 2], 2, 84, 84, true)).toMatchObject({ cardW: 84, cascade: 0.37, gap: 0.18, overflow: false });
+    // Taller than the zone even at the colour band: it spills over, but the groups keep their spacing.
+    expect(fitTableau({ w: 682, h: 120 }, [3, 1], 1, 84, 84)).toMatchObject({ cardW: 84, cascade: 0.3, gap: 0.18, overflow: true });
+  });
 });
