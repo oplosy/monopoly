@@ -57,8 +57,8 @@
 }
 /* The whole table fits, from the far chairs to mine at the near rim; the plane is lifted to the top. */
 .lobby-table, .lobby-table .scene { --plane: min(56vw, 58vh); }
-.lobby-table { position: relative; overflow: hidden; height: calc(var(--plane) * 0.78 + 150px); }
-.lobby-table .scene { --plane-shift: calc(-9% - 75px); }
+.lobby-table { position: relative; overflow: hidden; height: calc(var(--plane) * 1.05 + 110px); }
+.lobby-table .scene { --plane-shift: calc(-17% - 8px); }
 .chairs { list-style: none; margin: 0; padding: 0; }
 .chair {
   position: absolute;

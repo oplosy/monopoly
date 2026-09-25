@@ -13,6 +13,13 @@ test('two players pick characters and meet at the picnic table', async ({ browse
   await ann.getByRole('button', { name: 'Owl', exact: true }).click();
   await expect(ann.getByRole('button', { name: 'Owl', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(bob.getByRole('button', { name: 'Owl, taken by Ann' })).toBeDisabled();
+  // Every chair shows in full on the lobby's table, the far ones too.
+  const table = (await ann.locator('.lobby-table').boundingBox())!;
+  for (const chair of await ann.locator('.chair').all()) {
+    const c = (await chair.boundingBox())!;
+    expect(c.y, 'chair top').toBeGreaterThanOrEqual(table.y);
+    expect(c.y + c.height, 'chair bottom').toBeLessThanOrEqual(table.y + table.height);
+  }
   await attachScreenshot(ann, testInfo, 'lobby');
 
   await ann.getByRole('button', { name: 'Start game' }).click();
