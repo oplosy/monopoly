@@ -1,8 +1,9 @@
-import { animate, motion, useMotionValue, useSpring, useTransform, useVelocity, type MotionStyle, type MotionValue } from 'motion/react';
+import { motion, useMotionValue, useMotionValueEvent, useSpring, useTransform, useVelocity, type MotionStyle, type MotionValue } from 'motion/react';
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { CardFace } from '../cards/CardFace';
 import { round2 } from '../cards/text';
 import { useAnchor } from '../motion/anchor-context';
+import { poseOf, type Pose } from '../motion/pose';
 import { getMotion } from '../motion/setting';
 
 /** How far a press must travel before it becomes a drag. */
@@ -40,6 +41,8 @@ export interface DragApi {
   /** Where the pointer is; the ghost holds the card there by its grabbed point. */
   x: MotionValue<number>;
   y: MotionValue<number>;
+  /** The ghost's turn in degrees: a lean with the pointer's speed, or the resting card's turn on the way home. */
+  turn: MotionValue<number>;
   handlers(card: string): DragHandlers;
   /**
    * True once, for the pointer click that ends a drag: it must not also open the card's popover.
@@ -68,6 +71,18 @@ function zoneAt(x: number, y: number, ok: ReadonlySet<string>): string | null {
   return null;
 }
 
+/**
+ * Where the ghost's grabbed point must be, and its turn, for the ghost to lie exactly on a card resting at
+ * `home` (spec 2026-09-25-table-layout §6.2): the grabbed point turns about the card's center with the card.
+ */
+export function ghostHome(home: Pose, grab: { x: number; y: number }): { x: number; y: number; rotate: number } {
+  const a = (home.rotate * Math.PI) / 180;
+  const dx = (grab.x - 0.5) * home.width;
+  const dy = (grab.y - 0.5) * home.height;
+  const round = (v: number) => Math.round(v * 1e6) / 1e6;
+  return { x: round(home.cx + dx * Math.cos(a) - dy * Math.sin(a)), y: round(home.cy + dx * Math.sin(a) + dy * Math.cos(a)), rotate: home.rotate };
+}
+
 /** Drag and drop for hand cards (spec §5.2): pointer-only sugar over the same legal plays as the popover. */
 export function useDragController({ enabled, zonesFor, onDrop }: Options): DragApi {
   const [state, setState] = useState<DragState | null>(null);
@@ -75,8 +90,15 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
   const press = useRef<{ card: string; x: number; y: number; gx: number; gy: number } | null>(null);
   const swallow = useRef<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const frame = useRef<number | null>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+  // The ghost leans with the pointer's horizontal speed, up to 8°, and settles upright in about 150 ms.
+  const lean = useSpring(useTransform(useVelocity(x), (v) => Math.max(-8, Math.min(8, v / 120))), { stiffness: 700, damping: 50 });
+  const turn = useMotionValue(0);
+  useMotionValueEvent(lean, 'change', (v) => {
+    if (live.current?.phase !== 'returning') turn.set(v);
+  });
 
   const update = (next: DragState | null) => {
     if (timer.current) clearTimeout(timer.current);
@@ -107,6 +129,7 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current);
+      if (frame.current) cancelAnimationFrame(frame.current);
     },
     [],
   );
@@ -116,6 +139,7 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
       state,
       x,
       y,
+      turn,
       consumeClick(card, pointer) {
         if (swallow.current !== card) return false;
         swallow.current = null;
@@ -178,18 +202,27 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
           swallow.current = card;
           const outcome = onDrop(card, zoneAt(e.clientX, e.clientY, s.ok), { x: e.clientX, y: e.clientY });
           if (outcome === 'missed') {
-            // The card flies back to its place in the hand, held by the same point; at once with animations off.
-            const home = e.currentTarget.getBoundingClientRect();
-            const to = { x: home.left + s.grab.x * home.width, y: home.top + s.grab.y * home.height };
-            if (getMotion() === 'off') {
-              x.set(to.x);
-              y.set(to.y);
-            } else {
-              animate(x, to.x, { duration: RETURN_MS / 1000, ease: 'easeOut' });
-              animate(y, to.y, { duration: RETURN_MS / 1000, ease: 'easeOut' });
-            }
             update({ ...s, phase: 'returning', hot: null });
-            timer.current = setTimeout(() => update(null), RETURN_MS);
+            if (frame.current) cancelAnimationFrame(frame.current);
+            // The card flies back onto its place in the hand and lands exactly on it, turned like it; the card
+            // waits hidden under it until then. Its place is measured on every frame: the hand card is still
+            // settling from its hover lift, and the fan may shift. At once with animations off.
+            const el = e.currentTarget;
+            const from = { x: x.get(), y: y.get(), turn: turn.get() };
+            const start = performance.now();
+            const ease = (p: number) => 1 - (1 - p) ** 3;
+            const home = () => {
+              if (live.current?.phase !== 'returning') return;
+              const elapsed = performance.now() - start;
+              const k = getMotion() === 'off' ? 1 : ease(Math.min(1, elapsed / RETURN_MS));
+              const to = ghostHome(poseOf(el), s.grab);
+              x.set(from.x + (to.x - from.x) * k);
+              y.set(from.y + (to.y - from.y) * k);
+              turn.set(from.turn + (to.rotate - from.turn) * k);
+              if (elapsed >= RETURN_MS) update(null);
+              else frame.current = requestAnimationFrame(home);
+            };
+            home();
             return;
           }
           // The card waits where it was dropped until the table changes: its flight starts there.
@@ -202,7 +235,7 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
         },
       }),
     }),
-    [state, enabled, zonesFor, onDrop, x, y],
+    [state, enabled, zonesFor, onDrop, x, y, turn],
   );
 }
 
@@ -231,8 +264,6 @@ export function dropClass(state: 'ok' | 'hot' | null): string | false {
  * starts there (lean included: its pose reads the turn of its parent), or goes home after a miss.
  */
 export function DragGhost({ drag }: { drag: DragApi }) {
-  const speed = useVelocity(drag.x);
-  const lean = useSpring(useTransform(speed, (v) => Math.max(-8, Math.min(8, v / 120))), { stiffness: 300, damping: 30 });
   const card = drag.state?.card ?? '';
   const anchor = useAnchor<HTMLDivElement>(`card:${card}`);
   if (!drag.state) return null;
@@ -241,7 +272,7 @@ export function DragGhost({ drag }: { drag: DragApi }) {
     <motion.div
       className="drag-ghost"
       aria-hidden="true"
-      style={{ x: drag.x, y: drag.y, rotate: lean, '--gx': round2(grab.x), '--gy': round2(grab.y) } as MotionStyle}
+      style={{ x: drag.x, y: drag.y, rotate: drag.turn, '--gx': round2(grab.x), '--gy': round2(grab.y) } as MotionStyle}
     >
       <div ref={anchor} data-rot="parent">
         <CardFace id={card} className="card-svg" />

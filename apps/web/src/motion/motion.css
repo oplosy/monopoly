@@ -156,6 +156,7 @@
 
 /* ---------- Drag and drop (spec §5.2) ---------- */
 .table-card.is-dragging { opacity: 0.35; }
+.table-card.is-returning { visibility: hidden; }
 .drag-ghost {
   position: fixed;
   left: 0;

@@ -162,3 +162,58 @@ test('a card dropped while it leans flies from where it leans, with no snap upri
   expect(Math.abs(starts[0]! - ghostTurn!)).toBeLessThanOrEqual(1);
   for (const page of [bob, ann]) await leaveRoom(page);
 });
+
+test('a card dropped nowhere flies home and lands exactly on its place in the hand', async ({ browser, baseURL }) => {
+  const ann = await newPlayer(browser, baseURL);
+  const bob = await newPlayer(browser, baseURL);
+  const link = await createRoom(ann, 'Ann');
+  await joinRoom(bob, link, 'Bob');
+  // Seed 18 (test mode only): Ann moves first, holding "2M money".
+  await ann.goto(`${link}?seed=18`);
+  await ann.getByRole('button', { name: 'Start game' }).click();
+  await expect(ann.getByRole('button', { name: 'End turn' })).not.toHaveAttribute('aria-disabled');
+  const money = hand(ann).getByRole('button', { name: '2M money', exact: true });
+  const id = await money.getAttribute('data-card');
+  // Frame by frame: the ghost's card and the resting card, with their turns.
+  await ann.evaluate((cardId) => {
+    const w = window as unknown as { frames: { ghost: number[] | null; card: number[]; shown: boolean }[] };
+    w.frames = [];
+    const turn = (el: Element | null) => {
+      const m = el ? /matrix\(([^)]+)\)/.exec(getComputedStyle(el).transform) : null;
+      if (!m) return 0;
+      const [a, b] = m[1]!.split(',').map(Number);
+      return (Math.atan2(b!, a!) * 180) / Math.PI;
+    };
+    const tick = () => {
+      const ghost = document.querySelector('.drag-ghost');
+      const card = document.querySelector(`.hand-fan [data-card="${cardId}"]`)!;
+      const g = ghost?.firstElementChild?.getBoundingClientRect();
+      const c = card.getBoundingClientRect();
+      w.frames.push({
+        ghost: g ? [g.left + g.width / 2, g.top + g.height / 2, turn(ghost)] : null,
+        card: [c.left + c.width / 2, c.top + c.height / 2, turn(card.parentElement)],
+        shown: getComputedStyle(card).visibility !== 'hidden',
+      });
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, id);
+  const box = (await money.boundingBox())!;
+  await ann.mouse.move(box.x + box.width * 0.3, box.y + box.height * 0.3);
+  await ann.mouse.down();
+  await ann.mouse.move(box.x + box.width * 0.3 + 12, box.y + box.height * 0.3 - 12);
+  // Up into the corner above the HUD's left, off every drop zone, and let go there.
+  await ann.mouse.move(20, 20, { steps: 10 });
+  await ann.mouse.up();
+  await expect(ann.locator('.drag-ghost')).toHaveCount(0);
+  const frames = await ann.evaluate(() => (window as unknown as { frames: { ghost: number[] | null; card: number[]; shown: boolean }[] }).frames);
+  const last = frames.map((f) => !!f.ghost).lastIndexOf(true);
+  const [gx, gy, gturn] = frames[last]!.ghost!;
+  const [cx, cy, cturn] = frames[last]!.card;
+  // In its last frame the ghost lies on the resting card, turned like it; the next frame shows the card itself.
+  expect(Math.hypot(gx! - cx!, gy! - cy!)).toBeLessThanOrEqual(2);
+  expect(Math.abs(gturn! - cturn!)).toBeLessThanOrEqual(1);
+  expect(frames[last]!.shown).toBe(false);
+  expect(frames[last + 1]!.shown).toBe(true);
+  for (const page of [bob, ann]) await leaveRoom(page);
+});

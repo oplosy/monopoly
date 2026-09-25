@@ -2,7 +2,7 @@
 import { act, fireEvent, screen, within } from '@testing-library/react';
 import { applyIntent } from '@deal-city/engine';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { RETURN_MS } from '../src/tabletop/drag';
+import { ghostHome, RETURN_MS } from '../src/tabletop/drag';
 import { renderTabletop, sentIntents } from './dom';
 import { atTable, payload, play } from './fixtures';
 import { reduceMotion, stubAnimations } from './motion';
@@ -198,5 +198,34 @@ describe('drag and drop', () => {
     } finally {
       calm.restore();
     }
+  });
+
+  it('works out where the ghost goes home: its grabbed point placed so it lies exactly on the resting card, turned like it', () => {
+    // Held by its middle, the ghost's grabbed point is the card's center, whatever the turn.
+    expect(ghostHome({ cx: 300, cy: 700, width: 100, height: 140, rotate: 12 }, { x: 0.5, y: 0.5 })).toEqual({ x: 300, y: 700, rotate: 12 });
+    // Upright, held at its top left quarter: the grabbed point sits up and left of the center.
+    expect(ghostHome({ cx: 130, cy: 630, width: 100, height: 140, rotate: 0 }, { x: 0.25, y: 0.25 })).toEqual({ x: 105, y: 595, rotate: 0 });
+    // Turned 90°, the same point turns about the center with the card.
+    const turned = ghostHome({ cx: 0, cy: 0, width: 100, height: 140, rotate: 90 }, { x: 0.25, y: 0.25 });
+    expect(turned.x).toBeCloseTo(35, 6);
+    expect(turned.y).toBeCloseTo(-25, 6);
+  });
+
+  it('hides the card in my hand while its ghost flies home, and shows it the moment the ghost lands', () => {
+    vi.useFakeTimers();
+    renderTabletop({ state: tableWith(['money-2-1']) });
+    under(null);
+    const card = handCard(/^2M money/);
+    dragAway(card);
+    expect(card).toHaveClass('is-dragging');
+    release(card);
+    expect(card).toHaveClass('is-returning');
+    expect(card).not.toHaveClass('is-dragging');
+    act(() => vi.advanceTimersByTime(RETURN_MS - 20));
+    expect(card).toHaveClass('is-returning');
+    // It lands on the first frame at or after RETURN_MS.
+    act(() => vi.advanceTimersByTime(40));
+    expect(card).not.toHaveClass('is-returning');
+    expect(document.querySelector('.drag-ghost')).toBeNull();
   });
 });

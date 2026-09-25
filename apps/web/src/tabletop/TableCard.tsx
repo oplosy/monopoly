@@ -33,7 +33,10 @@ export function TableCard({ id, zone, owner, activeColor, style, rotation = 0, d
   const card = { id, activeColor };
   const drag = useDrag();
   const dropState = useDropState(drop ?? null);
-  const dragging = zone === 'hand' && drag?.state?.card === id;
+  const dragged = zone === 'hand' && drag?.state?.card === id ? drag.state.phase : null;
+  // While its ghost flies home the card waits hidden, so the two swap unseen when the ghost lands on it.
+  const dragging = dragged === 'dragging' || dragged === 'landing';
+  const returning = dragged === 'returning';
   const dragHandlers = zone === 'hand' && drag ? drag.handlers(id) : null;
   const inspectHandlers = inspect.handlers(card);
   useEffect(() => {
@@ -43,7 +46,7 @@ export function TableCard({ id, zone, owner, activeColor, style, rotation = 0, d
     <button
       ref={anchor}
       type="button"
-      className={['table-card', `tone-${tone}`, pressed && 'is-pressed', dragging && 'is-dragging', dropClass(dropState)].filter(Boolean).join(' ')}
+      className={['table-card', `tone-${tone}`, pressed && 'is-pressed', dragging && 'is-dragging', returning && 'is-returning', dropClass(dropState)].filter(Boolean).join(' ')}
       style={hidden ? { ...style, visibility: 'hidden' } : style}
       data-card={id}
       data-zone={zone}
