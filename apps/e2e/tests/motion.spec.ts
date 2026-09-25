@@ -73,3 +73,92 @@ test('every page carries the motion setting from the first paint', async ({ page
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
   }
 });
+
+test('a dragged card stays under the pointer where it was grabbed', async ({ browser, baseURL }) => {
+  const ann = await newPlayer(browser, baseURL);
+  const bob = await newPlayer(browser, baseURL);
+  const link = await createRoom(ann, 'Ann');
+  await joinRoom(bob, link, 'Bob');
+  await ann.getByRole('button', { name: 'Start game' }).click();
+  await expect(hand(ann).getByRole('button')).not.toHaveCount(0);
+  const mover = (await ann.getByRole('button', { name: 'End turn' }).isVisible()) ? ann : bob;
+  await expect(mover.getByRole('button', { name: 'End turn' })).not.toHaveAttribute('aria-disabled');
+  const card = hand(mover).getByRole('button').first();
+  const rest = (await card.boundingBox())!;
+  const grab = { x: rest.x + rest.width * 0.3, y: rest.y + rest.height * 0.3 };
+  await mover.mouse.move(grab.x, grab.y);
+  await mover.waitForTimeout(250); // the hover lift settles
+  const lifted = (await card.boundingBox())!;
+  const f = { x: (grab.x - lifted.x) / lifted.width, y: (grab.y - lifted.y) / lifted.height };
+  await mover.mouse.down();
+  const to = { x: grab.x + 160, y: grab.y - 240 };
+  await mover.mouse.move(to.x, to.y, { steps: 12 });
+  await mover.waitForTimeout(300); // the lean settles back to upright
+  const ghost = (await mover.locator('.drag-ghost').boundingBox())!;
+  expect(Math.abs(ghost.x + f.x * ghost.width - to.x)).toBeLessThanOrEqual(2);
+  expect(Math.abs(ghost.y + f.y * ghost.height - to.y)).toBeLessThanOrEqual(2);
+  await mover.mouse.up();
+  for (const page of [bob, ann]) await leaveRoom(page);
+});
+
+test('a card dropped while it leans flies from where it leans, with no snap upright', async ({ browser, baseURL }) => {
+  const ann = await newPlayer(browser, baseURL);
+  const bob = await newPlayer(browser, baseURL);
+  const link = await createRoom(ann, 'Ann');
+  await joinRoom(bob, link, 'Bob');
+  // Seed 18 (test mode only): Ann moves first, holding "2M money".
+  await ann.goto(`${link}?seed=18`);
+  await ann.getByRole('button', { name: 'Start game' }).click();
+  const mover = ann;
+  await expect(mover.getByRole('button', { name: 'End turn' })).not.toHaveAttribute('aria-disabled');
+  // Every flight's first frame, and the dragged card's own turn, frame by frame, until it is gone.
+  await mover.evaluate(() => {
+    const w = window as unknown as { starts: number[]; ghostTurn: number | null };
+    w.starts = [];
+    w.ghostTurn = null;
+    const turn = (t: string) => {
+      const r = /rotate\(([-\d.]+)deg\)/.exec(t);
+      if (r) return Number(r[1]);
+      const m = /matrix\(([^)]+)\)/.exec(t);
+      if (!m) return 0;
+      const [a, b] = m[1]!.split(',').map(Number);
+      return (Math.atan2(b!, a!) * 180) / Math.PI;
+    };
+    const watch = () => {
+      const ghost = document.querySelector('.drag-ghost');
+      if (ghost) w.ghostTurn = turn(getComputedStyle(ghost).transform);
+      requestAnimationFrame(watch);
+    };
+    requestAnimationFrame(watch);
+    const animate = Element.prototype.animate;
+    Element.prototype.animate = function (frames, opts) {
+      if (this.classList.contains('flight') && Array.isArray(frames)) w.starts.push(turn(String(frames[0]!.transform)));
+      return animate.call(this, frames, opts);
+    };
+  });
+  const money = hand(mover).getByRole('button', { name: '2M money', exact: true });
+  const bank = mover.getByRole('group', { name: /^Your bank/ });
+  const a = (await money.boundingBox())!;
+  const b = (await bank.boundingBox())!;
+  await mover.mouse.move(a.x + a.width * 0.3, a.y + a.height * 0.3);
+  await mover.mouse.down();
+  // A first small step on the card starts the drag (and captures the pointer).
+  await mover.mouse.move(a.x + a.width * 0.3 + 10, a.y + a.height * 0.3 - 10);
+  // A quick sideways sweep onto the bank: the card leans with its speed, and is released mid-sweep.
+  const end = { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+  for (let i = 10; i >= 0; i--) {
+    await mover.mouse.move(end.x - i * 30, end.y);
+    await mover.waitForTimeout(12);
+  }
+  await mover.mouse.up();
+  await expect(bank).toHaveAccessibleName(/[1-9]\d*M$/);
+  const { starts, ghostTurn } = await mover.evaluate(() => {
+    const w = window as unknown as { starts: number[]; ghostTurn: number | null };
+    return { starts: w.starts, ghostTurn: w.ghostTurn };
+  });
+  // The card was leaning as it was let go, and its flight starts at that same turn.
+  expect(Math.abs(ghostTurn!)).toBeGreaterThan(1);
+  expect(starts).toHaveLength(1);
+  expect(Math.abs(starts[0]! - ghostTurn!)).toBeLessThanOrEqual(1);
+  for (const page of [bob, ann]) await leaveRoom(page);
+});

@@ -1,7 +1,9 @@
-import { motion, useMotionValue, useSpring, type MotionValue } from 'motion/react';
+import { animate, motion, useMotionValue, useSpring, useTransform, useVelocity, type MotionStyle, type MotionValue } from 'motion/react';
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { CardFace } from '../cards/CardFace';
+import { round2 } from '../cards/text';
 import { useAnchor } from '../motion/anchor-context';
+import { getMotion } from '../motion/setting';
 
 /** How far a press must travel before it becomes a drag. */
 export const DRAG_START_PX = 6;
@@ -19,6 +21,8 @@ export interface DragState {
   ok: ReadonlySet<string>;
   /** The zone under the pointer, if the card can land there. */
   hot: string | null;
+  /** Where the card was grabbed, as fractions of its box (0–1). */
+  grab: { x: number; y: number };
 }
 
 /** What a drop did: a play went out, a choice opened at the drop, or nothing (the card flies back). */
@@ -33,7 +37,7 @@ export interface DragHandlers {
 
 export interface DragApi {
   state: DragState | null;
-  /** Where the dragged card is; the ghost trails it. */
+  /** Where the pointer is; the ghost holds the card there by its grabbed point. */
   x: MotionValue<number>;
   y: MotionValue<number>;
   handlers(card: string): DragHandlers;
@@ -68,7 +72,7 @@ function zoneAt(x: number, y: number, ok: ReadonlySet<string>): string | null {
 export function useDragController({ enabled, zonesFor, onDrop }: Options): DragApi {
   const [state, setState] = useState<DragState | null>(null);
   const live = useRef<DragState | null>(null);
-  const press = useRef<{ card: string; x: number; y: number } | null>(null);
+  const press = useRef<{ card: string; x: number; y: number; gx: number; gy: number } | null>(null);
   const swallow = useRef<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const x = useMotionValue(0);
@@ -129,7 +133,11 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
         onPointerDown(e) {
           swallow.current = null;
           if (!enabled || e.button !== 0 || e.pointerType === 'touch' || live.current) return;
-          press.current = { card, x: e.clientX, y: e.clientY };
+          const r = e.currentTarget.getBoundingClientRect();
+          // A card with no layout box (not laid out yet) is held by its middle.
+          const gx = r.width > 0 ? (e.clientX - r.left) / r.width : 0.5;
+          const gy = r.height > 0 ? (e.clientY - r.top) / r.height : 0.5;
+          press.current = { card, x: e.clientX, y: e.clientY, gx, gy };
         },
         onPointerMove(e) {
           const p = press.current;
@@ -154,7 +162,7 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
             }
             x.jump(e.clientX);
             y.jump(e.clientY);
-            update({ card, phase: 'dragging', ok, hot: zoneAt(e.clientX, e.clientY, ok) });
+            update({ card, phase: 'dragging', ok, hot: zoneAt(e.clientX, e.clientY, ok), grab: { x: p.gx, y: p.gy } });
             return;
           }
           if (s.phase !== 'dragging') return;
@@ -170,10 +178,16 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
           swallow.current = card;
           const outcome = onDrop(card, zoneAt(e.clientX, e.clientY, s.ok), { x: e.clientX, y: e.clientY });
           if (outcome === 'missed') {
-            // The card flies back to its place in the hand.
+            // The card flies back to its place in the hand, held by the same point; at once with animations off.
             const home = e.currentTarget.getBoundingClientRect();
-            x.set(home.left + home.width / 2);
-            y.set(home.top + home.height / 2);
+            const to = { x: home.left + s.grab.x * home.width, y: home.top + s.grab.y * home.height };
+            if (getMotion() === 'off') {
+              x.set(to.x);
+              y.set(to.y);
+            } else {
+              animate(x, to.x, { duration: RETURN_MS / 1000, ease: 'easeOut' });
+              animate(y, to.y, { duration: RETURN_MS / 1000, ease: 'easeOut' });
+            }
             update({ ...s, phase: 'returning', hot: null });
             timer.current = setTimeout(() => update(null), RETURN_MS);
             return;
@@ -212,18 +226,24 @@ export function dropClass(state: 'ok' | 'hot' | null): string | false {
 }
 
 /**
- * The dragged card under the pointer, trailing it a little (spring lag). It waits where it was
- * dropped, registered as the card itself so the play's flight starts there, or flies home after a miss.
+ * The dragged card under the pointer, held where it was grabbed and following with no lag; it leans a
+ * little with its speed. It waits where it was dropped, registered as the card itself so the play's flight
+ * starts there (lean included: its pose reads the turn of its parent), or goes home after a miss.
  */
 export function DragGhost({ drag }: { drag: DragApi }) {
-  const x = useSpring(drag.x, { stiffness: 900, damping: 55 });
-  const y = useSpring(drag.y, { stiffness: 900, damping: 55 });
+  const speed = useVelocity(drag.x);
+  const lean = useSpring(useTransform(speed, (v) => Math.max(-8, Math.min(8, v / 120))), { stiffness: 300, damping: 30 });
   const card = drag.state?.card ?? '';
   const anchor = useAnchor<HTMLDivElement>(`card:${card}`);
   if (!drag.state) return null;
+  const { grab } = drag.state;
   return (
-    <motion.div className="drag-ghost" aria-hidden="true" style={{ x, y }}>
-      <div ref={anchor} data-rot={6}>
+    <motion.div
+      className="drag-ghost"
+      aria-hidden="true"
+      style={{ x: drag.x, y: drag.y, rotate: lean, '--gx': round2(grab.x), '--gy': round2(grab.y) } as MotionStyle}
+    >
+      <div ref={anchor} data-rot="parent">
         <CardFace id={card} className="card-svg" />
       </div>
     </motion.div>

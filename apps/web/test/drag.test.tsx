@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RETURN_MS } from '../src/tabletop/drag';
 import { renderTabletop, sentIntents } from './dom';
 import { atTable, payload, play } from './fixtures';
-import { stubAnimations } from './motion';
+import { reduceMotion, stubAnimations } from './motion';
 
 afterEach(() => {
   Reflect.deleteProperty(document, 'elementsFromPoint');
@@ -146,5 +146,57 @@ describe('drag and drop', () => {
     // Enter on the focused card: a keyboard click has no detail.
     fireEvent.click(card, { detail: 0 });
     expect(screen.getByRole('dialog', { name: /^Play / })).toBeInTheDocument();
+  });
+
+  const box = (left: number, top: number, width: number, height: number) =>
+    ({ left, top, width, height, right: left + width, bottom: top + height, x: left, y: top, toJSON: () => ({}) }) as DOMRect;
+  const settle = () => act(() => new Promise((resolve) => setTimeout(resolve, 60)));
+
+  it('keeps the grabbed point under the pointer, with no lag', async () => {
+    renderTabletop({ state: tableWith(['money-2-1']) });
+    under(null);
+    const card = handCard(/^2M money/);
+    vi.spyOn(card, 'getBoundingClientRect').mockReturnValue(box(80, 560, 100, 140));
+    fireEvent.pointerDown(card, { ...mouse, button: 0, clientX: 100, clientY: 600 });
+    fireEvent.pointerMove(card, { ...mouse, clientX: 140, clientY: 300 });
+    fireEvent.pointerMove(card, { ...mouse, clientX: 200, clientY: 350 });
+    await settle();
+    const ghost = document.querySelector<HTMLElement>('.drag-ghost')!;
+    expect(Number(ghost.style.getPropertyValue('--gx'))).toBeCloseTo(0.2, 2);
+    expect(Number(ghost.style.getPropertyValue('--gy'))).toBeCloseTo(40 / 140, 2);
+    expect(ghost.style.transform).toContain('translateX(200px)');
+    expect(ghost.style.transform).toContain('translateY(350px)');
+  });
+
+  it('grabs a card with no layout box by its middle', async () => {
+    renderTabletop({ state: tableWith(['money-2-1']) });
+    under(null);
+    const card = handCard(/^2M money/);
+    vi.spyOn(card, 'getBoundingClientRect').mockReturnValue(box(0, 0, 0, 0));
+    dragAway(card);
+    await settle();
+    const ghost = document.querySelector<HTMLElement>('.drag-ghost')!;
+    expect(ghost.style.getPropertyValue('--gx')).toBe('0.5');
+    expect(ghost.style.getPropertyValue('--gy')).toBe('0.5');
+  });
+
+  it('sends a missed card home at once when animations are off', async () => {
+    const calm = reduceMotion();
+    try {
+      renderTabletop({ state: tableWith(['money-2-1']) });
+      under(null);
+      const card = handCard(/^2M money/);
+      vi.spyOn(card, 'getBoundingClientRect').mockReturnValue(box(80, 560, 100, 140));
+      fireEvent.pointerDown(card, { ...mouse, button: 0, clientX: 100, clientY: 600 });
+      fireEvent.pointerMove(card, { ...mouse, clientX: 140, clientY: 300 });
+      release(card);
+      await settle();
+      const ghost = document.querySelector<HTMLElement>('.drag-ghost')!;
+      // Home is the grabbed point on the card's own box: (80 + 0.2 × 100, 560 + 40).
+      expect(ghost.style.transform).toContain('translateX(100px)');
+      expect(ghost.style.transform).toContain('translateY(600px)');
+    } finally {
+      calm.restore();
+    }
   });
 });
