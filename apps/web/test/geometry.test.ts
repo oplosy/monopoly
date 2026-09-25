@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { viewFor } from '@deal-city/engine';
 import { opponentsInOrder } from '../src/game/derive';
-import {
-  discardJitter, fanLayout, planePoint, seatLayout, seatPlan, SEAT_UI_RADIUS,
-} from '../src/scene/geometry';
+import { discardJitter, fanLayout, planePoint, SEAT_UI_RADIUS, seatLayout, seatPlan, WEDGE_CLEAR, wedgeReach } from '../src/scene/geometry';
 import { play } from './fixtures';
 
 describe('planePoint', () => {
@@ -77,5 +75,40 @@ describe('fanLayout', () => {
 
   it('does not tilt a single card', () => {
     expect(fanLayout(1, 0)).toEqual({ rotate: 0, drop: 0 });
+  });
+});
+
+describe('wedgeReach', () => {
+  // The deck and the discard pile, in card widths around the center (y up): side by side, 0.6 apart.
+  const piles = [
+    { x1: -1.3, x2: -0.3, y1: -0.7, y2: 0.7 },
+    { x1: 0.3, x2: 1.3, y1: -0.7, y2: 0.7 },
+  ];
+  /** The wedge's box (0.6 × 0.45, turned to point at the seat) at `reach` toward `angle` overlaps a pile. */
+  const overPile = (angle: number, reach: number, room = WEDGE_CLEAR) => {
+    const a = (angle * Math.PI) / 180;
+    const turn = ((90 - angle) * Math.PI) / 180;
+    const hx = 0.3 * Math.abs(Math.cos(turn)) + 0.225 * Math.abs(Math.sin(turn));
+    const hy = 0.3 * Math.abs(Math.sin(turn)) + 0.225 * Math.abs(Math.cos(turn));
+    const cx = reach * Math.cos(a);
+    const cy = reach * Math.sin(a);
+    return piles.some(
+      (p) => cx - hx < p.x2 + room - 1e-9 && cx + hx > p.x1 - room + 1e-9 && cy - hy < p.y2 + room - 1e-9 && cy + hy > p.y1 - room + 1e-9,
+    );
+  };
+
+  it('keeps the wedge in the gap between the piles when it points straight up or down', () => {
+    expect(wedgeReach(90)).toBe(0.72);
+    expect(wedgeReach(270)).toBe(0.72);
+    expect(overPile(270, 0.72, 0)).toBe(false);
+  });
+
+  it('takes the wedge past the piles toward any side seat, with room to spare, and no further than it must', () => {
+    for (const angle of [30, 150, 210, 330, 0, 180]) {
+      const reach = wedgeReach(angle);
+      expect(overPile(angle, reach), `${angle}°`).toBe(false);
+      expect(overPile(angle, reach - 0.02), `${angle}° a little closer`).toBe(true);
+    }
+    expect(wedgeReach(30)).toBe(wedgeReach(150));
   });
 });

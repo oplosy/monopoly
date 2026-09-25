@@ -150,6 +150,8 @@
 :root[data-motion='on'] .gameover-actions button:active { scale: 0.96; }
 /* The turn ring swings to the next seat. */
 :root[data-motion='on'] .turn-ring { transition: rotate 0.6s cubic-bezier(0.3, 1.2, 0.5, 1); }
+/* The wedge moves out past the piles, or back into their gap, as the ring turns. */
+:root[data-motion='on'] .turn-wedge { transition: top 0.6s cubic-bezier(0.3, 1.2, 0.5, 1); }
 @keyframes breathe { 50% { scale: 1.035; } }
 /* My plays are spent: End turn breathes, so the turn plainly waits on it (spec 2026-09-25-table-controls D3). */
 :root[data-motion='on'] .end-turn.is-due { animation: due-breathe 1.8s ease-in-out infinite; }

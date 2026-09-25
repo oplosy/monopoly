@@ -4,7 +4,7 @@ import { CardBack } from '../cards/CardBack';
 import { cardName, plural } from '../game/log';
 import { useAnchor } from '../motion/anchor-context';
 import { CountUp, useCountShift } from '../motion/stage-context';
-import { discardJitter } from '../scene/geometry';
+import { discardJitter, wedgeReach } from '../scene/geometry';
 import type { PlaneRect } from '../scene/layout';
 import { dropClass, useDropState } from './drag';
 import { TableCard } from './TableCard';
@@ -37,7 +37,11 @@ export function CenterPiles({ view, at, activeAngle }: { view: GameView; at: Pla
       aria-label="Table center"
       style={{ left: `${at.x}%`, top: `${at.y}%`, width: `${at.w}%`, height: `${at.h}%` }}
     >
-      <div className="turn-ring" aria-hidden="true" style={{ '--turn': `${turn.current}deg` } as CSSProperties}>
+      <div
+        className="turn-ring"
+        aria-hidden="true"
+        style={{ '--turn': `${turn.current}deg`, '--reach': wedgeReach(activeAngle ?? 90) } as CSSProperties}
+      >
         {activeAngle !== null && <span className="turn-wedge" />}
       </div>
       <div ref={deck} className="deck" role="group" aria-label={`Deck, ${plural(view.deckCount, 'card')}`}>
