@@ -272,12 +272,10 @@
 .inspect-preview { position: fixed; z-index: 50; pointer-events: none; filter: drop-shadow(0 14px 24px rgb(0 0 0 / 0.45)); }
 .inspect-preview .card-svg { display: block; width: 100%; height: auto; }
 
-@media (prefers-reduced-motion: reduce) {
-  .table-card,
-  .hand-fan > li,
-  .turn-ring,
-  .timer-ring { transition: none; }
-}
+:root[data-motion='off'] .table-card,
+:root[data-motion='off'] .hand-fan > li,
+:root[data-motion='off'] .turn-ring,
+:root[data-motion='off'] .timer-ring { transition: none; }
 
 /* ---------- The table screen ---------- */
 .tabletop {
@@ -435,10 +433,8 @@
   .narrator { top: 4.5rem; }
   .pending-stage { top: 7.5rem; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .narrator,
-  .end-turn { transition: none; }
-}
+:root[data-motion='off'] .narrator,
+:root[data-motion='off'] .end-turn { transition: none; }
 
 /* ---------- Card popover ---------- */
 .popover { position: fixed; z-index: 30; width: max-content; max-width: min(22rem, calc(100vw - 16px)); }
@@ -488,11 +484,9 @@
 .rent-form legend { font-weight: 700; margin-bottom: 0.2rem; }
 .rent-form label { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500; }
 .rent-form input { width: auto; }
-@media (prefers-reduced-motion: reduce) {
-  .pill,
-  .pill-back,
-  .popover-close { transition: none; }
-}
+:root[data-motion='off'] .pill,
+:root[data-motion='off'] .pill-back,
+:root[data-motion='off'] .popover-close { transition: none; }
 
 /* ---------- Decision trays (above the hand) ---------- */
 .tray {

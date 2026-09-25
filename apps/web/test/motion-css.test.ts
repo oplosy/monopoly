@@ -1,54 +1,51 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCss, rules } from './css';
 
-const css = readFileSync(new URL('../src/motion/motion.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const css = readCss(new URL('../src/motion/motion.css', import.meta.url));
+const ON = ":root[data-motion='on']";
+const OFF = ":root[data-motion='off']";
+const all = rules(css);
+const moving = (body: string) => /(animation|transition)\s*:\s*(?!none)/.test(body);
 
-/** The bodies of every block opened by `header`, and the text outside them. */
-function split(text: string, header: string): { inside: string; outside: string } {
-  let inside = '';
-  let outside = '';
-  let at = 0;
-  for (;;) {
-    const start = text.indexOf(header, at);
-    if (start < 0) return { inside, outside: outside + text.slice(at) };
-    outside += text.slice(at, start);
-    const open = text.indexOf('{', start);
-    let depth = 0;
-    let i = open;
-    for (; i < text.length; i++) {
-      if (text[i] === '{') depth++;
-      else if (text[i] === '}' && --depth === 0) break;
-    }
-    inside += text.slice(open + 1, i);
-    at = i + 1;
-  }
+/** Every stylesheet under src/. */
+function stylesheets(dir = new URL('../src/', import.meta.url)): URL[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? stylesheets(new URL(`${e.name}/`, dir)) : e.name.endsWith('.css') ? [new URL(e.name, dir)] : [],
+  );
 }
 
-const moving = split(css, '@media (prefers-reduced-motion: no-preference)');
-const reduced = split(moving.outside, '@media (prefers-reduced-motion: reduce)');
-
 describe('motion.css', () => {
-  it('keeps every animation and transition behind prefers-reduced-motion: no-preference', () => {
-    expect(reduced.outside).not.toMatch(/animation|transition|@keyframes/);
+  it('no stylesheet asks the OS about motion any more: the game has its own switch', () => {
+    for (const file of stylesheets()) expect(readFileSync(file, 'utf8'), file.pathname).not.toMatch(/prefers-reduced-motion/);
   });
 
-  it('only fades cards in, within 150 ms, when less motion is asked for', () => {
-    const uses = [...reduced.inside.matchAll(/animation:\s*[\w-]+\s+([\d.]+)(m?s)/g)];
+  it('keeps every animation and transition behind the switch being on', () => {
+    for (const r of all.filter((x) => moving(x.body) && !x.selector.startsWith(OFF))) {
+      for (const s of r.selector.split(',')) expect(s.trim(), r.selector).toMatch(/^:root\[data-motion='on'\] /);
+    }
+  });
+
+  it('only fades cards in, within 150 ms, when animations are off', () => {
+    const off = all.filter((r) => r.selector.startsWith(OFF)).map((r) => r.body).join('\n');
+    const uses = [...off.matchAll(/animation:\s*[\w-]+\s+([\d.]+)(m?s)/g)];
     expect(uses.length).toBeGreaterThan(0);
     for (const [, time, unit] of uses) expect(unit === 's' ? Number(time) * 1000 : Number(time)).toBeLessThanOrEqual(150);
-    expect(reduced.inside).not.toMatch(/infinite|transform|scale|translate|rotate/);
+    expect(off).not.toMatch(/infinite|transform|scale|translate|rotate/);
   });
 
   it('defines every keyframes it uses', () => {
     for (const [, name] of css.matchAll(/animation:\s*([\w-]+)/g)) expect(css, name).toContain(`@keyframes ${name}`);
   });
 
-  it('shows the controls that wait for scenes to finish as waiting', () => {
-    expect(reduced.outside).toMatch(/\.end-turn\[aria-disabled='true'\]/);
-    expect(reduced.outside).toMatch(/\.tray-actions button\[aria-disabled='true'\]/);
+  it('shows the controls that wait for scenes to finish as waiting, whatever the switch', () => {
+    const plain = all.filter((r) => !r.selector.startsWith(ON) && !r.selector.startsWith(OFF)).map((r) => r.selector).join('\n');
+    expect(plain).toMatch(/\.end-turn\[aria-disabled='true'\]/);
+    expect(plain).toMatch(/\.tray-actions button\[aria-disabled='true'\]/);
   });
 
   it('keeps the red pulse going under the last-seconds shake', () => {
-    expect(moving.inside).toMatch(/\.timer-ring\.is-critical\s*\{\s*animation:\s*ring-pulse[^;]*,\s*ring-shake/);
+    const ring = all.find((r) => r.selector === `${ON} .timer-ring.is-critical`);
+    expect(ring?.body).toMatch(/animation:\s*ring-pulse[^;]*,\s*ring-shake/);
   });
 });

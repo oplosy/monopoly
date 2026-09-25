@@ -34,6 +34,4 @@
 @media (max-width: 480px) {
   .avatar-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .avatar-choice { transition: none; }
-}
+:root[data-motion='off'] .avatar-choice { transition: none; }
