@@ -71,8 +71,8 @@ The user's words: "we are playing a card game; the cards must never be the small
 
 **As built (Plan 10).**
 - **Scene.** `TableScene` (was `PicnicScene`): the navy ground (`--bg`), a felt plane (`--felt-1`, `--felt-2`) with a rim (`--rim`, 1.2 % of the plane) and its shadow, tilted `--tilt: 22deg`. The props, cloth, light, grass tokens and the paper pages' backdrop scene are gone. The table's own component in `Tabletop.tsx` is now `GameTable`.
-- **Still round.** The oval arrives with the layout model in Plan 11 (Plan 10 decision 1); the plane is the old square, restyled as felt.
-- **Fit values** (measured at 22 viewports in 14 states, 2 and 3 players; Plan 11 replaces them all):
+- **Still round.** The oval arrives with the layout model in Plan 11 (Plan 10 decision 1); the plane is the old square, restyled as felt. *(Replaced in Plan 11: see §5 "As built (Plan 11)".)*
+- **Fit values** (measured at 22 viewports in 14 states, 2 and 3 players). *Replaced in Plan 11 by the layout model (§5); kept here as the record of Plan 10.*
   - desktop: `--plane: min(64vw, calc((100vh - 210px) * 0.9))`, `--plane-shift: -8%`;
   - lobby: `--plane: min(56vw, 58vh)`, height `plane × 1.05 + 110px`, shift `−17% − 8px`;
   - short landscape (≤ 500 px high): `min(56vw, 100vh × 0.9)`, shift −5 %, for 3 players and `min(56vw, 100vh × 0.66)`, shift 4 %, for 2 (a round table at 22° is nearly as tall as wide, and the 2-player far seat sits on its top edge); the resting hand sits at `hand-w × −0.55` (45 px of it shows, a thumb's height); the HUD is a 2-column grid in the top right corner; my seat moves 80 px left, clear of the hand; the narrator speaks at the left and the action in play at the top left; unanchored trays sit at the bottom right (`min(24rem, max(side, 30vw))` wide), the discard tray above the hand, and the answer tray shows only its buttons; at ≤ 340 px high the discard tray does too, tighter;
@@ -81,7 +81,7 @@ The user's words: "we are playing a card game; the cards must never be the small
   - 2 players: the action in play stands just left of the far seat (`right: 50% + 3.2rem`), which it otherwise hides;
   - while paying, at every size, the hand tucks down and the pay tray sits at the bottom, so the cards to pay with stay pickable at the lower rim of the 22° table.
   - an answer or counter tray anchored beside my Just Say No card takes the first place that keeps my table, the seats, the HUD and the action in play in view: above the card, beside it, lifted above what it would cover, or the bottom right corner; if none is clear, the one that covers least (`placeBeside` with boxes to avoid). The card is found after the table is drawn, so a table first drawn mid-answer (a reload) anchors at once.
-- **Fit limits left for Plan 11:** on landscape phones up to 740 px wide, a counter tray (both players holding Just Say No) still covers part of my table: no place there is clear. An anchored answer tray may sit over the hand's other cards (none is picked while answering).
+- **Fit limits left for Plan 11** *(the counter-tray limit on landscape phones stands; see §5 "As built")*: on landscape phones up to 740 px wide, a counter tray (both players holding Just Say No) still covers part of my table: no place there is clear. An anchored answer tray may sit over the hand's other cards (none is picked while answering).
 
 ---
 
@@ -164,6 +164,82 @@ The fixes of the phone polish (PR #9: 44 px touch targets, narrator below the HU
 - **Playable cards** are marked (gold edge) during my turn; unplayable ones stay plain, never greyed out.
 
 ---
+
+### 5.6 As built (Plan 11)
+
+**The model.** `src/scene/layout.ts`:
+- `tableLayout(viewport, players, { tray })` returns `mode` (`desktop`, `portrait` or `landscape`), `compact` (phones), `hand` (with `rest`), `handReserve`, `card`, `cardFloor`, `plane` (with its center on screen), the felt `radius`, `tilt`, `perspective`, `avatar`, `seats` (angle, zone and seat UI anchor, mine first) and `center`.
+- `project()` is the browser's projection, done in numbers: the tests check rendered sizes with it.
+- `Tabletop` writes the result on `.tabletop` as custom properties (`layoutStyle`), with `data-layout` and `data-compact`, once per resize (`useViewport`).
+
+**The rules** (`RULES` per mode):
+- **The hand card.** Its height is 0.214 × the viewport height, capped at 0.195 × the width (0.267 on phones in portrait). At rest, this much of it lies below the screen edge: 25 % on desktops, 35 % in portrait, 50 % on landscape phones.
+- **The table card.** Its near card renders at 0.46 × the hand card's width on desktops, 0.52 in portrait and 0.58 in landscape.
+- **The floor.** A crowded tableau may shrink its cards only down to the spec's minimums: 0.457, 0.44 (tablets), 0.5 (phones in portrait) and 0.575 × the hand card, measured on the near card.
+- **The perspective** is 2 × the plane's height, from the top center of the screen. The far card then renders at 0.88× the near one or more, and the near scale depends only on where the zones lie, so the cards are sized before the plane.
+- **The plane is fitted by bisection.** It is the largest plane that meets all of these:
+  - its top edge lands below the HUD row (64 px; in portrait, below the far seats too);
+  - my zone and my seat end above the resting hand, with room for End turn in portrait;
+  - the seats beside it stay on screen;
+  - on landscape phones, it keeps a 118 px column clear for the HUD.
+- **The shape.** On desktops and landscape phones the plane is 1.8:1 and the felt a stadium (corner radius half the short side); a plane held back by the width, not the height, grows taller instead, down to 1.45:1. In portrait it is as wide as the screen less 16 px, no wider than tall, with a radius of 18 % of its width.
+- **Zones.**
+  - The far zones span from 6 % down to the center ring, and my zone from the ring to 95 %.
+  - The center is 2.8 × 1.62 card widths: the deck and the discard pile side by side, the turn ring a circle behind them.
+  - Zone edges follow the stadium's round ends (6 px in); every zone holds at least one card on every supported screen, and no zones touch.
+  - On landscape phones my zone is 22–68 %, leaving the plane's lower right corner to the docked trays.
+- **Seats.**
+  - Desktop: all seats sit beside the plane; the opponents are level with the far zones, and I am at the lower left.
+  - Landscape: my seat and the left opponent sit beside the plane; the right-hand seat stands on the felt's round right end, left of the HUD column.
+  - Portrait: the far seats stand above the plane, and mine stands beside my zone, its foot level with the zone's.
+  - The avatar is at most 72 px and never taller than a far table card on screen.
+- **Trays in portrait** get 56 px more room above the hand (`tray: true`). The table refits smaller; the cards keep their size.
+
+**Tableaus** (`src/scene/tableau-fit.ts`). A tableau fills its zone, and `fitTableau` lays it out in this order:
+1. a stack taller than the zone tightens its fan, down to each card's colour band (0.3 card widths); a loose row (gap 0.18 card widths), then a tight one (0.08);
+2. two rows, when the zone is tall enough;
+3. overlapping groups, each keeping half its width in view;
+4. smaller cards, down to the floor;
+5. at the floor, the tableau is flagged `data-overflow`, keeping the row spacing its width allows.
+
+Other rules:
+- The bank is a tight pile, each note 0.14 card widths from the one below.
+- While cards can be picked, groups fan to 0.5 and the bank to 0.3.
+- An empty tableau's "No properties yet" is a card-sized dashed slot, counted like a group.
+
+**The hand** (`handFan`):
+- The fan keeps 16 % of the width free on each side on desktops, at least 130 px on landscape phones and 8 px in portrait.
+- It counts the outer cards' swing about the fan's pivot, 1.6 card heights down.
+- A turned fan that does not fit lies flat. A flat hand that shows less than 28 % of each card scrolls sideways.
+- Hover lifts a card 12 px and scales it to 1.05 (150 ms, ease-out). The selected card rises by its resting overlap plus 8 px, at 1.08.
+- On my turn, playable cards have a gold edge (the `playable` tone). Hand cards are never dimmed; table cards still dim while a play aims.
+
+**Flat UI**:
+- The seat avatar, its card backs and the action in play's card read `--avatar` and `--card-w`.
+- End turn and my clock wait above the hand in every portrait layout.
+- The narrator stays off the seats:
+  - portrait: over the table's middle (`--plane-cy`);
+  - landscape phones: at the right, below the HUD column (184 px);
+  - otherwise: at the top middle, as before.
+- On landscape phones the action in play stands at the top middle, at most half the plane wide.
+- The phone rules are keyed on `.tabletop[data-layout][data-compact]` instead of 700 px and 500 px media queries. Pure control-styling media queries remain.
+
+**The lobby** keeps its own CSS plane: the same stadium at 1.8:1, `min(78vw, 110vh)` wide, with the ellipse chair anchors from `seatLayout`.
+
+**Tests.**
+- `layout.test.ts`: the §5.3 targets for 2 and 3 players; the floor; and a sweep of about 4 000 real device shapes (felt, overlaps, seats on screen, my zone above my hand, far/near ≥ 0.85).
+- `tableau-fit.test.ts`.
+- `layout.spec.ts`, in Chrome, for every §5.3 viewport with 2 and 3 players:
+  - the hand card's width;
+  - the table cards' near-edge widths (a card's box grows off the middle, where the tilt draws it as a trapezoid);
+  - far/near;
+  - no overlaps among the hand, tableaus, center, seats and HUD;
+  - avatar ≤ table card; HUD control ≤ about half a hand card.
+
+**Limits.**
+- A tableau that still overflows at the floor spills over its zone. With 3 players, the far zones hold about four overlapped groups and a bank.
+- On landscape phones up to 740 px wide, a counter tray still covers part of my table (from Plan 10).
+- The landscape narrator's 184 px top is tied to the HUD column's height, which the model does not know.
 
 ## 6. Motion (Plan 10 switch, Plan 12 polish)
 

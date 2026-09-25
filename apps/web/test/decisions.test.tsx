@@ -6,6 +6,7 @@ import type { PlayerSpec } from '@deal-city/engine/testing';
 import type { Deadlines } from '@deal-city/protocol';
 import { describe, expect, it } from 'vitest';
 import { renderTabletop, sentIntents } from './dom';
+import { tableLayout } from '../src/scene/layout';
 import { atTable, payload, play } from './fixtures';
 
 const dc: Intent = { type: 'playDebtCollector', card: 'act-debtCollector-1', target: 'p2' };
@@ -160,6 +161,22 @@ describe('discarding', () => {
     expect(within(myHand()).getAllByRole('button', { name: '1M money', pressed: true })).toHaveLength(1);
   });
 
+
+  it('leaves room for the tray between my table and my hand on a phone (Review Focus 4)', () => {
+    const hand = ['money-1-1', 'money-1-2', 'money-1-3', 'money-1-4', 'money-1-5', 'money-1-6', 'money-2-1', 'money-2-2', 'money-2-3'];
+    const s = play({ players: [{ id: 'p1', hand }, { id: 'p2' }] }, [['p1', { type: 'endTurn' }]]);
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 375 });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 812 });
+    try {
+      show(s, 'p1');
+      expect(screen.getByRole('region', { name: 'Discard 2 cards' })).toBeInTheDocument();
+      const table = document.querySelector<HTMLElement>('.tabletop')!;
+      expect(table.style.getPropertyValue('--plane-h')).toBe(`${tableLayout({ width: 375, height: 812 }, 2, { tray: true }).plane.h}px`);
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: 768 });
+    }
+  });
 
   it('picks exactly the extra cards from my hand', async () => {
     const hand = ['money-1-1', 'money-1-2', 'money-1-3', 'money-1-4', 'money-1-5', 'money-1-6', 'money-2-1', 'money-2-2', 'money-2-3'];

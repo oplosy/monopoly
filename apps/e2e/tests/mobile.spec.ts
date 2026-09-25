@@ -39,6 +39,35 @@ async function expectTappable(...controls: Locator[]): Promise<void> {
 
 const handCards = (page: Page): Locator => page.getByRole('list', { name: /^Your hand/ }).getByRole('listitem');
 
+/**
+ * Presses my hand card `name` on its uncovered left strip, as a thumb would: the next card covers the rest
+ * (spec §5.5: at least 28 % shows). The point is found in the card's own turned frame, like a finger on a fan.
+ */
+async function pressHand(page: Page, name: string, how: 'tap' | 'click' = 'click'): Promise<void> {
+  const card = page.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name, exact: true });
+  // Wait as .tap() would: the card is shown, enabled (no scene playing) and at rest.
+  await expect(card).toBeVisible();
+  await expect(card).not.toHaveAttribute('aria-disabled');
+  await expect.poll(async () => {
+    const a = await boxOf(card);
+    await page.waitForTimeout(50);
+    const b = await boxOf(card);
+    return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+  }).toBeLessThan(0.5);
+  const at = await card.evaluate((el: HTMLElement) => {
+    const r = el.getBoundingClientRect();
+    const m = /matrix\(([^)]+)\)/.exec(getComputedStyle(el.parentElement!).transform);
+    const [a = 1, b = 0] = m ? m[1]!.split(',').map(Number) : [];
+    const turn = Math.atan2(b, a);
+    const scale = Math.hypot(a, b) || 1;
+    const dx = (0.12 - 0.5) * el.offsetWidth * scale;
+    const dy = (0.15 - 0.5) * el.offsetHeight * scale; // near the top, by the corner value: a landscape hand shows only its top half
+    return { x: r.left + r.width / 2 + dx * Math.cos(turn) - dy * Math.sin(turn), y: r.top + r.height / 2 + dx * Math.sin(turn) + dy * Math.cos(turn) };
+  });
+  if (how === 'tap') await page.touchscreen.tap(at.x, at.y);
+  else await page.mouse.click(at.x, at.y);
+}
+
 /** `a` shares no more than a sliver with any of `others` (polled: the table settles after a move). */
 async function expectClear(a: Locator, others: Locator): Promise<void> {
   await expect
@@ -62,7 +91,7 @@ async function expectOnScreen(page: Page, ...items: Locator[]): Promise<void> {
 
 /** Seed 18 with 2 players: Ann banks 2M (then `banked` runs) and ends her turn; Bob's It's My Birthday makes her pay. */
 async function birthdayForTwo(ann: Page, bob: Page, banked?: () => Promise<void>): Promise<Locator> {
-  await ann.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name: '2M money', exact: true }).click();
+  await pressHand(ann, '2M money');
   await ann.getByRole('dialog', { name: /^Play / }).getByRole('button', { name: 'Bank it (+2M)', exact: true }).click();
   await expect(ann.getByRole('group', { name: 'Your bank, 2M' })).toBeVisible();
   await banked?.();
@@ -76,7 +105,7 @@ async function birthdayForTwo(ann: Page, bob: Page, banked?: () => Promise<void>
 }
 
 const tapHand = async (page: Page, card: string, option: string) => {
-  await page.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name: card, exact: true }).tap();
+  await pressHand(page, card, 'tap');
   await page.getByRole('dialog', { name: /^Play / }).getByRole('button', { name: option, exact: true }).tap();
 };
 
@@ -92,7 +121,7 @@ test('a phone in portrait: the narrator clears the HUD, and every control fits a
   await expectTappable(menu.getByRole('button', { name: 'Sound' }), menu.getByRole('button', { name: 'Game log' }), menu.getByRole('button', { name: 'Leave game' }));
   await expectTappable(ann.getByRole('button', { name: 'End turn' }));
 
-  await ann.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name: '2M money', exact: true }).tap();
+  await pressHand(ann, '2M money', 'tap');
   const popover = ann.getByRole('dialog', { name: /^Play / });
   await expectTappable(popover.getByRole('button', { name: 'Close' }), popover.getByRole('button', { name: 'Bank it (+2M)' }));
   await popover.getByRole('button', { name: 'Bank it (+2M)' }).tap();
@@ -101,6 +130,8 @@ test('a phone in portrait: the narrator clears the HUD, and every control fits a
   const narrator = ann.locator('.narrator.is-shown .narrator-text');
   await expect(narrator).toContainText('2M');
   await expectApart(narrator, menu);
+  // The narrator never hides who is at the table.
+  for (const seat of [/^Bob's seat/, /^Your seat/]) await expectApart(narrator, ann.getByRole('group', { name: seat }));
 
   await menu.getByRole('button', { name: 'Game log' }).tap();
   await expectTappable(ann.getByRole('complementary', { name: 'Game log' }).getByRole('button', { name: 'Close' }));
@@ -136,6 +167,7 @@ for (const [width, height] of [[844, 390], [667, 375]] as const) test(`a phone i
   const menu = ann.getByRole('navigation', { name: 'Game menu' });
   // The bubble is always laid out (empty between lines), so this never waits for a line to show.
   await expectApart(ann.locator('.narrator-text'), menu);
+  for (const seat of [/^Bob's seat/, /^Cy's seat/, /^Your seat/]) await expectApart(ann.locator('.narrator-text'), ann.getByRole('group', { name: seat }));
   // The cards to pay with stay pickable: the tray never covers my area.
   const mine = ann.getByRole('region', { name: 'Your area' });
   await expectApart(tray, mine);
@@ -208,7 +240,7 @@ for (const [width, height] of [[1280, 720], [1366, 768], [360, 740], [375, 667],
   await ann.goto(`${link}?seed=18`);
   await ann.getByRole('button', { name: 'Start game' }).click();
   // Payday alone: 8 cards at the end of the turn, one over the limit.
-  await ann.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name: 'Payday, action, worth 1M', exact: true }).click();
+  await pressHand(ann, 'Payday, action, worth 1M');
   await ann.getByRole('dialog', { name: /^Play / }).getByRole('button', { name: 'Payday: draw 2 cards', exact: true }).click();
   await expect(handCards(ann)).toHaveCount(8);
   await ann.getByRole('button', { name: 'End turn' }).click();
@@ -222,7 +254,7 @@ for (const [width, height] of [[1280, 720], [1366, 768], [360, 740], [375, 667],
   await expectApart(menu, discard);
   // In portrait the HUD is one row; landscape phones stand it as a column in the corner.
   if (width < height) await expect.poll(async () => (await boxOf(menu)).height, { message: 'the HUD wraps to a second row' }).toBeLessThan(60);
-  await ann.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name: '4M money', exact: true }).click();
+  await pressHand(ann, '4M money');
   await discard.getByRole('button', { name: 'Discard 1/1' }).click();
   await expect(discard).toHaveCount(0);
   for (const page of [bob, ann]) await leaveRoom(page);

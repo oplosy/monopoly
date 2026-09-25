@@ -21,31 +21,42 @@
 .tableau .table-card.is-pressed { transform: translateY(-12%); outline: 3px solid var(--gold); outline-offset: 2px; }
 
 /* ---------- Tableaus ---------- */
+/* A tableau fills its zone (layout.ts); its cards are sized and spaced by fitTableau (tableau-fit.ts). */
 .tableau {
   position: absolute;
-  transform: translate(-50%, -50%);
   display: flex;
+  flex-wrap: nowrap;
   align-items: flex-start;
-  gap: calc(var(--card-w) * 0.35);
-  /* Readable on the far side too, where perspective shrinks it to ≈0.7×. */
+  align-content: flex-start;
+  justify-content: center;
+  row-gap: calc(var(--card-w) * 0.12);
   font-size: calc(var(--card-w) * 0.28);
 }
-.players-3 .tableau:not(.is-mine) { max-width: calc(var(--plane) * 0.4); }
-.tableau-groups { display: flex; flex-wrap: wrap; gap: calc(var(--card-w) * 0.18); max-width: calc(var(--card-w) * 6.2); }
+.tableau[data-rows='2'] { flex-wrap: wrap; }
+/* Groups and the bank are the row's items, spaced (or overlapped) by the fit's gap. */
+.tableau-groups { display: contents; }
+.tableau-groups > *,
+.tableau > .bank-pile { margin-left: calc(var(--card-w) * var(--gap, 0.18)); }
+.tableau-groups > :first-child { margin-left: 0; }
 .tableau-empty {
+  /* A card-sized slot, like the empty bank beside it: fitTableau counts it as a group. */
+  display: grid;
+  place-items: center;
+  width: var(--card-w);
+  aspect-ratio: 5 / 7;
   margin: 0;
-  padding: 0.3em 0.7em;
-  white-space: nowrap;
+  padding: 0.4em;
+  font-size: 0.6em;
   font-weight: 700;
-  color: rgb(59 42 16 / 0.75);
-  background: rgb(255 255 255 / 0.4);
-  border-radius: 999px;
+  line-height: 1.15;
+  text-align: center;
+  color: rgb(255 255 255 / 0.8);
+  border: 2px dashed rgb(255 255 255 / 0.45);
+  border-radius: 6%;
 }
 .group-stack { position: relative; display: flex; flex-direction: column; width: var(--card-w); }
-/* Each card shows its color band (the top 26% of a card). */
-.group-stack > .table-card + .table-card { margin-top: calc(var(--card-w) * -1.1); }
-/* While its cards can be picked (a steal, a swap, paying), a set fans out so each card is easy to hit. */
-.group-stack:has(> .tone-target, > .tone-selectable) > .table-card + .table-card { margin-top: calc(var(--card-w) * -0.75); }
+/* Each card behind shows its top `--cascade` card widths: its color band, or more while it can be picked. */
+.group-stack > .table-card + .table-card { margin-top: calc(var(--card-w) * (var(--cascade, 0.3) - 1.4)); }
 .group-stack.is-complete { filter: drop-shadow(0 0 calc(var(--card-w) * 0.08) rgb(255 216 74 / 0.9)); }
 .group-stack.is-target { outline: 3px dashed var(--gold); outline-offset: 4px; border-radius: 8px; }
 .set-stamp {
@@ -76,14 +87,14 @@
   cursor: pointer;
 }
 .group-pick:focus-visible { outline: 3px solid #1f4e9a; }
-/* The bank is a loose pile, fanned so every note stays clickable. */
-.bank-pile { position: relative; display: flex; align-items: flex-start; padding-top: 1.5em; }
+/* The bank is a loose pile: each note a little off the one below, more while notes can be picked. */
+.bank-pile { position: relative; display: flex; align-items: flex-start; }
 .bank-pile > .table-card { rotate: var(--rot, 0deg); }
-.bank-pile > .table-card + .table-card { margin-left: calc(var(--card-w) * -0.72); }
+.bank-pile > .table-card + .table-card { margin-left: calc(var(--card-w) * (var(--bank-step, 0.14) - 1)); }
 .bank-total {
   position: absolute;
   left: 0;
-  top: 0;
+  top: -0.7em;
   z-index: 4;
   font-family: var(--font-num);
   font-weight: 700;
@@ -105,11 +116,6 @@
 /* ---------- Center: deck, messy discard pile, turn ring ---------- */
 .center-piles {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: calc(var(--card-w) * 4.4);
-  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -117,8 +123,13 @@
   font-size: calc(var(--card-w) * 0.2);
 }
 .turn-ring {
+  /* A circle as tall as the center, behind the deck and the discard pile. */
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 0;
+  height: 100%;
+  aspect-ratio: 1;
+  translate: -50% 0;
   border-radius: 50%;
   border: calc(var(--card-w) * 0.07) solid rgb(255 255 255 / 0.4);
   rotate: var(--turn, 0deg);
@@ -128,14 +139,14 @@
 .turn-wedge {
   position: absolute;
   left: 50%;
-  top: calc(var(--card-w) * -0.45);
+  top: calc(var(--card-w) * -0.2);
   translate: -50% 0;
   border-left: calc(var(--card-w) * 0.3) solid transparent;
   border-right: calc(var(--card-w) * 0.3) solid transparent;
   border-bottom: calc(var(--card-w) * 0.45) solid var(--gold);
   filter: drop-shadow(0 0 6px rgb(255 216 74 / 0.9));
 }
-.deck { position: relative; width: var(--card-w); }
+.deck { position: relative; flex: none; width: var(--card-w); }
 .deck > .card-svg {
   display: block;
   width: 100%;
@@ -154,7 +165,7 @@
   border-radius: 6px;
   padding: 0 0.35em;
 }
-.discard { position: relative; width: var(--card-w); aspect-ratio: 5 / 7; }
+.discard { position: relative; flex: none; width: var(--card-w); aspect-ratio: 5 / 7; }
 .discard > .table-card { position: absolute; left: 0; top: 0; transform: translate(var(--dx, 0%), var(--dy, 0%)) rotate(var(--rot, 0deg)); }
 
 /* ---------- Seats (flat UI) ---------- */
@@ -167,11 +178,10 @@
   display: grid;
   justify-items: center;
   gap: 4px;
-  --avatar: clamp(48px, 5vw, 72px);
   /* How close a seat's center may come to the screen edge. */
-  --seat-edge: calc(var(--avatar) / 2 + 10px);
+  --seat-edge: calc(var(--avatar, 64px) / 2 + 10px);
 }
-.avatar-frame { position: relative; display: block; width: var(--avatar); height: var(--avatar); border-radius: 24%; }
+.avatar-frame { position: relative; display: block; width: var(--avatar, 64px); height: var(--avatar, 64px); border-radius: 24%; }
 .seat .avatar-svg { filter: drop-shadow(0 3px 6px rgb(0 0 0 / 0.35)); }
 .seat.is-active .avatar-frame { box-shadow: 0 0 0 3px var(--gold), 0 0 22px 6px rgb(255 216 74 / 0.85); }
 .seat.is-offline .avatar-svg { filter: grayscale(1) opacity(0.55); }
@@ -198,8 +208,8 @@
   outline-offset: 5px;
   box-shadow: 0 0 22px 6px rgb(255 216 74 / 0.85);
 }
-.back-fan { display: flex; justify-content: center; height: 34px; }
-.back-card { width: 24px; margin-left: -16px; rotate: var(--rot, 0deg); transform-origin: 50% 120%; }
+.back-fan { display: flex; justify-content: center; height: calc(var(--avatar, 64px) * 0.47); }
+.back-card { width: calc(var(--avatar, 64px) * 0.33); margin-left: calc(var(--avatar, 64px) * -0.22); rotate: var(--rot, 0deg); transform-origin: 50% 120%; }
 .back-card:first-child { margin-left: 0; }
 .back-card .card-svg { display: block; width: 100%; height: auto; }
 .pips { display: flex; gap: 4px; }
@@ -228,7 +238,7 @@
 .hand-fan {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--hand-w) * -0.42);
+  bottom: calc(var(--hand-rest) * -1);
   transform: translateX(-50%);
   z-index: 10;
   display: flex;
@@ -238,22 +248,32 @@
 }
 .hand-fan > li {
   flex: none;
-  /* Overlap 35%, or more when --n cards would not fit between the reserves (a big hand squeezes). */
-  margin-left: min(
-    calc(var(--hand-w) * -0.35),
-    calc((100vw - 2 * var(--hand-reserve) - var(--hand-w)) / max(var(--n, 1) - 1, 1) - var(--hand-w))
-  );
+  /* Each card's step from the one before comes from the layout (handFan): at least 28 % of a card shows. */
+  margin-left: calc(var(--step, calc(var(--hand-w) * 0.62)) - var(--hand-w));
   transform-origin: 50% 160%;
   transform: translateY(var(--drop, 0px)) rotate(var(--rot, 0deg));
-  transition: transform 0.15s ease, translate 0.15s ease;
+  transition: transform 0.15s ease-out, translate 0.15s ease-out;
 }
 .hand-fan > li:first-child { margin-left: 0; }
 .hand-fan > li:hover,
-.hand-fan > li:focus-within { z-index: 2; transform: translateY(calc(var(--drop, 0px) - 12px)) rotate(calc(var(--rot, 0deg) * 0.5)); }
+.hand-fan > li:focus-within { z-index: 2; transform: translateY(calc(var(--drop, 0px) - 12px)) rotate(calc(var(--rot, 0deg) * 0.5)) scale(1.05); }
 /* The hovered card's neighbours part a little, by transform only, so the fan never re-centres. */
 .hand-fan > li:hover ~ li { translate: calc(var(--hand-w) * 0.1) 0; }
 .hand-fan > li:has(~ li:hover) { translate: calc(var(--hand-w) * -0.1) 0; }
-.hand-fan > li:has(> .is-pressed) { z-index: 3; transform: translateY(calc(var(--hand-w) * -0.3)) scale(1.18); }
+/* The selected card (its popover open) rises fully on screen. */
+.hand-fan > li:has(> .is-pressed) { z-index: 3; transform: translateY(calc(var(--hand-rest) * -1 - 8px)) scale(1.08); }
+/* A hand too long to fan scrolls sideways at full size; the strip's padding leaves the lifted cards room. */
+.hand-fan.is-scrolling {
+  max-width: calc(100vw - 2 * var(--hand-reserve));
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-top: calc(var(--hand-rest) + var(--hand-h) * 0.15);
+  pointer-events: none;
+  scrollbar-width: thin;
+}
+.hand-fan.is-scrolling > li { pointer-events: auto; }
+/* On my turn, the cards I can play have a gold edge; the others stay plain, never greyed out. */
+.hand-fan .table-card.tone-playable { box-shadow: 0 0 0 2px var(--gold), 0 6px 14px rgb(0 0 0 / 0.4); }
 .hand-fan .table-card { width: var(--hand-w); box-shadow: 0 6px 14px rgb(0 0 0 / 0.4); }
 .hand-fan .table-card.tone-target { outline: none; box-shadow: 0 0 0 3px var(--gold), 0 0 24px 4px rgb(255 216 74 / 0.9); }
 .hand-fan.is-empty {
@@ -285,12 +305,7 @@
   overflow: hidden;
   /* clip, unlike hidden, cannot be scrolled by focus(): focusing a hand card never shifts the table. */
   overflow: clip;
-  --hand-w: clamp(84px, 8.5vw, 124px);
-  /* Kept free on each side of the hand: my seat sits at the lower left. */
-  --hand-reserve: 26vw;
 }
-/* The whole table fits the screen: the far seats below the narrator, the near rim under my hand. */
-.tabletop .scene { --plane: min(64vw, calc((100vh - 210px) * 0.9)); --plane-shift: -8%; }
 .narrator {
   position: absolute;
   left: 50%;
@@ -331,7 +346,7 @@
   pointer-events: none;
 }
 .pending-cards { display: flex; gap: 0.4rem; }
-.pending-cards .card-svg { width: clamp(64px, 6.5vw, 104px); height: auto; rotate: -3deg; filter: drop-shadow(0 8px 14px rgb(0 0 0 / 0.4)); }
+.pending-cards .card-svg { width: calc(var(--card-w) * 1.1); height: auto; rotate: -3deg; filter: drop-shadow(0 8px 14px rgb(0 0 0 / 0.4)); }
 .pending-text,
 .pending-wait {
   margin: 0;
@@ -435,18 +450,16 @@
 .log-head h2 { margin: 0; font-size: 1.1rem; }
 .log-drawer ol { margin: 0; padding-left: 1.2rem; overflow-y: auto; display: grid; gap: 0.3rem; align-content: start; font-size: 0.9rem; }
 
-@media (max-width: 700px) {
-  .tabletop { --hand-w: 68px; --hand-reserve: 8px; }
-  /* As wide as the screen, smaller on a short phone, where the HUD, the far seats, a tray and the hand
-     share the height. */
-  .tabletop .scene { --plane: min(100vw, calc((100vh - 215px) * 0.75)); --plane-shift: 4%; }
-  .end-turn { right: 8px; bottom: calc(var(--hand-w) * 1.25); font-size: 1rem; padding: 0.6rem 1rem; }
-  .my-clock { right: 12px; bottom: calc(var(--hand-w) * 1.25 + 3.2rem); font-size: 1.3rem; }
-  .hud { top: 6px; right: 6px; }
-  /* Below the HUD, which is one row of 44 px buttons on a phone. */
-  .narrator { top: 4.5rem; }
-  .pending-stage { top: 7.5rem; }
-}
+/* In portrait the hand spans the width: End turn and my clock wait above its right end (layout.ts leaves them room). */
+.tabletop[data-layout='portrait'] .end-turn { right: 8px; bottom: calc(var(--hand-h) - var(--hand-rest) + 8px); }
+.tabletop[data-layout='portrait'] .my-clock { right: 12px; bottom: calc(var(--hand-h) - var(--hand-rest) + 8px + 3.2rem); }
+.tabletop[data-layout='portrait'][data-compact] .end-turn { font-size: 1rem; padding: 0.6rem 1rem; }
+.tabletop[data-layout='portrait'][data-compact] .my-clock { font-size: 1.3rem; }
+.tabletop[data-layout='portrait'][data-compact] .hud { top: 6px; right: 6px; }
+/* Over the table's middle (the deck and the discard pile), where the plane's center lands on screen: the far
+   seats stand below the HUD. */
+.tabletop[data-layout='portrait'] .narrator { top: var(--plane-cy); transform: translate(-50%, -50%); }
+.tabletop[data-layout='portrait'][data-compact] .pending-stage { top: 7.5rem; }
 :root[data-motion='off'] .narrator,
 :root[data-motion='off'] .end-turn { transition: none; }
 
@@ -506,7 +519,7 @@
 .tray {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--hand-w) * 1.15);
+  bottom: calc(var(--hand-h) - var(--hand-rest) + 12px);
   transform: translateX(-50%);
   z-index: 12;
   display: grid;
@@ -522,7 +535,7 @@
 .tray.is-anchored { position: fixed; transform: none; bottom: auto; }
 /* Paying picks cards on my table, not in my hand: the hand tucks down and the tray sits at the bottom,
    so the cards to pay with stay clear at the 22° tilt. */
-.tabletop:has(.pay-tray) .hand-fan { bottom: calc(var(--hand-w) * -1.12); }
+.tabletop:has(.pay-tray) .hand-fan { bottom: calc(var(--hand-h) * -0.8); }
 .tabletop .pay-tray { bottom: 12px; }
 .tray-title { margin: 0; font-weight: 700; font-size: 0.9rem; }
 /* The pay tray is one compact strip (mockup 05): the meter and the buttons share a row. */
@@ -542,29 +555,33 @@
 .counter-row + .counter-row { border-top: 1px solid rgb(255 255 255 / 0.2); padding-top: 0.45rem; }
 /* On a wide screen a tray over the hand's middle reaches my seat and my table: it waits at the right,
    beside the table and above the hand's end (End turn's corner, empty while a tray shows). */
-@media (min-width: 1024px) and (min-aspect-ratio: 4/3) and (min-height: 501px) {
-  .tray:not(.is-anchored, .pay-tray) { left: auto; right: 3vw; transform: none; max-width: min(26rem, calc(var(--hand-reserve) - 3vw - 16px)); }
+@media (min-width: 1024px) {
+  .tabletop[data-layout='desktop'] .tray:not(.is-anchored, .pay-tray) {
+    left: auto;
+    right: 3vw;
+    transform: none;
+    max-width: min(26rem, calc((100vw - var(--plane-w) * 0.64) / 2 - 3vw - 16px));
+  }
 }
-@media (max-width: 700px) {
-  .tray { bottom: calc(var(--hand-w) * 1.3); max-width: calc(100vw - 1rem); }
-  .pay-tray { grid-template-columns: 1fr; }
-  .pay-tray > .tray-meter,
-  .pay-tray > .tray-actions { grid-row: auto; grid-column: 1; }
-  .tray-title { font-size: 0.8rem; }
-  /* Paying on a phone: the tray keeps only the meter and buttons (the action is written in the stage
-     above the table, and the region is still named). */
-  .pay-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  /* While any tray shows, the table moves up so my seat and my cards stay clear of it. */
-  .tabletop:has(.tray) .scene { --plane-shift: -7%; }
-}
+.tabletop[data-layout='portrait'][data-compact] .tray { max-width: calc(100vw - 1rem); }
+/* Above the resting hand, in the room the layout leaves a tray (layout.ts); paying keeps its own place. */
+/* An answer tray anchored beside my Just Say No card keeps its own place. */
+.tabletop[data-layout='portrait'][data-compact] .tray:not(.pay-tray, .is-anchored) { bottom: calc(var(--hand-h) - var(--hand-rest) + 8px); }
+.tabletop[data-layout='portrait'][data-compact] .pay-tray { grid-template-columns: 1fr; }
+.tabletop[data-layout='portrait'][data-compact] .pay-tray > .tray-meter,
+.tabletop[data-layout='portrait'][data-compact] .pay-tray > .tray-actions { grid-row: auto; grid-column: 1; }
+.tabletop[data-layout='portrait'][data-compact] .tray-title { font-size: 0.8rem; }
+/* Paying on a phone: the tray keeps only the meter and buttons (the action is written in the stage
+   above the table, and the region is still named). */
+.tabletop[data-layout='portrait'][data-compact] .pay-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* The narrowest phones (320 px): the HUD keeps to one row, the trays are tighter, and my seat steps up
    clear of a tray. */
 @media (max-width: 359px) {
   .hud { max-width: calc(100vw - 12px); gap: 0.2rem; padding: 0.3rem; }
   .hud button { padding-inline: 0.5rem; font-size: 0.8rem; }
-  .tray { padding: 0.45rem 0.7rem; gap: 0.3rem; }
-  .tray-title { font-size: 0.75rem; }
-  .tabletop:has(.tray) .seat.is-me { translate: 0 -12px; }
+  .tabletop[data-layout='portrait'][data-compact] .tray { padding: 0.45rem 0.7rem; gap: 0.3rem; }
+  .tabletop[data-layout='portrait'][data-compact] .tray-title { font-size: 0.75rem; }
+  .tabletop[data-layout='portrait'][data-compact]:has(.tray) .seat.is-me { translate: 0 -12px; }
 }
 
 /* ---------- Game over ---------- */
@@ -616,49 +633,39 @@
 }
 
 /* ---------- Short screens (a phone in landscape) ---------- */
-@media (max-height: 500px) and (orientation: landscape) {
-  /* A smaller hand, resting lower (a thumb's height still shows), leaves the height to the table, which
-     sits a little high so my table clears the hand. At 22° a round table is nearly as tall as it is
-     wide: with 2 players the far seat sits on its top edge, so that table is smaller. */
-  .tabletop { --hand-w: 64px; --hand-reserve: 28vw; --short-plane: min(56vw, calc(100vh * 0.9)); --short-shift: -5%; --side: calc((100vw - var(--short-plane)) / 2 - 16px); }
-  .tabletop.players-2 { --short-plane: min(56vw, calc(100vh * 0.66)); --short-shift: 4%; }
-  .hand-fan { bottom: calc(var(--hand-w) * -0.55); }
-  /* :has() matches the ≤700 px rule that lifts a portrait table under a tray: landscape keeps it put. */
-  .tabletop .scene,
-  .tabletop:has(.tray) .scene { --plane: var(--short-plane); --plane-shift: var(--short-shift); }
-  /* The HUD stands as a column in the top right corner, clear of the far seats; the slider waits for a
-     taller screen. My seat moves left, clear of the hand. */
-  .hud { display: grid; grid-template-columns: auto auto; align-items: stretch; border-radius: 22px; padding: 0.4rem; }
-  .hud > :not(.sound-control, .motion-toggle) { grid-column: 1 / -1; }
-  .sound-control input[type='range'] { display: none; }
-  .seat.is-me { translate: -80px 0; }
-  /* The narrator speaks at the left, beside the table and below the action in play. */
-  .narrator { left: 8px; top: 42%; transform: none; max-width: calc(var(--side) - 8px); }
-  .narrator-text { text-align: left; border-radius: 16px; }
-  .end-turn { right: 10px; bottom: 10px; font-size: 1rem; padding: 0.55rem 1rem; }
-  .my-clock { right: 14px; bottom: calc(10px + 3.6rem); font-size: 1.2rem; }
-  /* Beside the table, not over it: the action in play at the top left, the trays at the bottom right
-     (End turn's corner, empty while a tray shows), so my cards stay pickable. */
-  .pending-stage,
-  .tabletop.players-2 .pending-stage { left: 8px; right: auto; top: 8px; transform: none; justify-items: start; max-width: calc(var(--side) - 24px); }
-  .pending-cards .card-svg { width: 48px; }
-  .pending-text, .pending-wait { font-size: 0.8rem; text-align: left; border-radius: 12px; }
-  /* A tray anchored beside my Just Say No card keeps its own place and size. */
-  .tray:not(.is-anchored) { left: auto; right: 8px; bottom: 8px; transform: none; width: min(24rem, max(var(--side), 30vw)); max-width: min(24rem, max(var(--side), 30vw)); padding: 0.6rem 0.7rem; }
-  /* Discarding picks cards in my hand: that tray waits above the hand's right end. */
-  .tabletop .discard-tray:not(.is-anchored) { bottom: calc(var(--hand-w) * 1.02); }
-  .pay-tray { grid-template-columns: 1fr; }
-  .pay-tray > .tray-meter,
-  .pay-tray > .tray-actions { grid-row: auto; grid-column: 1; }
-  /* The answer tray keeps only its buttons too: the action is written in the stage, the region is named. */
-  .pay-tray > .tray-title,
-  .respond-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .tray-meter meter { min-width: 0; }
-  .tray-title { font-size: 0.8rem; }
-}
+/* The room beside the table, for the narrator and the trays. */
+.tabletop[data-layout='landscape'] { --side: calc((100vw - var(--plane-w)) / 2 - 16px); }
+/* The HUD stands as a column in the top right corner, clear of the far seats; the slider waits for a
+   taller screen. */
+.tabletop[data-layout='landscape'] .hud { display: grid; grid-template-columns: auto auto; align-items: stretch; border-radius: 22px; padding: 0.4rem; }
+.tabletop[data-layout='landscape'] .hud > :not(.sound-control, .motion-toggle) { grid-column: 1 / -1; }
+.tabletop[data-layout='landscape'] .sound-control input[type='range'] { display: none; }
+/* The narrator speaks at the right, beside the table: below the HUD column (12 px + 161 px), above End turn and the trays;
+   the seats stand at the left and on the felt. */
+.tabletop[data-layout='landscape'] .narrator { left: auto; right: 8px; top: 184px; transform: none; max-width: calc(var(--side) + 8px); }
+.tabletop[data-layout='landscape'] .narrator-text { text-align: left; border-radius: 16px; }
+.tabletop[data-layout='landscape'] .end-turn { right: 10px; bottom: 10px; font-size: 1rem; padding: 0.55rem 1rem; }
+.tabletop[data-layout='landscape'] .my-clock { right: 14px; bottom: calc(10px + 3.6rem); font-size: 1.2rem; }
+/* The action in play stands at the top middle, between the far seats (which sit at the sides) and below
+   nothing; the trays wait at the bottom right (End turn's corner, empty while a tray shows), beside my zone. */
+.tabletop[data-layout='landscape'] .pending-stage,
+.tabletop[data-layout='landscape'].players-2 .pending-stage { left: 50%; right: auto; top: 8px; transform: translateX(-50%); justify-items: center; max-width: min(16rem, calc(var(--plane-w) * 0.5)); }
+.tabletop[data-layout='landscape'] .pending-text, .tabletop[data-layout='landscape'] .pending-wait { font-size: 0.8rem; border-radius: 12px; }
+/* A tray anchored beside my Just Say No card keeps its own place and size. */
+.tabletop[data-layout='landscape'] .tray:not(.is-anchored) { left: auto; right: 8px; bottom: 8px; transform: none; width: min(24rem, max(var(--side), 30vw)); max-width: min(24rem, max(var(--side), 30vw)); padding: 0.6rem 0.7rem; }
+/* Discarding picks cards in my hand: that tray waits above the hand's right end. */
+.tabletop[data-layout='landscape'] .discard-tray:not(.is-anchored) { bottom: calc(var(--hand-h) - var(--hand-rest) + 8px); }
+.tabletop[data-layout='landscape'] .pay-tray { grid-template-columns: 1fr; }
+.tabletop[data-layout='landscape'] .pay-tray > .tray-meter,
+.tabletop[data-layout='landscape'] .pay-tray > .tray-actions { grid-row: auto; grid-column: 1; }
+/* The answer tray keeps only its buttons too: the action is written in the stage, the region is named. */
+.tabletop[data-layout='landscape'] .pay-tray > .tray-title,
+.tabletop[data-layout='landscape'] .respond-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.tabletop[data-layout='landscape'] .tray-meter meter { min-width: 0; }
+.tabletop[data-layout='landscape'] .tray-title { font-size: 0.8rem; }
 /* The shortest landscape phones (320 px high): the discard tray, below the HUD column, keeps only its
    button (my hand's cards show what to pick; the region is still named). */
 @media (max-height: 340px) and (orientation: landscape) {
-  .tray:not(.is-anchored) { padding: 0.4rem 0.6rem; gap: 0.25rem; }
-  .discard-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .tabletop[data-layout='landscape'] .tray:not(.is-anchored) { padding: 0.4rem 0.6rem; gap: 0.25rem; }
+  .tabletop[data-layout='landscape'] .discard-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }

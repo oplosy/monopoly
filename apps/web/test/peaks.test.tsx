@@ -57,7 +57,7 @@ describe('peak moments', () => {
     const effects = new Map([['group:g1', { effect: { type: 'setComplete' as const, groupId: 'g1' }, pose: null }]]);
     render(
       <StageProvider value={staticStage({ effects })}>
-        <Tableau player={view.players[0]!} name="Ann" isMe at={{ x: 50, y: 80 }} />
+        <Tableau player={view.players[0]!} name="Ann" isMe zone={{ x: 20, y: 67, w: 60, h: 28 }} />
       </StageProvider>,
     );
     expect(screen.getByRole('group', { name: 'Brown group, 2 of 2, complete' })).toHaveClass('is-celebrating');

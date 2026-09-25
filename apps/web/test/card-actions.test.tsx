@@ -111,13 +111,18 @@ describe('the card popover', () => {
     expect(sentIntents(socket)).toEqual([{ type: 'moveProperty', card: 'wild-darkBlue-green-1', toGroup: 'new', color: 'darkBlue' }]);
   });
 
-  it("fades my cards on another player's turn and says why they cannot be played", async () => {
+  it("leaves my cards plain on another player's turn and says why they cannot be played", async () => {
     const { user } = setup('p2');
-    expect(handCard(/^2M money$/)).toHaveClass('tone-dim');
+    expect(handCard(/^2M money$/)).toHaveClass('tone-normal');
     await user.click(handCard(/^2M money$/));
     const popover = screen.getByRole('dialog', { name: 'Play 2M' });
     expect(within(popover).getByText("It's not your turn.")).toBeInTheDocument();
     expect(within(popover).queryByRole('button', { name: /Bank it/ })).not.toBeInTheDocument();
+  });
+
+  it('marks the cards I can play on my turn with a gold edge', () => {
+    setup();
+    expect(handCard(/^1M money$/)).toHaveClass('tone-playable');
   });
 });
 
@@ -137,6 +142,9 @@ describe('targeting on the table', () => {
     await user.click(handCard(/^Sly Deal/));
     await user.click(screen.getByRole('button', { name: 'Sly Deal: pick a property' }));
     const bob = area("Bob's area");
+    // While its cards can be picked, the tableau fans out so each card is easy to hit.
+    expect(bob.style.getPropertyValue('--cascade')).toBe('0.5');
+    expect(area('Your area').style.getPropertyValue('--cascade')).toBe('0.3');
     expect(within(bob).getByRole('button', { name: /Tannery Lane/ })).toHaveClass('tone-dim');
     await user.click(within(bob).getByRole('button', { name: /Tannery Lane/ }));
     expect(sentIntents(socket)).toEqual([]);

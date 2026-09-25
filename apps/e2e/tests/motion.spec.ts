@@ -101,7 +101,9 @@ test('a dragged card stays under the pointer where it was grabbed', async ({ bro
       const r = el.getBoundingClientRect();
       const m = /matrix\(([^)]+)\)/.exec(getComputedStyle(el.parentElement!).transform);
       const [a = 1, b = 0] = m ? m[1]!.split(',').map(Number) : [];
-      return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: el.offsetWidth, h: el.offsetHeight, turn: Math.atan2(b, a) };
+      // A hovered card is lifted and scaled (spec §5.5): its frame is the scaled card.
+      const scale = Math.hypot(a, b);
+      return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: el.offsetWidth * scale, h: el.offsetHeight * scale, turn: Math.atan2(b, a) };
     });
   /** A point given as fractions of the card itself, on screen. */
   const onCard = (c: Awaited<ReturnType<typeof frameOf>>, fx: number, fy: number) => {

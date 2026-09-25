@@ -31,7 +31,8 @@ const nothing = (): PickInteraction => NOTHING;
  * What clicking each card, set and seat does in the current mode. Aiming at a target comes first,
  * then paying, then discarding, then answering an action (hand cards only preview; the tray
  * holds the answers). Otherwise hand cards open their play popover and my movable table
- * cards open their move popover. Everything else only shows its preview.
+ * cards open their move popover. Everything else only shows its preview. Hand cards are never dimmed:
+ * on my turn the ones I can play are marked (spec 2026-09-25-table-layout §5.5).
  */
 export function resolveInteraction({ view, legal, role, aim, selected, payPicked, discardPicked, actions }: ResolveInput): TableInteraction {
   const me = view.me;
@@ -41,7 +42,7 @@ export function resolveInteraction({ view, legal, role, aim, selected, payPicked
     const answers = legal.some((i) => i.type === 'respondJustSayNo' && i.card === id);
     const blocked = playBlocker(view, playOptions(legal, id)) !== null;
     return {
-      tone: answers ? 'target' : blocked ? 'dim' : 'normal',
+      tone: answers ? 'target' : blocked ? 'normal' : 'playable',
       pressed: open,
       onActivate: () => actions.select(open ? null : { zone: 'hand', card: id }),
     };
@@ -55,6 +56,7 @@ export function resolveInteraction({ view, legal, role, aim, selected, payPicked
     return {
       card(zone, id) {
         if (zone === 'hand' && id === aim.card) return { tone: 'normal', pressed: true, onActivate: actions.cancel };
+        if (zone === 'hand') return { tone: 'normal' };
         const run = zone === 'tableau' ? pick('card', id).onPick : undefined;
         return run ? { tone: 'target', onActivate: run } : { tone: 'dim' };
       },
@@ -89,7 +91,7 @@ export function resolveInteraction({ view, legal, role, aim, selected, payPicked
     // The answers live in the tray; hand cards only show their preview, so no play popover covers it.
     const answers = new Set(legal.flatMap((i) => (i.type === 'respondJustSayNo' ? [i.card] : [])));
     return {
-      card: (zone, id) => (zone === 'hand' ? { tone: answers.has(id) ? 'target' : 'dim' } : { tone: 'normal' }),
+      card: (zone, id) => (zone === 'hand' ? { tone: answers.has(id) ? 'target' : 'normal' } : { tone: 'normal' }),
       group: nothing,
       player: nothing,
     };
