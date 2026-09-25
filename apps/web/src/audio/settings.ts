@@ -20,7 +20,7 @@ export function parseSettings(volume: string | null, muted: string | null): Audi
   return { volume: Number.isFinite(v) && v >= 0 && v <= 1 ? v : DEFAULT_SETTINGS.volume, muted: muted === '1' };
 }
 
-/** Mute and volume in localStorage, shared by every tab; reads and writes never throw (spec §8). */
+/** Mute and volume in localStorage, read when the page loads; reads and writes never throw (spec §8). */
 export function browserSettings(): SettingsStore {
   const get = (key: string): string | null => {
     try {
