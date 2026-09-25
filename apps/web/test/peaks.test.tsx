@@ -88,6 +88,26 @@ describe('peak moments', () => {
     expect(action.querySelector('.rent-wheel [data-slice]')).not.toBeNull();
   });
 
+  it('keeps an action my Just Say No cancels on stage while it shudders, then lets it go', () =>
+    flying(() => {
+      const s0 = play({ players: [{ id: 'p1', hand: ['act-justSayNo-1', 'money-1-1'] }, { id: 'p2', hand: ['act-debtCollector-1'] }], turn: 'p2' });
+      const asked = applyIntent(s0, 'p2', { type: 'playDebtCollector', card: 'act-debtCollector-1', target: 'p1' });
+      if (!asked.ok) throw new Error(asked.error);
+      const { store } = renderTabletop({ state: atTable(asked.state, 'p1') });
+      expect(screen.getByRole('region', { name: 'Action in play' })).not.toHaveClass('is-shaken');
+      const cancelled = change(asked.state, 'p1', { type: 'respondJustSayNo', card: 'act-justSayNo-1' });
+      // The answer ends the action at once: the new view has nothing pending.
+      expect(cancelled.view.pending).toBeNull();
+      // No timer runs: the stage shakes in the same frame the answer arrives, so it never blinks out and back.
+      act(() => store.setState({ game: cancelled }));
+      const action = screen.getByRole('region', { name: 'Action in play' });
+      expect(action).toHaveClass('is-shaken');
+      expect(action).toHaveTextContent(/Debt Collector/);
+      expect(action).not.toHaveTextContent(/Waiting for/);
+      act(() => vi.advanceTimersByTime(EFFECT_MS.justSayNo));
+      expect(screen.queryByRole('region', { name: 'Action in play' })).toBeNull();
+    }));
+
   it('shakes the timer ring in the last three seconds', () => {
     const { container, rerender } = render(<TimerRing deadline={Date.now() + 2500} total={60_000} drainKey="k" kind="turn" label="Your turn" />);
     expect(container.querySelector('.timer-ring')).toHaveClass('is-low', 'is-critical');
