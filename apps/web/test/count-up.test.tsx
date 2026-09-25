@@ -20,8 +20,8 @@ describe('counters', () => {
       vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => frames.push(cb));
       vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
       const me = (bank: string[]) => viewFor(play({ players: [{ id: 'p1', bank }, { id: 'p2' }] }), 'p1').players[0]!;
-      const { rerender } = render(<Tableau player={me(['money-1-1'])} name="Ann" isMe at={{ x: 50, y: 80 }} />);
-      rerender(<Tableau player={me(['money-1-1', 'money-5-1'])} name="Ann" isMe at={{ x: 50, y: 80 }} />);
+      const { rerender } = render(<Tableau player={me(['money-1-1'])} name="Ann" isMe zone={{ x: 20, y: 67, w: 60, h: 28 }} />);
+      rerender(<Tableau player={me(['money-1-1', 'money-5-1'])} name="Ann" isMe zone={{ x: 20, y: 67, w: 60, h: 28 }} />);
       const drawn = vi.mocked(CardFace).mock.calls.length;
       const t0 = performance.now();
       for (const step of [100, 200, 400]) {

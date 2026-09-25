@@ -100,7 +100,7 @@ describe('inspect', () => {
 describe('Tableau', () => {
   it('names my area, my bank total and my groups in color order', () => {
     const view = viewFor(state(), 'p1');
-    mount(<Tableau player={view.players[0]!} name="Ann" isMe at={{ x: 50, y: 80 }} />);
+    mount(<Tableau player={view.players[0]!} name="Ann" isMe zone={{ x: 20, y: 67, w: 60, h: 28 }} />);
     const area = screen.getByRole('region', { name: 'Your area' });
     expect(within(area).getByRole('group', { name: 'Your bank, 7M' })).toBeInTheDocument();
     const groups = within(area).getAllByRole('group', { name: / group, / });
@@ -111,7 +111,7 @@ describe('Tableau', () => {
 
   it("names an opponent's area and says when it has no properties", () => {
     const view = viewFor(state(), 'p1');
-    mount(<Tableau player={view.players[1]!} name="Bob" isMe={false} at={{ x: 50, y: 20 }} />);
+    mount(<Tableau player={view.players[1]!} name="Bob" isMe={false} zone={{ x: 20, y: 6, w: 60, h: 27 }} />);
     const area = screen.getByRole('region', { name: "Bob's area" });
     expect(within(area).getByRole('group', { name: "Bob's bank, 0M" })).toBeInTheDocument();
     expect(within(area).getByText('No properties yet')).toBeInTheDocument();
@@ -122,7 +122,7 @@ describe('Tableau', () => {
     const onPick = vi.fn();
     const view = viewFor(state(), 'p1');
     const brown = view.players[0]!.groups.find((g) => g.color === 'brown')!.id;
-    mount(<Tableau player={view.players[0]!} name="Ann" isMe at={{ x: 50, y: 80 }} />, {
+    mount(<Tableau player={view.players[0]!} name="Ann" isMe zone={{ x: 20, y: 67, w: 60, h: 28 }} />, {
       group: (id) => (id === brown ? { target: true, onPick } : { target: false }),
     });
     await user.click(screen.getByRole('button', { name: 'Pick your Brown set' }));
@@ -134,29 +134,29 @@ describe('Tableau', () => {
 describe('CenterPiles', () => {
   it('shows the deck count and a messy pile of the last five discards that never jitters', () => {
     const view = viewFor(state(), 'p1');
-    const { rerender } = mount(<CenterPiles view={view} activeAngle={270} />);
+    const { rerender } = mount(<CenterPiles view={view} at={{ x: 41, y: 34, w: 18, h: 32 }} activeAngle={270} />);
     expect(screen.getByRole('group', { name: `Deck, ${view.deckCount} cards` })).toBeInTheDocument();
     const pile = () => screen.getByRole('group', { name: 'Discard pile, top card 2M' });
     const styles = within(pile()).getAllByRole('button').map((c) => c.getAttribute('style'));
     expect(styles).toHaveLength(5);
-    rerender(wrap(<CenterPiles view={view} activeAngle={150} />));
+    rerender(wrap(<CenterPiles view={view} at={{ x: 41, y: 34, w: 18, h: 32 }} activeAngle={150} />));
     expect(within(pile()).getAllByRole('button').map((c) => c.getAttribute('style'))).toEqual(styles);
   });
 
   it('always turns the ring forward, in the direction of play', () => {
     const view = viewFor(state(), 'p1');
-    const { rerender } = mount(<CenterPiles view={view} activeAngle={270} />);
+    const { rerender } = mount(<CenterPiles view={view} at={{ x: 41, y: 34, w: 18, h: 32 }} activeAngle={270} />);
     const turn = () => document.querySelector<HTMLElement>('.turn-ring')!.style.getPropertyValue('--turn');
     const seen = [turn()];
     for (const angle of [150, 30, 270, 150]) {
-      rerender(wrap(<CenterPiles view={view} activeAngle={angle} />));
+      rerender(wrap(<CenterPiles view={view} at={{ x: 41, y: 34, w: 18, h: 32 }} activeAngle={angle} />));
       seen.push(turn());
     }
     expect(seen).toEqual(['-180deg', '-60deg', '60deg', '180deg', '300deg']);
   });
 
   it('says when the discard pile is empty', () => {
-    mount(<CenterPiles view={viewFor(play({ players: [{ id: 'p1' }, { id: 'p2' }] }), 'p1')} activeAngle={null} />);
+    mount(<CenterPiles view={viewFor(play({ players: [{ id: 'p1' }, { id: 'p2' }] }), 'p1')} at={{ x: 41, y: 34, w: 18, h: 32 }} activeAngle={null} />);
     expect(screen.getByRole('group', { name: 'Discard pile, empty' })).toBeInTheDocument();
   });
 });

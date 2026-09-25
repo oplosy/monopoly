@@ -5,6 +5,7 @@ import { cardName, plural } from '../game/log';
 import { useAnchor } from '../motion/anchor-context';
 import { CountUp, useCountShift } from '../motion/stage-context';
 import { discardJitter } from '../scene/geometry';
+import type { PlaneRect } from '../scene/layout';
 import { dropClass, useDropState } from './drag';
 import { TableCard } from './TableCard';
 
@@ -16,7 +17,7 @@ const PILE_SHOWN = 5;
  * it points up (90°) by default, so it turns clockwise by 90° minus the seat's angle. The rotation
  * only grows, so the ring always turns forward (clockwise, the direction of play), never back.
  */
-export function CenterPiles({ view, activeAngle }: { view: GameView; activeAngle: number | null }) {
+export function CenterPiles({ view, at, activeAngle }: { view: GameView; at: PlaneRect; activeAngle: number | null }) {
   const center = useAnchor<HTMLElement>('center');
   const deck = useAnchor<HTMLDivElement>('deck');
   const discard = useAnchor<HTMLDivElement>('discard');
@@ -29,7 +30,13 @@ export function CenterPiles({ view, activeAngle }: { view: GameView; activeAngle
   if (turn.current === null) turn.current = target;
   else turn.current += (((target - turn.current) % 360) + 360) % 360;
   return (
-    <section ref={center} className={['center-piles', dropClass(dropState)].filter(Boolean).join(' ')} data-drop="center" aria-label="Table center">
+    <section
+      ref={center}
+      className={['center-piles', dropClass(dropState)].filter(Boolean).join(' ')}
+      data-drop="center"
+      aria-label="Table center"
+      style={{ left: `${at.x}%`, top: `${at.y}%`, width: `${at.w}%`, height: `${at.h}%` }}
+    >
       <div className="turn-ring" aria-hidden="true" style={{ '--turn': `${turn.current}deg` } as CSSProperties}>
         {activeAngle !== null && <span className="turn-wedge" />}
       </div>

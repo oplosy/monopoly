@@ -21,4 +21,21 @@ describe('the plain table (spec 2026-09-25-table-layout §3–4)', () => {
   it('keeps no picnic scenery', () => {
     expect(scene).not.toMatch(/\.cloth|\.dapple|\.prop\b|--grass|--gingham|scene-backdrop/);
   });
+
+  it('reads the plane from the layout model: its size, its center, the perspective and the felt radius', () => {
+    const plane = rule(scene, '.plane');
+    for (const v of ['--plane-w', '--plane-h', '--plane-cx', '--plane-cy']) expect(plane).toContain(`var(${v}`);
+    expect(plane).not.toMatch(/translateY/);
+    expect(rule(scene, '.scene-perspective')).toMatch(/perspective:\s*var\(--perspective/);
+    expect(rule(scene, '.table-felt')).toMatch(/border-radius:\s*var\(--felt-radius/);
+  });
+
+  it('keeps no hand-tuned plane sizes', () => {
+    const table = readCss(new URL('../src/tabletop/tabletop.css', import.meta.url));
+    const pages = readCss(new URL('../src/pages/pages.css', import.meta.url));
+    for (const css of [scene, table, pages]) {
+      expect(css).not.toMatch(/--plane:|--plane-shift|--short-plane|--short-shift/);
+    }
+    expect(table).not.toMatch(/--hand-w:\s*(clamp|\d)/);
+  });
 });

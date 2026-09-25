@@ -55,10 +55,15 @@
   grid-template-rows: auto 1fr;
   background: var(--bg);
 }
-/* The whole table fits, from the far chairs to mine at the near rim; the plane is lifted to the top. */
-.lobby-table, .lobby-table .scene { --plane: min(56vw, 58vh); }
-.lobby-table { position: relative; overflow: hidden; height: calc(var(--plane) * 1.05 + 110px); }
-.lobby-table .scene { --plane-shift: calc(-17% - 8px); }
+/* The same stadium as the game table (1.8:1), with the far chairs above it and mine below its near rim. */
+.lobby-table {
+  position: relative;
+  overflow: hidden;
+  --plane-w: min(78vw, 110vh);
+  --plane-h: calc(var(--plane-w) / 1.8);
+  --plane-cy: calc(var(--plane-h) * 0.46 + 64px);
+  height: calc(var(--plane-h) + 170px);
+}
 .chairs { list-style: none; margin: 0; padding: 0; }
 .chair {
   position: absolute;
@@ -105,6 +110,6 @@
 .share { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; }
 
 @media (max-width: 640px) {
-  .lobby-table, .lobby-table .scene { --plane: 96vw; }
+  .lobby-table { --plane-w: 90vw; }
   .lobby-panel { margin-top: -1rem; }
 }

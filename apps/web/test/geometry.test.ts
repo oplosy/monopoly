@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { viewFor } from '@deal-city/engine';
 import { opponentsInOrder } from '../src/game/derive';
 import {
-  discardJitter, fanLayout, MY_SEAT_UI, planePoint, seatLayout, seatPlan, SEAT_UI_RADIUS, TABLEAU_RADIUS,
+  discardJitter, fanLayout, planePoint, seatLayout, seatPlan, SEAT_UI_RADIUS,
 } from '../src/scene/geometry';
 import { play } from './fixtures';
 
@@ -22,21 +22,10 @@ describe('seatLayout', () => {
     expect(seatLayout(1).map((s) => s.angle)).toEqual([270]);
   });
 
-  it('puts tableaus at 0.6 R and seat UI just outside the rim', () => {
-    for (const spot of seatLayout(3)) {
-      expect(spot.tableau).toEqual(planePoint(spot.angle, TABLEAU_RADIUS));
-      expect(spot.ui).toEqual(planePoint(spot.angle, SEAT_UI_RADIUS));
-    }
-    expect(seatLayout(3)[1]!.tableau.x).toBeLessThan(50); // the first opponent sits upper left
-    expect(seatLayout(3)[1]!.tableau.y).toBeLessThan(50);
-  });
-});
-
-describe('MY_SEAT_UI', () => {
-  it('puts my seat at the lower left of the near rim, clear of the hand in the middle', () => {
-    expect(Math.hypot(MY_SEAT_UI.x - 50, MY_SEAT_UI.y - 50)).toBeCloseTo(50 * SEAT_UI_RADIUS, 0);
-    expect(MY_SEAT_UI.x).toBeLessThan(25);
-    expect(MY_SEAT_UI.y).toBeGreaterThan(75);
+  it('puts the lobby chairs just outside the rim', () => {
+    for (const spot of seatLayout(3)) expect(spot.ui).toEqual(planePoint(spot.angle, SEAT_UI_RADIUS));
+    expect(seatLayout(3)[1]!.ui.x).toBeLessThan(50); // the first opponent sits upper left
+    expect(seatLayout(3)[1]!.ui.y).toBeLessThan(50);
   });
 });
 

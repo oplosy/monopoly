@@ -8,41 +8,37 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  --plane: min(80vw, 118vh);
   --tilt: 22deg;
-  --card-w: calc(var(--plane) * 0.058);
 }
 
 .scene-ground { position: absolute; inset: 0; background: var(--bg); }
 
+/* The layout model (layout.ts) sets the plane's size, its center on the screen and the perspective; the
+   lobby sets its own. The perspective looks down from the top center of the screen. */
 .scene-perspective {
   position: absolute;
   inset: 0;
-  perspective: calc(var(--plane) * 1.5);
+  perspective: var(--perspective, calc(var(--plane-h) * 2));
   perspective-origin: 50% 0%;
 }
 
 .plane {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: var(--plane);
-  height: var(--plane);
-  margin: calc(var(--plane) / -2) 0 0 calc(var(--plane) / -2);
-  transform: translateY(var(--plane-shift, 4%)) rotateX(var(--tilt));
+  left: var(--plane-cx, 50%);
+  top: var(--plane-cy, 50%);
+  width: var(--plane-w);
+  height: var(--plane-h);
+  margin: calc(var(--plane-h) / -2) 0 0 calc(var(--plane-w) / -2);
+  transform: rotateX(var(--tilt));
   transform-style: preserve-3d;
 }
 
-/* Green felt with a thin wooden rim, and its shadow on the ground. */
+/* Green felt with a thin wooden rim, and its shadow on the ground: a stadium (round ends, straight sides). */
 .table-felt {
   position: absolute;
   inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 40%, var(--felt-1), var(--felt-2) 70%);
-  box-shadow: 0 0 0 calc(var(--plane) * 0.012) var(--rim), 0 calc(var(--plane) * 0.03) calc(var(--plane) * 0.06) rgb(0 0 0 / 0.5);
+  border-radius: var(--felt-radius, calc(var(--plane-h) / 2));
+  background: radial-gradient(ellipse at 50% 40%, var(--felt-1), var(--felt-2) 70%);
+  box-shadow: 0 0 0 calc(var(--plane-w) * 0.012) var(--rim), 0 calc(var(--plane-h) * 0.04) calc(var(--plane-h) * 0.08) rgb(0 0 0 / 0.5);
 }
 .plane-anchor { position: absolute; width: 0; height: 0; }
-
-@media (max-width: 700px) {
-  .scene { --plane: 100vw; }
-}

@@ -2,7 +2,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { MY_SEAT_UI } from '../src/scene/geometry';
+import { tableLayout } from '../src/scene/layout';
 import { LINE_MS, MAX_QUEUE } from '../src/tabletop/narration';
 import { renderApp, renderTabletop, sentIntents } from './dom';
 import { atTable, payload, play, roomOf } from './fixtures';
@@ -47,12 +47,47 @@ describe('the table', () => {
     expect(document.querySelector('.tabletop')).toHaveClass('players-2');
   });
 
-  it('puts my seat beside my hand and the others at their seat angles', () => {
+  it('lays the table out from the viewport: sizes on the table, zones for each tableau, seats at their anchors', () => {
     renderTabletop({ state: atTable(base(), 'p1') });
+    const L = tableLayout({ width: window.innerWidth, height: window.innerHeight }, 2);
+    const table = document.querySelector<HTMLElement>('.tabletop')!;
+    expect(table.dataset.layout).toBe(L.mode);
+    expect(table.style.getPropertyValue('--hand-w')).toBe(`${L.hand.w}px`);
+    expect(table.style.getPropertyValue('--plane-h')).toBe(`${L.plane.h}px`);
+    const mine = screen.getByRole('region', { name: 'Your area' });
+    const zone = L.seats[0]!.zone;
+    expect([mine.style.left, mine.style.top, mine.style.width, mine.style.height]).toEqual([`${zone.x}%`, `${zone.y}%`, `${zone.w}%`, `${zone.h}%`]);
     const anchor = (id: string) => document.querySelector<HTMLElement>(`[data-anchor="seat:${id}"]`)!;
-    expect(anchor('p1').style.left).toBe(`${MY_SEAT_UI.x}%`);
-    expect(anchor('p1').style.top).toBe(`${MY_SEAT_UI.y}%`);
-    expect(anchor('p2').style.top).toBe('-4%');
+    expect(anchor('p1').style.left).toBe(`${L.seats[0]!.ui.x}%`);
+    expect(anchor('p2').style.top).toBe(`${L.seats[1]!.ui.y}%`);
+    const center = screen.getByRole('region', { name: 'Table center' });
+    expect(center.style.width).toBe(`${L.center.w}%`);
+  });
+
+  it('re-lays the table when the window turns (Review Focus 1)', () => {
+    const turn = (width: number, height: number) =>
+      act(() => {
+        Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
+        Object.defineProperty(window, 'innerHeight', { configurable: true, value: height });
+        window.dispatchEvent(new Event('resize'));
+      });
+    renderTabletop({ state: atTable(base(), 'p1') });
+    try {
+      turn(375, 812);
+      const table = document.querySelector<HTMLElement>('.tabletop')!;
+      expect(table.dataset.layout).toBe('portrait');
+      expect(table).toHaveAttribute('data-compact');
+      expect(table.style.getPropertyValue('--hand-w')).toBe(`${tableLayout({ width: 375, height: 812 }, 2).hand.w}px`);
+    } finally {
+      turn(1024, 768);
+    }
+  });
+
+  it('seats three players at 270°, 150° and 30°, each in its own zone', () => {
+    renderTabletop({ state: atTable(three(), 'p1') });
+    const L = tableLayout({ width: window.innerWidth, height: window.innerHeight }, 3);
+    expect(screen.getByRole('region', { name: "Bob's area" }).style.left).toBe(`${L.seats[1]!.zone.x}%`);
+    expect(screen.getByRole('region', { name: "Cy's area" }).style.left).toBe(`${L.seats[2]!.zone.x}%`);
   });
 
   it('keeps a seat on screen when its rim point falls outside it (phones)', () => {

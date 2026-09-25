@@ -7,7 +7,11 @@ import { moveOptions, playBlocker, playOptions, type PlayKind, type PlayOption }
 import { meAsPlayer, myRole, namesFrom } from '../game/derive';
 import { cardName } from '../game/log';
 import { PaperPage } from '../pages/PaperPage';
-import { MY_SEAT_UI, seatPlan } from '../scene/geometry';
+import { seatPlan } from '../scene/geometry';
+import { tableLayout } from '../scene/layout';
+import { LayoutProvider } from '../scene/layout-context';
+import { layoutStyle } from '../scene/layout-style';
+import { useViewport } from '../scene/use-viewport';
 import { TableScene } from '../scene/TableScene';
 import { PlaneAnchor, ProjectionProvider } from '../scene/projection';
 import { useGameStore } from '../store/context';
@@ -89,6 +93,11 @@ function GameTable({ game }: { game: GameStatePayload }) {
   const [dropped, setDropped] = useState<{ card: string; options: PlayOption[]; at: { x: number; y: number }; open: PlayKind | null } | null>(null);
   const line = useNarration(log, names);
   const role = myRole(view);
+  const viewport = useViewport();
+  const playerCount = view.players.length;
+  // A tray leaves room above the hand in portrait (layout.ts); the cards keep their size.
+  const trayShown = role !== null;
+  const layout = useMemo(() => tableLayout(viewport, playerCount, { tray: trayShown }), [viewport, playerCount, trayShown]);
   // Keyed by the action, not the version: another payer finishing must not reset this player's picks.
   const payKey = role?.kind === 'pay' ? `${role.pending.actorId}:${role.pending.cardIds.join(',')}` : '';
   const [payPicked, setPayPicked] = useKeyedSelection(payKey, () => (role?.kind === 'pay' ? autoPayment(meAsPlayer(view), role.amount) : []));
@@ -180,10 +189,12 @@ function GameTable({ game }: { game: GameStatePayload }) {
   const interaction = gateInteraction(resolved, busy);
 
   const places = seatPlan(view.players.map((p) => p.id), view.me);
+  const slotOf = (k: number) => layout.seats[k]!;
   const players = new Map(view.players.map((p) => [p.id, p]));
   const seats = new Map((room?.seats ?? []).map((s) => [s.playerId, s]));
   const me = players.get(view.me);
   const active = view.winner ? null : view.turn.playerId;
+  const activeSeat = places.findIndex((p) => p.playerId === active);
   const myTurn = active === view.me;
   const heading = view.winner ? `${name(view.winner)} won` : myTurn ? 'Your turn' : `${name(view.turn.playerId)}'s turn`;
   const anchorOf = (zone: string, card: string): Element | null =>
@@ -251,8 +262,16 @@ function GameTable({ game }: { game: GameStatePayload }) {
   return (
     <TableInteractionProvider value={interaction}>
       <DragProvider value={drag}>
+        <LayoutProvider value={layout}>
         <ProjectionProvider rootRef={rootRef}>
-          <div ref={rootRef} className={`tabletop players-${places.length}`} onClick={onBackground}>
+          <div
+            ref={rootRef}
+            className={`tabletop players-${places.length}`}
+            data-layout={layout.mode}
+            data-compact={layout.compact || undefined}
+            style={layoutStyle(layout)}
+            onClick={onBackground}
+          >
             <h1 className="sr-only">{heading}</h1>
             <Narrator line={line} prompt={aim?.prompt ?? null} onCancel={cancel} />
             {turnPulse && (
@@ -294,12 +313,12 @@ function GameTable({ game }: { game: GameStatePayload }) {
               <CounterTray pending={role.pending} targets={role.targets} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} avoid={answerAvoid} onSend={send} busy={busy} />
             )}
             <TableScene>
-              {places.map(({ playerId, spot }) => (
-                <Tableau key={playerId} player={players.get(playerId)!} name={name(playerId)} isMe={playerId === view.me} at={spot.tableau} />
+              {places.map(({ playerId }, k) => (
+                <Tableau key={playerId} player={players.get(playerId)!} name={name(playerId)} isMe={playerId === view.me} zone={slotOf(k).zone} />
               ))}
-              <CenterPiles view={view} activeAngle={places.find((p) => p.playerId === active)?.spot.angle ?? null} />
-              {places.map(({ playerId, spot }) => (
-                <PlaneAnchor key={playerId} id={`seat:${playerId}`} at={playerId === view.me ? MY_SEAT_UI : spot.ui} />
+              <CenterPiles view={view} at={layout.center} activeAngle={activeSeat < 0 ? null : slotOf(activeSeat).angle} />
+              {places.map(({ playerId }, k) => (
+                <PlaneAnchor key={playerId} id={`seat:${playerId}`} at={slotOf(k).ui} />
               ))}
             </TableScene>
             {places.map(({ playerId }) => {
@@ -335,6 +354,7 @@ function GameTable({ game }: { game: GameStatePayload }) {
             )}
           </div>
         </ProjectionProvider>
+        </LayoutProvider>
       </DragProvider>
     </TableInteractionProvider>
   );

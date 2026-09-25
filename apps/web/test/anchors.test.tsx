@@ -76,8 +76,8 @@ describe('anchors on the table', () => {
     const registry = withAnchors(
       <>
         <HandFan cards={view.hand} me="p1" />
-        <Tableau player={view.players[0]!} name="Ann" isMe at={{ x: 50, y: 80 }} />
-        <CenterPiles view={view} activeAngle={270} />
+        <Tableau player={view.players[0]!} name="Ann" isMe zone={{ x: 20, y: 67, w: 60, h: 28 }} />
+        <CenterPiles view={view} at={{ x: 41, y: 34, w: 18, h: 32 }} activeAngle={270} />
         <Seat playerId="p2" name="Bob" avatar={1} anchor="seat:p2" isMe={false} active={false} connected handCount={1} playsLeft={null} />
       </>,
     );

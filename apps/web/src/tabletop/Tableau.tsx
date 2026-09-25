@@ -2,7 +2,8 @@ import { COLOR_KEYS, COLORS, isComplete, totalValue, type PropertyGroup, type Pu
 import type { CSSProperties } from 'react';
 import { useAnchor } from '../motion/anchor-context';
 import { CountUp, useLanded, useStageEffect } from '../motion/stage-context';
-import { discardJitter, type PlanePoint } from '../scene/geometry';
+import { discardJitter } from '../scene/geometry';
+import type { PlaneRect } from '../scene/layout';
 import { useTableInteraction } from './interaction';
 import { dropClass, useDropState } from './drag';
 import { TableCard } from './TableCard';
@@ -11,14 +12,14 @@ interface Props {
   player: PublicPlayer;
   name: string;
   isMe: boolean;
-  /** Where the tableau lies on the table plane. */
-  at: PlanePoint;
+  /** The zone the tableau lies in, in plane percent (layout.ts). */
+  zone: PlaneRect;
 }
 
 const byColor = (a: PropertyGroup, b: PropertyGroup) => COLOR_KEYS.indexOf(a.color) - COLOR_KEYS.indexOf(b.color);
 
 /** One player's cards on the table: property groups in color order, then a loose bank pile. */
-export function Tableau({ player, name, isMe, at }: Props) {
+export function Tableau({ player, name, isMe, zone }: Props) {
   const groups = [...player.groups].sort(byColor);
   const total = totalValue(player.bank);
   // The shown total counts only the notes that have landed, and counts up as each one does.
@@ -33,7 +34,7 @@ export function Tableau({ player, name, isMe, at }: Props) {
       ref={area}
       className={['tableau', isMe && 'is-mine', dropClass(areaState)].filter(Boolean).join(' ')}
       data-drop={areaDrop}
-      style={{ left: `${at.x}%`, top: `${at.y}%` }}
+      style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.w}%`, height: `${zone.h}%` }}
       aria-label={isMe ? 'Your area' : `${name}'s area`}
     >
       <div className="tableau-groups">
