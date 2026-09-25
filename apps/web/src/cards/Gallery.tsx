@@ -3,8 +3,8 @@ import { useSound } from '../audio/audio-context';
 import { CUE_LABEL, CUES } from '../audio/cues';
 import { Avatar } from '../avatars/Avatar';
 import { CHARACTERS } from '../avatars/characters';
+import { DISH_ART, sceneUrl } from '../scene/art';
 import { PROP_KINDS } from '../scene/geometry';
-import { PROP_ART } from '../scenery/props';
 import { CardBack } from './CardBack';
 import { CardFace } from './CardFace';
 
@@ -52,17 +52,14 @@ export function Gallery() {
           </figure>
         ))}
       </div>
-      <h2>Picnic props</h2>
+      <h2>Picnic dishes</h2>
       <div className="gallery-grid">
-        {PROP_KINDS.map((kind) => {
-          const Art = PROP_ART[kind];
-          return (
-            <figure key={kind}>
-              <Art className="card" />
-              <figcaption>{kind}</figcaption>
-            </figure>
-          );
-        })}
+        {PROP_KINDS.map((kind) => (
+          <figure key={kind}>
+            <img className="card" src={sceneUrl(DISH_ART[kind])} alt="" />
+            <figcaption>{kind}</figcaption>
+          </figure>
+        ))}
       </div>
       <h2>Sounds</h2>
       <p>Click a sound to hear it. The first click also switches sound on for this page.</p>

@@ -1,6 +1,5 @@
 import { memo, type CSSProperties, type ReactNode } from 'react';
-import { PROP_ART } from '../scenery/props';
-import { PORTRAIT, SCENE_ART, sceneUrl } from './art';
+import { DISH_ART, PORTRAIT, SCENE_ART, sceneUrl } from './art';
 import { propLayout } from './geometry';
 import './scene.css';
 
@@ -53,9 +52,8 @@ const Scenery = memo(function Scenery({ players }: { players: number }) {
         <div className="dapple" style={{ backgroundImage: `url(${sceneUrl(SCENE_ART.dapple)})` }} />
       </div>
       {propLayout(players).map((p, i) => {
-        const Art = PROP_ART[p.kind];
         const style = { left: `${p.at.x}%`, top: `${p.at.y}%`, width: `${p.size}%`, '--r': `${p.rotate}deg` } as CSSProperties;
-        return <Art key={`${p.kind}-${i}`} className={`prop prop-${p.kind}`} style={style} />;
+        return <img key={`${p.kind}-${i}`} className={`prop prop-${p.kind}`} src={sceneUrl(DISH_ART[p.kind])} alt="" decoding="async" style={style} />;
       })}
     </div>
   );

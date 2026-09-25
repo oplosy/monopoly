@@ -49,7 +49,13 @@ describe('PicnicScene', () => {
     const plane = container.querySelector('.plane')!;
     expect(plane).toContainElement(screen.getByText('On the table'));
     expect(container.querySelector('.scenery')).toHaveAttribute('aria-hidden', 'true');
-    expect(container.querySelectorAll('.prop')).toHaveLength(5);
+    const dishes = [...container.querySelectorAll('img.prop')];
+    expect(dishes.map((d) => d.getAttribute('src')!.replace(/^.*\/scene\//, '')).sort()).toEqual([
+      'dish-berries.webp',
+      'dish-chips.webp',
+      'dish-melon.webp',
+    ]);
+    for (const dish of dishes) expect(dish).toHaveAttribute('alt', '');
   });
 
   it('paints the meadow, in portrait on tall screens', () => {

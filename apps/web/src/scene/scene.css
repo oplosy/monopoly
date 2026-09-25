@@ -107,7 +107,7 @@
   position: absolute;
   height: auto;
   transform: translate(-50%, -50%) rotate(var(--r, 0deg));
-  filter: drop-shadow(3px 5px 4px rgb(0 0 0 / 0.35));
+  filter: drop-shadow(2px 4px 4px rgb(0 0 0 / 0.3));
 }
 .plane-anchor { position: absolute; width: 0; height: 0; }
 
