@@ -19,6 +19,8 @@ export interface AudioDeps {
   now(): number;
   /** Where the sound files are served; defaults to /sounds/. */
   baseUrl?: string;
+  /** The ambience loop, without its extension; defaults to /ambience/meadow. */
+  ambienceUrl?: string;
 }
 
 export interface AudioManager {
@@ -29,7 +31,14 @@ export interface AudioManager {
   /** Starts (or resumes) sound: call it from a user gesture, as browsers require. */
   unlock(): void;
   play(cue: Cue): void;
+  /** Starts (true) or stops (false) the picnic's ambience loop; it waits for the unlock and fades in and out. */
+  setAmbience(on: boolean): void;
 }
+
+/** The ambience sits well under the cues (spec 2026-09-25 §6). */
+export const AMBIENCE_GAIN = 0.25;
+export const AMBIENCE_FADE_IN_S = 2;
+export const AMBIENCE_FADE_OUT_S = 1;
 
 /** After the unlocking gesture, cues play for this long even before the context reports it runs. */
 export const UNLOCK_GRACE_MS = 1000;
@@ -50,6 +59,11 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
   let master: GainNode | null = null;
   let tried = false;
   let unlockedAt = -Infinity;
+  const ambienceUrl = deps.ambienceUrl ?? '/ambience/meadow';
+  let ambienceWanted = false;
+  let ambienceBuffer: AudioBuffer | null = null;
+  let ambienceLoading = false;
+  let ambience: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
 
   const level = () => (settings.muted ? 0 : settings.volume);
 
@@ -66,6 +80,49 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
       .then((data) => context.decodeAudioData(data))
       .then((buffer) => buffers.set(stem, buffer))
       // A missing or undecodable file stays silent: sound is never the only signal.
+      .catch(() => undefined);
+  };
+
+  const startAmbience = (): void => {
+    if (!ctx || !master || !ambienceWanted || ambience) return;
+    if (!ambienceBuffer) {
+      loadAmbience(ctx);
+      return;
+    }
+    const at = ctx.currentTime;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, at);
+    gain.gain.linearRampToValueAtTime(AMBIENCE_GAIN, at + AMBIENCE_FADE_IN_S);
+    gain.connect(master);
+    const src = ctx.createBufferSource();
+    src.buffer = ambienceBuffer;
+    src.loop = true;
+    src.connect(gain);
+    src.start(at);
+    ambience = { src, gain };
+  };
+
+  const stopAmbience = (): void => {
+    if (!ctx || !ambience) return;
+    const at = ctx.currentTime;
+    const { src, gain } = ambience;
+    ambience = null;
+    gain.gain.setValueAtTime(gain.gain.value, at);
+    gain.gain.linearRampToValueAtTime(0, at + AMBIENCE_FADE_OUT_S);
+    src.stop(at + AMBIENCE_FADE_OUT_S);
+  };
+
+  const loadAmbience = (context: AudioContextLike): void => {
+    if (ambienceLoading) return;
+    ambienceLoading = true;
+    deps
+      .fetchSound(`${ambienceUrl}.${deps.format}`)
+      .then((data) => context.decodeAudioData(data))
+      .then((buffer) => {
+        ambienceBuffer = buffer;
+        startAmbience();
+      })
+      // A missing loop is silence, like a missing sample.
       .catch(() => undefined);
   };
 
@@ -98,6 +155,7 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
           master.gain.value = level();
           master.connect(context.destination);
           for (const stems of Object.values(SAMPLES)) for (const stem of stems ?? []) load(context, stem);
+          startAmbience();
         }
       }
       if (ctx && ctx.state !== 'running') void ctx.resume().catch(() => undefined);
@@ -128,6 +186,11 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
       src.connect(out);
       src.start(at);
     },
+    setAmbience(on) {
+      ambienceWanted = on;
+      if (on) startAmbience();
+      else stopAmbience();
+    },
   };
 }
 
@@ -155,5 +218,6 @@ export function browserAudioDeps(): AudioDeps {
     format: playsOgg() ? 'ogg' : 'mp3',
     now: () => performance.now(),
     baseUrl: `${import.meta.env.BASE_URL}sounds/`,
+    ambienceUrl: `${import.meta.env.BASE_URL}ambience/meadow`,
   };
 }

@@ -1,4 +1,5 @@
 import { memo, useMemo, type CSSProperties, type ReactNode } from 'react';
+import { useAmbience } from '../audio/audio-context';
 import { Butterfly } from './Butterfly';
 import { DISH_ART, PORTRAIT, SCENE_ART, sceneUrl } from './art';
 import { propLayout } from './geometry';
@@ -18,6 +19,7 @@ interface Props {
 /** The painted meadow, and the round wooden table tilted in perspective. Children lie on the table. */
 export function PicnicScene({ players, children, variant = 'table', className }: Props) {
   const dishes = useMemo(() => propLayout(players).map((p) => p.at), [players]);
+  useAmbience(variant === 'table');
   return (
     <div className={['scene', `scene-${variant}`, className].filter(Boolean).join(' ')}>
       <Ground />

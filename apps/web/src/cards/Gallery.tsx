@@ -1,5 +1,6 @@
 import { CARDS, type Color } from '@deal-city/engine';
-import { useSound } from '../audio/audio-context';
+import { useState } from 'react';
+import { useAmbience, useSound } from '../audio/audio-context';
 import { CUE_LABEL, CUES } from '../audio/cues';
 import { Avatar } from '../avatars/Avatar';
 import { CHARACTERS } from '../avatars/characters';
@@ -18,6 +19,8 @@ const WILD_STATES: { id: string; activeColor: Color }[] = [
 /** Every card on one page, for visual review of the SVG art. */
 export function Gallery() {
   const sound = useSound();
+  const [ambience, setAmbience] = useState(false);
+  useAmbience(ambience);
   return (
     <main className="gallery">
       <h1>Deal City card sheet</h1>
@@ -70,6 +73,11 @@ export function Gallery() {
           </button>
         ))}
       </div>
+      <p>
+        <button type="button" aria-pressed={ambience} onClick={() => setAmbience((on) => !on)}>
+          Ambience
+        </button>
+      </p>
     </main>
   );
 }

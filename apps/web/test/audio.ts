@@ -93,10 +93,11 @@ export function fakeAudioContext(opts: { resumes?: boolean } = {}) {
       const s = {
         ...node(),
         buffer: null as unknown,
+        loop: false,
         start(at = 0) {
           voices.push({ kind: 'buffer', at, freq: null, buffer: s.buffer, node: s });
         },
-        stop() {},
+        stop: vi.fn(),
       };
       return s;
     },
@@ -133,7 +134,7 @@ export function fakeAudioDeps(opts: { format?: AudioFormat; settings?: Partial<A
     return new TextEncoder().encode(url).buffer as ArrayBuffer;
   });
   const createContext = vi.fn(() => (opts.noAudio ? null : (fake.raw as unknown as import('../src/audio/manager').AudioContextLike)));
-  const deps: AudioDeps = { settings, createContext, fetchSound, format: opts.format ?? 'ogg', now: () => clock.t, baseUrl: '/sounds/' };
+  const deps: AudioDeps = { settings, createContext, fetchSound, format: opts.format ?? 'ogg', now: () => clock.t, baseUrl: '/sounds/', ambienceUrl: '/ambience/meadow' };
   return { deps, fake, clock, settings, fetchSound, createContext };
 }
 
@@ -146,16 +147,18 @@ export async function flushAudio(): Promise<void> {
 export const urlOf = (buffer: unknown): string => (buffer as { decoded: string }).decoded;
 
 /** An audio manager that only records what it was asked to play. */
-export function recordingAudio(initial: Partial<AudioSettings> = {}): AudioManager & { played: Cue[] } {
+export function recordingAudio(initial: Partial<AudioSettings> = {}): AudioManager & { played: Cue[]; ambience: boolean[] } {
   let current: AudioSettings = { ...DEFAULT_SETTINGS, ...initial };
   const listeners = new Set<() => void>();
   const played: Cue[] = [];
+  const ambience: boolean[] = [];
   const change = (next: AudioSettings) => {
     current = next;
     for (const listener of [...listeners]) listener();
   };
   return {
     played,
+    ambience,
     getSettings: () => current,
     subscribe(listener) {
       listeners.add(listener);
@@ -168,6 +171,9 @@ export function recordingAudio(initial: Partial<AudioSettings> = {}): AudioManag
     unlock: vi.fn(),
     play(cue) {
       played.push(cue);
+    },
+    setAmbience(on) {
+      ambience.push(on);
     },
   };
 }
