@@ -125,3 +125,9 @@ PR: https://github.com/oplosy/monopoly/pull/8 (merged into `main` as 307c77b).
   - Trays dock at the bottom right on short landscape screens (not bottom center as elsewhere).
 - Minors deferred: see the report (M1–M7, known candidates).
 - Animation: worst landing error 1 px; batches ≤ 1.6 s; no clones left behind.
+- Final review: 2 Important (small landscape phones' seat under the HUD while paying; the narrator under
+  the HUD on tablets in portrait) and 3 Minors fixed test-first; the rest deferred (see the report's
+  "Final review"). Gates: web 408 (engine 108, protocol 6, server 59); typecheck, lint, build clean;
+  e2e 15 passed (Chromium via scratch config).
+- Ruling: the anchored-tray fix is checked in the scratch harness only (seed 18 reaches no Just Say No). —
+  cost if wrong: a CSS regression there would be caught by eye, not by CI.

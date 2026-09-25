@@ -49,8 +49,9 @@ D1–D13, the plans' "Decisions"); every proposed fix polishes them.
 - *What a player sees:* "Bob charged you 4M rent", "Bob's turn" and every other narration is cut off
   or invisible. The targeting prompt ("Pick a property to steal", with its Cancel button) shares that
   bubble.
-- *Fix:* keep the phone HUD on one row (below 480 px the room code leaves the HUD; the log drawer shows
-  it instead), and place the narrator and the pending stage below the HUD on phones and short screens.
+- *Fix:* keep the phone HUD on one row (the room code leaves the visible HUD, and stays in the
+  accessibility tree), and place the narrator and the pending stage below the HUD on phones, tablets and
+  short screens.
 
 **I2. Touch targets below 44×44 px** (every touch viewport).
 - HUD: Sound 38×30, Game log 102×30, Leave game 100×24.
@@ -135,3 +136,36 @@ What changed, in CSS only (`tabletop.css`, `index.css`):
 After the fixes, the full audit was run again at every viewport: no new overlap, no horizontal scroll.
 The remaining overlaps are the Minor ones above (M2), and the lifted hand card reaching my seat with a
 10-card hand on a landscape phone (the hand is what matters while discarding).
+
+## Final review (fresh reviewer, most capable model)
+
+No Critical. Fixed test-first (each with a new or extended check in `mobile.spec.ts`):
+- **Important:** on small landscape phones (667×375, 640×360, 568×320) the ≤700 px "lift the table while
+  paying" rule (higher specificity, through `:has()`) leaked into the landscape layout and put the
+  right-hand seat under the HUD. The landscape block now keeps the table level while paying; the
+  landscape test runs at 844×390 and 667×375 and checks every seat against the HUD.
+  `fix: keep small landscape phones' seats clear of the HUD while paying`.
+- **Important:** I1 was not fixed on tablets in portrait (768×1024, 820×1180): the narrator stayed at the
+  top, half under the HUD. Up to 1100 px wide the narrator and the pending stage now sit below the HUD.
+  `fix: keep the narrator below the HUD on tablets too`.
+- **Minor, fixed:** End turn (43 px in landscape) and the log drawer's Close (41 px) join the 44 px rule.
+- **Minor, fixed:** the landscape tray width also squeezed the trays anchored beside my Just Say No card
+  into tall columns (131×403 at 667×375, running off the screen); docked trays are now capped at 24rem
+  (they were 684 px wide at 1920×480). Checked in the scratch harness: anchored respond and counter
+  trays keep their own size inside the viewport at 667×375 and 844×390. (Seed 18 deals no Just Say No
+  early, so no e2e reaches an anchored tray.)
+- **e2e robustness:** the landscape narrator check no longer waits for a line (it measures the bubble,
+  which is always laid out), and the action in play is found by its role ("Action in play").
+
+Deferred minors from the review:
+- At 568×320 (iPhone SE, 1st generation) the docked side is 112 px: the pay tray's total and the
+  Discard button spill a few px, and End turn touches the last hand card.
+- In landscape with 2 players, the narrator sits over the opponent's seat for its 2.5 s (it used to be
+  under the HUD). On 1024×768 tablets the narrator and the action in play overlap the top seat in a
+  2-player game, as before this branch.
+- Discarding in landscape: the rightmost lifted hand card slides under the docked tray.
+- The tucked hand while paying can touch the bottom row of a fuller tableau by a few px.
+- Possibly clipped: the big-rent stamp at the top-left pending stage in landscape (not verified);
+  `100vh` in the landscape plane uses the large viewport while browser bars show.
+- **For the user:** hiding the room code up to 1100 px wide (mouse windows too) departs from spec §4.4's
+  HUD list. It stays readable by screen readers, and the invite link lives in the lobby.
