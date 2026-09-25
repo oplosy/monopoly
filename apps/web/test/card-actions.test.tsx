@@ -137,6 +137,9 @@ describe('targeting on the table', () => {
     await user.click(handCard(/^Sly Deal/));
     await user.click(screen.getByRole('button', { name: 'Sly Deal: pick a property' }));
     const bob = area("Bob's area");
+    // While its cards can be picked, the tableau fans out so each card is easy to hit.
+    expect(bob.style.getPropertyValue('--cascade')).toBe('0.5');
+    expect(area('Your area').style.getPropertyValue('--cascade')).toBe('0.3');
     expect(within(bob).getByRole('button', { name: /Tannery Lane/ })).toHaveClass('tone-dim');
     await user.click(within(bob).getByRole('button', { name: /Tannery Lane/ }));
     expect(sentIntents(socket)).toEqual([]);

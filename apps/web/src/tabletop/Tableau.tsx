@@ -4,6 +4,8 @@ import { useAnchor } from '../motion/anchor-context';
 import { CountUp, useLanded, useStageEffect } from '../motion/stage-context';
 import { discardJitter } from '../scene/geometry';
 import type { PlaneRect } from '../scene/layout';
+import { useLayout } from '../scene/layout-context';
+import { fitTableau } from '../scene/tableau-fit';
 import { useTableInteraction } from './interaction';
 import { dropClass, useDropState } from './drag';
 import { TableCard } from './TableCard';
@@ -29,12 +31,33 @@ export function Tableau({ player, name, isMe, zone }: Props) {
   const areaDrop = isMe ? 'table' : `player:${player.id}`;
   const areaState = useDropState(areaDrop);
   const bankState = useDropState(isMe ? 'bank' : null);
+  const layout = useLayout();
+  const interaction = useTableInteraction();
+  const pickable = (zone: 'tableau' | 'bank', id: string) => {
+    const tone = interaction.card(zone, id, player.id).tone;
+    return tone === 'target' || tone === 'selectable';
+  };
+  // While a steal, a swap or a payment can pick these cards, the tableau fans out (spec §5.2).
+  const picking = player.groups.some((g) => g.cards.some((id) => pickable('tableau', id))) || player.bank.some((id) => pickable('bank', id));
+  const fit = layout
+    ? fitTableau(
+        { w: (zone.w / 100) * layout.plane.w, h: (zone.h / 100) * layout.plane.h },
+        groups.map((g) => g.cards.length + (g.house ? 1 : 0) + (g.hotel ? 1 : 0)),
+        player.bank.length,
+        layout.card.w,
+        layout.cardFloor,
+        picking,
+      )
+    : null;
+  const fitStyle = fit ? { '--card-w': `${fit.cardW}px`, '--cascade': fit.cascade, '--gap': fit.gap, '--bank-step': fit.bankStep } : {};
   return (
     <section
       ref={area}
       className={['tableau', isMe && 'is-mine', dropClass(areaState)].filter(Boolean).join(' ')}
       data-drop={areaDrop}
-      style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.w}%`, height: `${zone.h}%` }}
+      data-rows={fit?.rows ?? 1}
+      data-overflow={fit?.overflow || undefined}
+      style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.w}%`, height: `${zone.h}%`, ...fitStyle } as CSSProperties}
       aria-label={isMe ? 'Your area' : `${name}'s area`}
     >
       <div className="tableau-groups">

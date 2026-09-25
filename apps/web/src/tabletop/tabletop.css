@@ -21,16 +21,23 @@
 .tableau .table-card.is-pressed { transform: translateY(-12%); outline: 3px solid var(--gold); outline-offset: 2px; }
 
 /* ---------- Tableaus ---------- */
+/* A tableau fills its zone (layout.ts); its cards are sized and spaced by fitTableau (tableau-fit.ts). */
 .tableau {
   position: absolute;
-  justify-content: center;
   display: flex;
+  flex-wrap: nowrap;
   align-items: flex-start;
-  gap: calc(var(--card-w) * 0.35);
-  /* Readable on the far side too, where perspective shrinks it to ≈0.7×. */
+  align-content: flex-start;
+  justify-content: center;
+  row-gap: calc(var(--card-w) * 0.12);
   font-size: calc(var(--card-w) * 0.28);
 }
-.tableau-groups { display: flex; flex-wrap: wrap; gap: calc(var(--card-w) * 0.18); max-width: calc(var(--card-w) * 6.2); }
+.tableau[data-rows='2'] { flex-wrap: wrap; }
+/* Groups and the bank are the row's items, spaced (or overlapped) by the fit's gap. */
+.tableau-groups { display: contents; }
+.tableau-groups > *,
+.tableau > .bank-pile { margin-left: calc(var(--card-w) * var(--gap, 0.18)); }
+.tableau-groups > :first-child { margin-left: 0; }
 .tableau-empty {
   margin: 0;
   padding: 0.3em 0.7em;
@@ -41,10 +48,8 @@
   border-radius: 999px;
 }
 .group-stack { position: relative; display: flex; flex-direction: column; width: var(--card-w); }
-/* Each card shows its color band (the top 26% of a card). */
-.group-stack > .table-card + .table-card { margin-top: calc(var(--card-w) * -1.1); }
-/* While its cards can be picked (a steal, a swap, paying), a set fans out so each card is easy to hit. */
-.group-stack:has(> .tone-target, > .tone-selectable) > .table-card + .table-card { margin-top: calc(var(--card-w) * -0.75); }
+/* Each card behind shows its top `--cascade` card widths: its color band, or more while it can be picked. */
+.group-stack > .table-card + .table-card { margin-top: calc(var(--card-w) * (var(--cascade, 0.3) - 1.4)); }
 .group-stack.is-complete { filter: drop-shadow(0 0 calc(var(--card-w) * 0.08) rgb(255 216 74 / 0.9)); }
 .group-stack.is-target { outline: 3px dashed var(--gold); outline-offset: 4px; border-radius: 8px; }
 .set-stamp {
@@ -75,14 +80,14 @@
   cursor: pointer;
 }
 .group-pick:focus-visible { outline: 3px solid #1f4e9a; }
-/* The bank is a loose pile, fanned so every note stays clickable. */
-.bank-pile { position: relative; display: flex; align-items: flex-start; padding-top: 1.5em; }
+/* The bank is a loose pile: each note a little off the one below, more while notes can be picked. */
+.bank-pile { position: relative; display: flex; align-items: flex-start; }
 .bank-pile > .table-card { rotate: var(--rot, 0deg); }
-.bank-pile > .table-card + .table-card { margin-left: calc(var(--card-w) * -0.72); }
+.bank-pile > .table-card + .table-card { margin-left: calc(var(--card-w) * (var(--bank-step, 0.14) - 1)); }
 .bank-total {
   position: absolute;
   left: 0;
-  top: 0;
+  top: -0.7em;
   z-index: 4;
   font-family: var(--font-num);
   font-weight: 700;

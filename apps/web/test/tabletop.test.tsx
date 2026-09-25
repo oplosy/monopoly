@@ -3,6 +3,7 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { tableLayout } from '../src/scene/layout';
+import { fitTableau } from '../src/scene/tableau-fit';
 import { LINE_MS, MAX_QUEUE } from '../src/tabletop/narration';
 import { renderApp, renderTabletop, sentIntents } from './dom';
 import { atTable, payload, play, roomOf } from './fixtures';
@@ -62,6 +63,18 @@ describe('the table', () => {
     expect(anchor('p2').style.top).toBe(`${L.seats[1]!.ui.y}%`);
     const center = screen.getByRole('region', { name: 'Table center' });
     expect(center.style.width).toBe(`${L.center.w}%`);
+  });
+
+  it("fits each tableau's cards into its zone", () => {
+    renderTabletop({ state: atTable(base(), 'p1') });
+    const L = tableLayout({ width: window.innerWidth, height: window.innerHeight }, 2);
+    const zone = L.seats[0]!.zone;
+    const fit = fitTableau({ w: (zone.w / 100) * L.plane.w, h: (zone.h / 100) * L.plane.h }, [2], 1, L.card.w, L.cardFloor);
+    const mine = screen.getByRole('region', { name: 'Your area' });
+    expect(mine.style.getPropertyValue('--card-w')).toBe(`${fit.cardW}px`);
+    expect(mine.style.getPropertyValue('--cascade')).toBe(String(fit.cascade));
+    expect(mine.style.getPropertyValue('--gap')).toBe(String(fit.gap));
+    expect(mine.dataset.rows).toBe('1');
   });
 
   it('re-lays the table when the window turns (Review Focus 1)', () => {

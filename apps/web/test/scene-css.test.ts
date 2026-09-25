@@ -38,4 +38,12 @@ describe('the plain table (spec 2026-09-25-table-layout §3–4)', () => {
     }
     expect(table).not.toMatch(/--hand-w:\s*(clamp|\d)/);
   });
+
+  it('stacks and spaces tableau cards by the fit, not by fixed numbers', () => {
+    const table = readCss(new URL('../src/tabletop/tabletop.css', import.meta.url));
+    expect(rule(table, '.group-stack > .table-card + .table-card')).toMatch(/var\(--cascade/);
+    expect(rule(table, '.bank-pile > .table-card + .table-card')).toMatch(/var\(--bank-step/);
+    expect(table).toMatch(/margin-left:\s*calc\(var\(--card-w\) \* var\(--gap/);
+    expect(table).not.toMatch(/\.group-stack:has\(> \.tone-target, > \.tone-selectable\)/);
+  });
 });
