@@ -98,3 +98,9 @@ Gates after the fixes: web 408 (engine 108, protocol 6, server 59); typecheck, l
 4. Add `CREDITS.md` (plan Task 7 Step 6), run web tests and build (`ls apps/web/dist/sounds | wc -l` = 36).
 5. Put back the plan's second e2e test in `apps/e2e/tests/sound.spec.ts` (Bob and Cy hear Ann bank 2M).
 6. Listening review: `pnpm dev`, open `/gallery`, "Sounds" board, then play a round.
+
+**Done locally (2026-09-25), steps 1–5.** All 18 stems were found under their planned names (no
+`SAMPLES` change); the three `License.txt` files name CC0; 36 files, 289 KB. The banked-card e2e test
+is back and fails with `public/sounds/` moved away (Bob hears 0 sounds). Gates on Windows with Chrome:
+engine 108, protocol 6, server 59, web 410; typecheck, lint, build clean; e2e 10 passed. Step 6 (the
+listening review) is the user's.
