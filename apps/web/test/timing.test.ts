@@ -50,4 +50,12 @@ describe('schedule', () => {
     const t = schedule([scene([flight('arc', 0), flight('arc', 1)], 60, [{ type: 'confetti' }])], 0);
     expect(t.effects).toEqual([{ effect: { type: 'confetti' }, at: t.total }]);
   });
+
+  it('tells each flight which scene it belongs to', () => {
+    const t = schedule([scene([flight('slide')]), { ...scene([flight('arc', 1)]), kind: 'paid' }], 0);
+    expect(t.flights.map((f) => [f.kind, f.scene])).toEqual([
+      ['played', 0],
+      ['paid', 1],
+    ]);
+  });
 });

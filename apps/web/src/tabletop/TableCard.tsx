@@ -1,5 +1,6 @@
 import type { Color } from '@deal-city/engine';
 import { useEffect, type CSSProperties } from 'react';
+import { useSound } from '../audio/audio-context';
 import { CardFace } from '../cards/CardFace';
 import { cardLabel } from '../cards/labels';
 import { useAnchor } from '../motion/anchor-context';
@@ -25,6 +26,7 @@ interface Props {
 export function TableCard({ id, zone, owner, activeColor, style, rotation = 0, drop }: Props) {
   const { tone, pressed, onActivate, busy } = useTableInteraction().card(zone, id, owner);
   const inspect = useInspect();
+  const sound = useSound();
   const anchor = useAnchor<HTMLButtonElement>(`card:${id}`);
   // A card still in flight keeps its place but is not shown; its flight reveals it on landing.
   const hidden = useHidden(`card:${id}`);
@@ -58,6 +60,11 @@ export function TableCard({ id, zone, owner, activeColor, style, rotation = 0, d
         onActivate();
       }}
       {...inspectHandlers}
+      onPointerEnter={(e) => {
+        inspectHandlers.onPointerEnter(e);
+        // A soft tick as the mouse moves over my own hand (spec §8); the manager thins out fast sweeps.
+        if (zone === 'hand' && e.pointerType === 'mouse') sound('hover');
+      }}
       onPointerDown={(e) => {
         inspectHandlers.onPointerDown(e);
         dragHandlers?.onPointerDown(e);

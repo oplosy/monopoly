@@ -1,6 +1,6 @@
 # Deal City: Game Table Redesign (UI, UX, Motion, Sound)
 
-**Status:** design approved on 2026-09-24. Plans 6 (world and interaction) and 7 (motion) are implemented; Plan 8 (sound) remains.
+**Status:** design approved on 2026-09-24. Plans 6 (world and interaction), 7 (motion) and 8 (sound) are implemented; the redesign is complete. Plan 8's CC0 sample files are still to be added in a local session (see §8, *As built*).
 **Parent spec:** `docs/superpowers/specs/2026-09-24-deal-city-design.md` covers the rules, engine, protocol and server. This document **supersedes its §4.4 (web client) for everything about the look, layout, interaction and motion of the game**. Engine rules are unchanged.
 **Mockups:** `docs/superpowers/specs/table-redesign/mockups/` holds standalone HTML files that open in any browser. §14 lists what each one shows.
 **Reference images:** `for_table/` in the repo root. These are the user's local screenshots of UNO games. They are **not committed**, because they are third-party art. §2.3 describes them in words.
@@ -136,7 +136,7 @@ Seats sit on a circle of the table plane, at angles measured on the plane. 270°
 - **Plays left:** 3 pips under my avatar on my seat, shown during my play phase and emptied as I play. My turn countdown number sits just above End turn.
 - **End turn:** a large sign-like button to the right of my hand, visible only when legal.
 - **Narrator bubble:** a speech-bubble strip centered above the table. It shows the latest event sentence (the existing `describeEvent`, e.g. "Bob charged you 4M rent") for ≈2.5 s, queued, and is `aria-live="polite"`. It also shows prompts while targeting ("Pick a property to steal", with a Cancel button).
-- **HUD corner (top right):** sound toggle and volume (Plan 8), log button, room code, leave.
+- **HUD corner (top right):** sound toggle and volume, room code, log button, leave. *Built (Plan 8):* a "Sound" button (`aria-pressed` while sound is on) and a "Volume" slider (0–100, steps of 5), first in the "Game menu"; on phones (≤640 px) only the button shows.
 - **Log drawer:** a side sheet with the full event log (today's `GameLog`), opened from the HUD. It is not a permanent column.
 - **Action in play:** while responses are pending, the action's cards and `describeAction` are shown above the table (the "Action in play" stage) with "Waiting for …". Plan 7's flight to the center replaces this static stage.
 
@@ -326,6 +326,16 @@ The server sends one `game:state` per change: the **new** redacted view plus the
 
 - Cues are triggered by the choreographer's scenes, so sound and animation stay in sync, and by UI micro-interactions. Reduced motion does not mute sound.
 
+**As built (Plan 8).**
+- **Sources.** Physical sounds are CC0 samples, 18 stems from the three Kenney packs, each as `.ogg` and `.mp3` (`audio/cues.ts`, `SAMPLES`): card slides (draw), card places (landing), chip lays (bank or payment), soft heavy impacts (Deal Breaker thud), metal heavy impacts (Just Say No shield), two ticks (hover, timer) and a soft medium impact (error). The tunes are synthesized with the Web Audio API (`audio/synth.ts`): the two-note turn chime, the set chime, the win fanfare, the lose "aww", the steal or swap whoosh and the bigger Deal Breaker whoosh. *The sample files are not in the repo yet:* the cloud session that built Plan 8 could not reach kenney.nl, so the sampled cues are silent (skipped, never late) until a local session runs Plan 8, Task 7. The synthesized cues play.
+- **Unlock.** One `AudioContext`, created on the first `pointerdown` or `keydown` anywhere on the page (every later gesture resumes it). The samples are then fetched and decoded in the background, as Ogg where the browser plays Vorbis and MP3 otherwise. The sound of the unlocking gesture plays within a 1 s grace even while the context is still starting; after that, cues are dropped while the context is suspended, so no backlog ever bursts out. A missing or undecodable file is silent.
+- **Timing.** Scene cues come from the Plan 7 timeline (`audio/scene-cues.ts`) and run on the stage's own timers: `drew` slides at each flight's start (a reshuffle once); a card that lands on a bank clinks, anything else lands with a place; `paid` and `buildingsToBank` clink at each landing; the Just Say No shield strikes at 35 % of its slam; a Sly Deal or swap whooshes once at its scene's start and places each card as it lands; a Deal Breaker whooshes once and thuds as its last card lands; the winning sets fly into the banner quietly. Effects: `yourTurn` rings the turn chime, `setComplete` the set chime, and `confetti` the fanfare for the winner and the "aww" for everyone else, once the sets have landed. A resume, a skipped batch and a snapped batch are silent.
+- **Motion off** (reduced motion): each kind of cue of a batch plays once, at once. **A hidden tab** hears only the turn chime.
+- **No walls of sound.** Each cue has a minimum gap (`MIN_GAP_MS`, 45–1000 ms): a repeat sooner than that is dropped. Sample variants take turns (round robin).
+- **Settings.** `dealcity.volume` (0–1, default 0.6) and `dealcity.muted` (`'1'` when muted) in `localStorage`, read and written without ever throwing; junk reads as the defaults. Moving the slider unmutes. At volume 0 the speaker shows sound as off, and pressing it brings the volume back to 0.6.
+- **Interface cues.** A soft tick when the mouse (not touch) moves over one of my hand cards; my own clock ticks once a second from 10 s and twice a second from 3 s, never while paused and never on another player's clock; an error toast thunks.
+- **Sound board.** `/gallery` has a "Sounds" group with one button per cue, for listening reviews.
+
 ---
 
 ## 9. Architecture changes
@@ -357,7 +367,7 @@ apps/web/src/
   ui/clock.ts   useNow, secondsLeft (moved from table/useNow.ts), useDrain
 ```
 
-- `motion/` (Plan 7): mode, pose, anchors, anchor-context, scenes, planner, timing, keyframes, stage, settle, stage-context, FlightLayer, MotionStage, confetti and motion.css; drag and drop is `tabletop/drop.ts` and `tabletop/drag.tsx`. `audio/` (AudioManager, cue map, useSound) arrives with Plan 8.
+- `motion/` (Plan 7): mode, pose, anchors, anchor-context, scenes, planner, timing, keyframes, stage, settle, stage-context, FlightLayer, MotionStage, confetti and motion.css; drag and drop is `tabletop/drop.ts` and `tabletop/drag.tsx`. `audio/` (Plan 8): cues (the cue vocabulary, samples, gains, gaps), synth (the tunes), settings (localStorage), manager (the framework-free audio manager), audio-context (AudioProvider, useAudio, useSound, useAudioSettings), SoundControl (the HUD control) and scene-cues (sceneCues, instantCues).
 - The old `apps/web/src/table/` (Table, CenterStrip, OpponentPanel, PlayerArea, GroupView, CardMenu, MoveMenu, TargetBar and the `modals/` folder) was **replaced** by `tabletop/` in Plan 6 and deleted, together with every `layoutId`. The working name `table2/` was never used.
 - The store gains no animation state. The choreographer subscribes to the store's `game` payload and owns "what is currently shown".
 
@@ -471,8 +481,9 @@ These are rough wireframes for layout decisions, not final art. Each file is a s
    - All of Plans 1–5 and the backlog fixes are merged to `main` (PRs #1–#5).
    - The redesign work branch is `feat/table-redesign`, which holds this spec, its mockups and a `.gitignore` entry for `.superpowers/`.
    - Plan 6 (`docs/superpowers/plans/2026-09-24-plan-6-table-world.md`) is merged to `main` (PR #6).
-   - Plan 7 (`docs/superpowers/plans/2026-09-25-plan-7-motion.md`) is implemented on `feat/table-motion`.
-3. **Next step:** invoke the writing-plans skill for **Plan 8** (sound, §13.3), save it as `docs/superpowers/plans/<date>-plan-8-sound.md`, and ask the user to review it. The user has consistently chosen **native (inline) execution**.
+   - Plan 7 (`docs/superpowers/plans/2026-09-25-plan-7-motion.md`) is merged to `main` (PR #7).
+   - Plan 8 (`docs/superpowers/plans/2026-09-25-plan-8-sound.md`) is implemented on `feat/table-sound`, except its Task 7 (the CC0 sample files), which waits for a local session.
+3. **Next step:** read the newest file in `docs/superpowers/handoff/` (the work queue) and the repo's `CLAUDE.md` (the standing rules). With Plans 6–8 the redesign in this spec is complete; there is no Plan 9 in this spec, and the next step is whatever the user asks for next. The user has consistently chosen **native (inline) execution**.
 4. **Working conventions (from the user's global CLAUDE.md and past sessions):**
    - Never work on `main`; branch first (`feat/…`).
    - One PR per plan, stacked if needed, merged in order by the user's request only.

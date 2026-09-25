@@ -31,6 +31,9 @@ export interface TimedFlight {
   flight: Flight;
   delay: number;
   duration: number;
+  /** The kind of scene the flight belongs to, and that scene's index in the batch (sound uses both). */
+  kind: Scene['kind'];
+  scene: number;
 }
 
 export interface TimedEffect {
@@ -64,12 +67,12 @@ export function schedule(scenes: readonly Scene[], waiting: number): Timeline {
   const effects: TimedEffect[] = [];
   let start = 0;
   let total = 0;
-  for (const scene of scenes) {
+  for (const [index, scene] of scenes.entries()) {
     let landed = start;
     scene.flights.forEach((flight, i) => {
       const delay = Math.round(start + i * scene.stagger * scale);
       const duration = Math.max(MIN_FLIGHT_MS, Math.round(STYLE_MS[flight.style] * scale));
-      flights.push({ flight, delay, duration });
+      flights.push({ flight, delay, duration, kind: scene.kind, scene: index });
       landed = Math.max(landed, delay + duration);
     });
     total = Math.max(total, landed);

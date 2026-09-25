@@ -1,4 +1,4 @@
-import { applyIntent, removePlayer, type GameState, type Intent } from '@deal-city/engine';
+import { applyIntent, createGame, removePlayer, type GameState, type Intent } from '@deal-city/engine';
 import { makeState } from '@deal-city/engine/testing';
 import type { GameStatePayload } from '@deal-city/protocol';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -22,8 +22,9 @@ function fakePoses(before: Record<string, Pose> = {}, after: Record<string, Pose
 function setup(initial: GameStatePayload | null, opts: { mode?: MotionMode; poses?: ReturnType<typeof fakePoses> } = {}) {
   const poses = opts.poses ?? fakePoses({}, {}, pose(0, 0));
   const settle = vi.fn();
-  const stage = createStage({ poses, mode: () => opts.mode ?? 'fly', settle }, initial);
-  return { stage, poses, settle };
+  const sound = vi.fn();
+  const stage = createStage({ poses, mode: () => opts.mode ?? 'fly', settle, sound }, initial);
+  return { stage, poses, settle, sound };
 }
 
 /** The payload p1 gets after `by` does `intent`. */
@@ -267,5 +268,65 @@ describe('createStage', () => {
     vi.advanceTimersByTime(STYLE_MS.slide);
     expect(stage.getState().clones).toContainEqual(expect.objectContaining({ card: 'money-3-2', delay: 12 * 50 - STYLE_MS.slide }));
     expect(stage.getState().clones.length).toBeLessThanOrEqual(MAX_CLONES);
+  });
+
+  it('plays each sound when its flight gets there: a banked note clinks as it lands', () => {
+    const s0 = banker();
+    const { stage, sound } = setup(payload(s0, 'p1'));
+    show(stage, next(s0, 'p1', { type: 'playToBank', card: 'money-1-1' }).game);
+    vi.advanceTimersByTime(STYLE_MS.arc - 1);
+    expect(sound).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(sound.mock.calls).toEqual([['coin']]);
+  });
+
+  it('with motion off, plays each kind of sound of a change once, at once', () => {
+    const s0 = makeState({ players: [{ id: 'p1', hand: ['money-1-1'] }, { id: 'p2', hand: ['money-2-1'] }], turn: 'p2' });
+    const { stage, sound } = setup(payload(s0, 'p1'), { mode: 'instant' });
+    stage.receive(next(s0, 'p2', { type: 'endTurn' }).game);
+    expect(sound.mock.calls).toEqual([['turn'], ['draw']]);
+  });
+
+  it('plays nothing for a resume', () => {
+    const s0 = banker();
+    const { stage, sound } = setup(payload(s0, 'p1'));
+    const { state } = next(s0, 'p1', { type: 'playToBank', card: 'money-1-1' });
+    show(stage, payload(state, 'p1'));
+    vi.advanceTimersByTime(5000);
+    expect(sound).not.toHaveBeenCalled();
+  });
+
+  it('keeps skipped changes and snapped scenes silent', () => {
+    const { stage, sound } = setup(payload(banker(), 'p1'));
+    let s = banker();
+    for (const card of ['money-1-1', 'money-1-2', 'money-1-3', 'money-1-4', 'money-1-5']) {
+      const n = next(s, 'p1', { type: 'playToBank', card });
+      s = n.state;
+      show(stage, n.game);
+    }
+    vi.advanceTimersByTime(5000);
+    // One of the five waiting changes was skipped: its card appeared without a sound.
+    expect(sound.mock.calls.filter(([cue]) => cue === 'coin')).toHaveLength(4);
+    sound.mockClear();
+    const n = next(s, 'p1', { type: 'endTurn' });
+    show(stage, n.game);
+    stage.snap();
+    vi.advanceTimersByTime(5000);
+    expect(sound).not.toHaveBeenCalled();
+  });
+
+  it('rings the turn chime for whoever opens a new game, though its deal is not animated', () => {
+    for (const mode of ['fly', 'instant'] as const) {
+      const { state, events } = createGame(['p1', 'p2'], 18);
+      const first = state.turn.playerId;
+      const other = first === 'p1' ? 'p2' : 'p1';
+      // The room turns to "playing" before the game's first payload: the table mounts with no game yet.
+      for (const [viewer, heard] of [[first, [['turn']]], [other, []]] as const) {
+        const { stage, sound } = setup(null, { mode });
+        show(stage, payload(state, viewer, { events }));
+        vi.advanceTimersByTime(5000);
+        expect(sound.mock.calls, `${mode} ${viewer}`).toEqual(heard);
+      }
+    }
   });
 });

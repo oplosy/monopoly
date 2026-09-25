@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { useSound } from '../audio/audio-context';
 import { useGameStoreApi } from '../store/context';
 import { AnchorProvider } from './anchor-context';
 import { AnchorRegistry } from './anchors';
@@ -15,8 +16,18 @@ import { StageProvider } from './stage-context';
 export function MotionStage({ children }: { children: ReactNode }) {
   const store = useGameStoreApi();
   const [registry] = useState(() => new AnchorRegistry());
+  const sound = useSound();
   const [stage] = useState(() =>
-    createStage({ poses: registry, mode: motionMode, settle: (before, skip) => settleCards(registry, before, skip) }, store.getState().game),
+    createStage(
+      {
+        poses: registry,
+        mode: motionMode,
+        settle: (before, skip) => settleCards(registry, before, skip),
+        // useSound keeps a background tab down to my turn.
+        sound,
+      },
+      store.getState().game,
+    ),
   );
   useEffect(() => {
     stage.receive(store.getState().game);

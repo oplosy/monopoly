@@ -3,10 +3,13 @@ import { cleanup, render } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router';
 import { afterEach } from 'vitest';
 import { routes } from '../src/App';
+import { AudioProvider } from '../src/audio/audio-context';
+import type { AudioManager } from '../src/audio/manager';
 import { StoreProvider } from '../src/store/context';
 import { createGameStore, type AppState } from '../src/store/game-store';
 import { memoryStorage, type SavedSession } from '../src/store/storage';
 import { Tabletop } from '../src/tabletop/Tabletop';
+import { recordingAudio } from './audio';
 import { FakeSocket } from './fake-socket';
 
 afterEach(cleanup);
@@ -30,6 +33,8 @@ export interface RenderOptions {
   saved?: SavedSession | null;
   nickname?: string;
   avatar?: number | null;
+  /** The table's sound; a recording one by default (renderTabletop only). */
+  audio?: AudioManager;
 }
 
 function mount(appRoutes: RouteObject[], path: string, opts: RenderOptions) {
@@ -51,9 +56,14 @@ export function renderApp(path: string, opts: RenderOptions = {}) {
   return mount(routes, path, opts);
 }
 
-/** Renders only the game table at /room/ABCDEF (no shell, no toast), with the same fake socket. */
+/** Renders only the game table at /room/ABCDEF (no shell, no toast), with the same fake socket and a quiet sound. */
 export function renderTabletop(opts: RenderOptions = {}) {
-  return mount([{ path: '*', element: <Tabletop /> }], '/room/ABCDEF', opts);
+  const table = (
+    <AudioProvider manager={opts.audio ?? recordingAudio()}>
+      <Tabletop />
+    </AudioProvider>
+  );
+  return mount([{ path: '*', element: table }], '/room/ABCDEF', opts);
 }
 
 /** The intents sent to the server so far, without their versions. */
