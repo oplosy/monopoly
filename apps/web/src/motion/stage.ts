@@ -1,5 +1,7 @@
 import type { Color } from '@deal-city/engine';
 import type { GameStatePayload } from '@deal-city/protocol';
+import type { Cue } from '../audio/cues';
+import { instantCues, sceneCues, type CueContext } from '../audio/scene-cues';
 import type { MotionMode } from './mode';
 import { planBatch } from './planner';
 import type { Pose } from './pose';
@@ -58,6 +60,8 @@ export interface StageDeps {
   mode(): MotionMode;
   /** Glides cards that only moved from their poses `before`; `skip` holds the cards that fly. */
   settle(before: ReadonlyMap<string, Pose>, skip: ReadonlySet<string>): void;
+  /** Plays a sound cue (spec §8), on the same clock as the flights. */
+  sound?(cue: Cue): void;
 }
 
 export interface Stage {
@@ -79,6 +83,8 @@ interface Batch {
   /** Reveals still owed, and counter corrections still applied. */
   hides: Map<string, number>;
   counts: Map<string, number>;
+  /** Who hears this batch, and who won. */
+  cues: CueContext;
 }
 
 const NONE: ReadonlyMap<string, number> = new Map();
@@ -102,13 +108,18 @@ function firstPose(poses: ReadonlyMap<string, Pose>, keys: readonly string[]): P
   return null;
 }
 
+/** Who hears a payload's sounds, and who won. */
+function cuesFor(game: GameStatePayload): CueContext {
+  return { me: game.view.me, winner: game.view.winner };
+}
+
 /** The cards a batch flies: they must not also glide as "only moved". */
 function flownKeys(scenes: readonly Scene[]): Set<string> {
   return new Set(scenes.flatMap((s) => s.flights.flatMap((f) => (f.card ? [`card:${f.card}`] : []))));
 }
 
-function batchOf(id: number, scenes: Scene[], poses: ReadonlyMap<string, Pose>): Batch {
-  const batch: Batch = { id, scenes, poses, hides: new Map(), counts: new Map() };
+function batchOf(id: number, scenes: Scene[], poses: ReadonlyMap<string, Pose>, cues: CueContext): Batch {
+  const batch: Batch = { id, scenes, poses, hides: new Map(), counts: new Map(), cues };
   for (const scene of scenes) {
     for (const f of scene.flights) {
       if (f.reveals) bump(batch.hides, f.reveals, 1);
@@ -246,6 +257,12 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
       });
     }
 
+    // Each sound plays on the flights' clock: a skipped or snapped batch clears these timers, and stays silent.
+    if (deps.sound) {
+      const sound = deps.sound;
+      for (const { cue, at } of sceneCues(timeline, batch.cues)) later(at, () => sound(cue));
+    }
+
     overflow = addClones(clones);
     set(tally());
     later(timeline.total, () => {
@@ -266,7 +283,13 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
     receive(game) {
       if (game === state.game) return;
       const prev = state.game;
-      if (!prev || !game || game.events.length === 0 || prev.view.me !== game.view.me || deps.mode() !== 'fly') {
+      if (!prev || !game || game.events.length === 0 || prev.view.me !== game.view.me) {
+        reset(game);
+        return;
+      }
+      if (deps.mode() !== 'fly') {
+        // Motion off: the cards appear at once, and each kind of sound of the change plays once, now (spec §8).
+        if (deps.sound) for (const cue of instantCues(planBatch(prev.view, game.view, game.events), cuesFor(game))) deps.sound(cue);
         reset(game);
         return;
       }
@@ -276,7 +299,7 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
       // Several payloads before one render: cards glide from where they were before the first of them.
       toSettle = toSettle ? { poses: toSettle.poses, skip: new Set([...toSettle.skip, ...skip]) } : { poses, skip };
       if (scenes.length > 0) {
-        waiting.push(batchOf(nextId++, scenes, poses));
+        waiting.push(batchOf(nextId++, scenes, poses, cuesFor(game)));
         // Too far behind: the oldest waiting batches are skipped, and their cards simply appear.
         while (waiting.length > MAX_WAITING) waiting.shift();
       }

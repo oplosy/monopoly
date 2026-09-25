@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { useAudio } from '../audio/audio-context';
 import { useGameStoreApi } from '../store/context';
 import { AnchorProvider } from './anchor-context';
 import { AnchorRegistry } from './anchors';
@@ -15,8 +16,21 @@ import { StageProvider } from './stage-context';
 export function MotionStage({ children }: { children: ReactNode }) {
   const store = useGameStoreApi();
   const [registry] = useState(() => new AnchorRegistry());
+  const audio = useAudio();
   const [stage] = useState(() =>
-    createStage({ poses: registry, mode: motionMode, settle: (before, skip) => settleCards(registry, before, skip) }, store.getState().game),
+    createStage(
+      {
+        poses: registry,
+        mode: motionMode,
+        settle: (before, skip) => settleCards(registry, before, skip),
+        // In a background tab only my turn is worth a sound; the rest would be noise nobody watches.
+        sound: (cue) => {
+          if (document.hidden && cue !== 'turn') return;
+          audio?.play(cue);
+        },
+      },
+      store.getState().game,
+    ),
   );
   useEffect(() => {
     stage.receive(store.getState().game);
