@@ -52,6 +52,15 @@ export function reloadMotion(): void {
   changed();
 }
 
+/** Follows a switch made in another tab of the game (the storage event fires only in the other tabs). */
+export function followOtherTabs(): () => void {
+  const onStorage = (e: StorageEvent) => {
+    if (e.key === MOTION_KEY || e.key === null) reloadMotion();
+  };
+  window.addEventListener('storage', onStorage);
+  return () => window.removeEventListener('storage', onStorage);
+}
+
 export function subscribeMotion(listener: () => void): () => void {
   listeners.add(listener);
   return () => {

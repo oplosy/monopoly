@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getMotion, MOTION_KEY, parseMotion, reloadMotion, setMotion, subscribeMotion } from '../src/motion/setting';
+import { followOtherTabs, getMotion, MOTION_KEY, parseMotion, reloadMotion, setMotion, subscribeMotion } from '../src/motion/setting';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -47,5 +47,17 @@ describe('the motion setting', () => {
     expect(getMotion()).toBe('on');
     expect(() => setMotion('off')).not.toThrow();
     expect(getMotion()).toBe('off');
+  });
+
+  it('follows a switch made in another tab of the game', () => {
+    const stop = followOtherTabs();
+    try {
+      localStorage.setItem(MOTION_KEY, 'off');
+      window.dispatchEvent(new StorageEvent('storage', { key: MOTION_KEY, newValue: 'off' }));
+      expect(getMotion()).toBe('off');
+      expect(document.documentElement.dataset.motion).toBe('off');
+    } finally {
+      stop();
+    }
   });
 });
