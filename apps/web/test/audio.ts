@@ -1,4 +1,6 @@
 import { vi } from 'vitest';
+import type { AudioDeps, AudioFormat } from '../src/audio/manager';
+import { DEFAULT_SETTINGS, type AudioSettings, type SettingsStore } from '../src/audio/settings';
 
 /** An AudioParam that remembers the first value it was scheduled to, and its latest value. */
 function param(value: number) {
@@ -104,3 +106,40 @@ export function fakeAudioContext(opts: { resumes?: boolean } = {}) {
 }
 
 export type FakeAudio = ReturnType<typeof fakeAudioContext>;
+
+
+/** Settings kept in memory; `saved` lists every save. */
+export function memorySettings(initial: Partial<AudioSettings> = {}): SettingsStore & { saved: AudioSettings[] } {
+  let current: AudioSettings = { ...DEFAULT_SETTINGS, ...initial };
+  const saved: AudioSettings[] = [];
+  return {
+    saved,
+    load: () => current,
+    save(s) {
+      current = s;
+      saved.push(s);
+    },
+  };
+}
+
+/** Deps for createAudioManager with a fake context; a fetched file's bytes are its URL. */
+export function fakeAudioDeps(opts: { format?: AudioFormat; settings?: Partial<AudioSettings>; noAudio?: boolean; resumes?: boolean; failing?: string[] } = {}) {
+  const fake = fakeAudioContext({ resumes: opts.resumes });
+  const clock = { t: 0 };
+  const settings = memorySettings(opts.settings);
+  const fetchSound = vi.fn(async (url: string) => {
+    if (opts.failing?.some((stem) => url.includes(stem))) throw new Error(`404 ${url}`);
+    return new TextEncoder().encode(url).buffer as ArrayBuffer;
+  });
+  const createContext = vi.fn(() => (opts.noAudio ? null : (fake.raw as unknown as import('../src/audio/manager').AudioContextLike)));
+  const deps: AudioDeps = { settings, createContext, fetchSound, format: opts.format ?? 'ogg', now: () => clock.t, baseUrl: '/sounds/' };
+  return { deps, fake, clock, settings, fetchSound, createContext };
+}
+
+/** Lets the fetches and decodes started by unlock() finish (real timers). */
+export async function flushAudio(): Promise<void> {
+  for (let i = 0; i < 3; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+/** The URL a played buffer was decoded from. */
+export const urlOf = (buffer: unknown): string => (buffer as { decoded: string }).decoded;
