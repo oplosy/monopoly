@@ -14,4 +14,6 @@ The tunes are synthesized in code (`apps/web/src/audio/synth.ts`) and are origin
 
 ## Art
 
-All card art, characters and scenery are drawn in code as SVG and are original to Deal City.
+Cards, avatars and the interface are drawn in code as SVG and are original to Deal City.
+
+The painted scene in `apps/web/public/scene/` (the meadow plates, tabletop, cloth, dishes, leaves, light texture and butterfly) was generated for Deal City by its owner with ChatGPT (OpenAI image generation) and processed into WebP. `caustics.webp` is generated in code.
