@@ -581,6 +581,8 @@
   .popover-close,
   .chip,
   .narrator button,
+  .end-turn,
+  .log-close,
   .gameover-actions button { min-height: 44px; }
   .hud .sound-toggle { min-width: 44px; }
 }

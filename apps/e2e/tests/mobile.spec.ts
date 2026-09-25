@@ -64,6 +64,9 @@ test('a phone in portrait: the narrator clears the HUD, and every control fits a
   await expect(narrator).toContainText('2M');
   await expectApart(narrator, menu);
 
+  await menu.getByRole('button', { name: 'Game log' }).tap();
+  await expectTappable(ann.getByRole('complementary', { name: 'Game log' }).getByRole('button', { name: 'Close' }));
+
   for (const page of [bob, ann]) await leaveRoom(page);
 });
 
@@ -79,6 +82,7 @@ for (const [width, height] of [[844, 390], [667, 375]] as const) test(`a phone i
   // Seed 18 deals the hands of game.spec.ts: Ann banks 2M, then Bob's It's My Birthday makes her pay.
   await ann.goto(`${link}?seed=18`);
   await ann.getByRole('button', { name: 'Start game' }).tap();
+  await expectTappable(ann.getByRole('button', { name: 'End turn' }));
   await tapHand(ann, '2M money', 'Bank it (+2M)');
   await expect(ann.getByRole('group', { name: 'Your bank, 2M' })).toBeVisible();
   await ann.getByRole('button', { name: 'End turn' }).tap();
