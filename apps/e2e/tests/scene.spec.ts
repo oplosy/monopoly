@@ -39,6 +39,19 @@ test('the painted scene loads, and the leaves never take a click', async ({ brow
   for (const page of [bob, ann]) await leaveRoom(page);
 });
 
+test('the lobby stands on the painted meadow all the way down, with no plain green', async ({ browser, baseURL }) => {
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 375, height: 812 }]) {
+    const ann = await (await browser.newContext({ baseURL, viewport })).newPage();
+    await createRoom(ann, 'Ann');
+    const under = (x: number, y: number) =>
+      ann.evaluate(([px, py]) => (document.elementFromPoint(px!, py!)?.closest('.scene-ground') ? 'meadow' : 'other'), [x, y]);
+    // The bottom corners, beside the paper panel: the page's plain background showed there before.
+    expect(await under(4, viewport.height - 4)).toBe('meadow');
+    expect(await under(viewport.width - 4, viewport.height - 4)).toBe('meadow');
+    await leaveRoom(ann);
+  }
+});
+
 test('with less motion asked for, nothing in the scene moves', async ({ browser, baseURL }) => {
   const calm = await (await browser.newContext({ baseURL, reducedMotion: 'reduce' })).newPage();
   const bob = await startGame(browser, baseURL, calm);
