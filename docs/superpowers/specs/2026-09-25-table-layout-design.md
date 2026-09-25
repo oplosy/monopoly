@@ -75,9 +75,12 @@ The user's words: "we are playing a card game; the cards must never be the small
 - **Fit values** (measured at 14 viewports in 6 states; Plan 11 replaces them all):
   - desktop: `--plane: min(64vw, calc((100vh - 210px) * 0.9))`, `--plane-shift: -8%`;
   - lobby: `--plane: min(56vw, 58vh)`, height `plane × 1.05 + 110px`, shift `−17% − 8px`;
-  - short landscape (≤ 500 px high): `min(56vw, 100vh × 0.9)` for 3 players and `min(56vw, 100vh × 0.78)`, shift 9 %, for 2 (a round table at 22° is nearly as tall as wide); the resting hand shows a little less; the HUD is a 2-column grid in the top right corner; my seat moves 64 px left, clear of the hand; the narrator speaks at the left; docked trays sit at the bottom right, the discard tray above the hand;
+  - short landscape (≤ 500 px high): `min(56vw, 100vh × 0.9)`, shift −5 %, for 3 players and `min(56vw, 100vh × 0.66)`, shift 4 %, for 2 (a round table at 22° is nearly as tall as wide, and the 2-player far seat sits on its top edge); the resting hand sits at `hand-w × −0.55` (45 px of it shows, a thumb's height); the HUD is a 2-column grid in the top right corner; my seat moves 80 px left, clear of the hand; the narrator speaks at the left and the action in play at the top left; unanchored trays sit at the bottom right, the discard tray above the hand;
+  - wide screens (≥ 1024 px wide, 4:3 or wider, > 500 px high): an unanchored tray other than the pay tray waits at the right, above the hand's end (`right: 3vw`, at most `hand-reserve − 3vw − 16px` wide), clear of my seat and table;
+  - portrait phones (≤ 700 px wide): the table moves up (`--plane-shift: −7%`) while any tray shows;
+  - 2 players: the action in play stands just left of the far seat (`right: 50% + 3.2rem`), which it otherwise hides;
   - while paying, at every size, the hand tucks down and the pay tray sits at the bottom, so the cards to pay with stay pickable at the lower rim of the 22° table.
-- **Known fit gaps for Plan 11:** on landscape phones my area's bottom edge dips a few px under the resting hand; the discard, answer and counter trays can cover my seat and area at 1280×720, 1366×768 and 360×740 (none of these states picks table cards); the far chair of a 2-player game touches the top at 568×320.
+- **Fit limits left for Plan 11:** at 375×667 with 2 players the far seat's name tag slips a few px under the HUD while a tray shows (also while paying before), and the counter tray still grazes my area by ~6 px; on landscape phones an *unanchored* answer or counter tray covers the hand's right end (in play these trays sit beside my Just Say No card; they are unanchored only when the table is first drawn mid-answer, after a reload, until its next redraw); 320×568 and 360×640 portrait were not fitted.
 
 ---
 
