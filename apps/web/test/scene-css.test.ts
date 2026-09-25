@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { readCss, rule } from './css';
 
@@ -57,6 +58,24 @@ describe('the plain table (spec 2026-09-25-table-layout §3–4)', () => {
     expect(pressed).toMatch(/var\(--hand-rest\)/);
     expect(pressed).toMatch(/scale\(1\.08\)/);
     expect(rule(table, '.hand-fan > li')).toMatch(/margin-left:\s*calc\(var\(--step/);
+    // handFan counts the outer cards' swing about this pivot (FAN_PIVOT = 1.6 card heights).
+    expect(rule(table, '.hand-fan > li')).toMatch(/transform-origin:\s*50% 160%/);
     expect(table).toMatch(/\.hand-fan \.table-card\.tone-playable/);
+  });
+
+  it('keys table rules on the layout mode, not on screen-size media queries', () => {
+    const raw = readFileSync(new URL('../src/tabletop/tabletop.css', import.meta.url), 'utf8');
+    expect(raw).not.toMatch(/@media \(max-width: 700px\)/);
+    expect(raw).not.toMatch(/@media \(max-height: 500px\) and \(orientation: landscape\)/);
+    expect(raw).toMatch(/\.tabletop\[data-layout='landscape'\]/);
+    expect(raw).toMatch(/\.tabletop\[data-layout='portrait'\]\[data-compact\]/);
+  });
+
+  it('sizes the seat UI from the layout: the avatar, and the card backs beside it', () => {
+    const table = readCss(new URL('../src/tabletop/tabletop.css', import.meta.url));
+    expect(rule(table, '.seat')).not.toMatch(/--avatar:/);
+    expect(rule(table, '.avatar-frame')).toMatch(/var\(--avatar/);
+    expect(rule(table, '.back-card')).toMatch(/var\(--avatar/);
+    expect(rule(table, '.pending-cards .card-svg')).toMatch(/var\(--card-w/);
   });
 });
