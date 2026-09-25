@@ -32,7 +32,8 @@
   content: '';
   position: absolute;
   inset: 0;
-  z-index: 1;
+  /* Painted after the plate (it comes last), so it darkens it without a z-index: `container-type`
+     makes no stacking context, and a z-index here would lift it over the whole table and take its clicks. */
   background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgb(0 0 0 / 0.35) 100%);
 }
 
