@@ -119,6 +119,12 @@
 }
 .plane-anchor { position: absolute; width: 0; height: 0; }
 
+/* The butterfly: one image split into its two wings, each folding toward the body line. */
+.butterfly { position: absolute; left: 0; top: 0; width: 3.5%; aspect-ratio: 1; pointer-events: none; will-change: transform; }
+.wing { position: absolute; inset: 0; width: 100%; height: 100%; }
+.wing-left { clip-path: inset(0 50% 0 0); }
+.wing-right { clip-path: inset(0 0 0 50%); }
+
 /* Behind the paper pages: blurred (and slowly drifting, below). */
 .scene-backdrop .scene-perspective { filter: blur(5px) saturate(1.05); }
 
@@ -141,6 +147,8 @@
   .scene-table .leaves-top { animation: sway-top 9s ease-in-out -4s infinite alternate; }
   .scene-table .dapple { will-change: transform; animation: dapple-drift 50s ease-in-out infinite alternate; }
   .scene-backdrop .scene-perspective { animation: scene-drift 40s ease-in-out infinite alternate; }
+  .butterfly.is-flying .wing { animation: flap 0.16s ease-in-out infinite alternate; }
+  .butterfly.is-resting .wing { animation: flap-rest 2.6s ease-in-out infinite; }
   /* Each loop moves exactly one tile, so it wraps without a jump. */
   .scene-table .caustics { animation: caustics-a 26s linear infinite; }
   .scene-table .caustics-b { animation: caustics-b 19s linear infinite; }
@@ -148,6 +156,8 @@
   @keyframes sway-left { from { rotate: -1.5deg; } to { rotate: 2deg; scale: 1.01; } }
   @keyframes sway-top { from { rotate: 1.2deg; } to { rotate: -2.2deg; } }
   @keyframes dapple-drift { from { translate: 0 0; } to { translate: 6% 4%; } }
+  @keyframes flap { to { scale: 0.3 1; } }
+  @keyframes flap-rest { 0%, 70%, 100% { scale: 1 1; } 80% { scale: 0.45 1; } }
   @keyframes caustics-a { to { translate: 220px 220px; } }
   @keyframes caustics-b { to { translate: -300px 0; } }
   @keyframes scene-drift {
