@@ -134,9 +134,9 @@
 .leaves { position: absolute; will-change: transform; }
 /* The art is cut where its branches ran on: fade those cut edges so no straight line shows. */
 .leaves-left { left: 0; top: 6%; height: min(80%, 820px); width: auto; transform-origin: 0% 45%; mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent); }
-.leaves-top { top: 0; right: 8%; width: min(44%, 680px); height: auto; transform-origin: 50% 0%; mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); }
+.leaves-top { top: 0; right: 4%; width: min(36%, 560px); height: auto; transform-origin: 50% 0%; mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); }
 @media (orientation: portrait) {
-  .leaves-left { top: 26%; height: 34%; }
+  .leaves-left { top: 12%; height: 22%; }
   .leaves-top { right: -6%; width: 62%; }
 }
 
