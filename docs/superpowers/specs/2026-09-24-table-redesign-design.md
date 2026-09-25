@@ -458,6 +458,8 @@ Each plan gets its own implementation plan (writing-plans), its own branch and i
    - The audio manager, the Kenney CC0 assets (download with the user's approval), the cue map wired to the choreographer and UI, and the mute and volume HUD.
    - **Done when** every cue in §8 plays in sync and mute and volume persist.
 
+5. **Plans 10–12: Table layout, camera and card feel**, added 2026-09-25 by the addendum `2026-09-25-table-layout-design.md`. It overrides §4.1 (a plain oval table at 22°), §4.2, §4.3, §4.5, §6.4 (an in-game motion switch) and §9.4. Plan 9's painted scene is on hold until after Plan 12.
+
 ---
 
 ## 14. Mockups (docs/superpowers/specs/table-redesign/mockups/)
@@ -483,7 +485,7 @@ These are rough wireframes for layout decisions, not final art. Each file is a s
    - Plan 6 (`docs/superpowers/plans/2026-09-24-plan-6-table-world.md`) is merged to `main` (PR #6).
    - Plan 7 (`docs/superpowers/plans/2026-09-25-plan-7-motion.md`) is merged to `main` (PR #7).
    - Plan 8 (`docs/superpowers/plans/2026-09-25-plan-8-sound.md`) is implemented on `feat/table-sound`, except its Task 7 (the CC0 sample files), which waits for a local session.
-3. **Next step:** read the newest file in `docs/superpowers/handoff/` (the work queue) and the repo's `CLAUDE.md` (the standing rules). With Plans 6–8 the redesign in this spec is complete; there is no Plan 9 in this spec, and the next step is whatever the user asks for next. The user has consistently chosen **native (inline) execution**.
+3. **Next step:** read `2026-09-25-table-layout-design.md` (Plans 10–12, the current work), then the newest file in `docs/superpowers/handoff/` (the work queue) and the repo's `CLAUDE.md` (the standing rules). With Plans 6–8 the redesign in this spec is complete; there is no Plan 9 in this spec, and the next step is whatever the user asks for next. The user has consistently chosen **native (inline) execution**.
 4. **Working conventions (from the user's global CLAUDE.md and past sessions):**
    - Never work on `main`; branch first (`feat/…`).
    - One PR per plan, stacked if needed, merged in order by the user's request only.
