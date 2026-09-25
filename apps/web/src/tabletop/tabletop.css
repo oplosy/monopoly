@@ -639,7 +639,9 @@
   .pay-tray { grid-template-columns: 1fr; }
   .pay-tray > .tray-meter,
   .pay-tray > .tray-actions { grid-row: auto; grid-column: 1; }
-  .pay-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  /* The answer tray keeps only its buttons too: the action is written in the stage, the region is named. */
+  .pay-tray > .tray-title,
+  .respond-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .tray-meter meter { min-width: 0; }
   .tray-title { font-size: 0.8rem; }
 }

@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { describeAction } from '../game/derive';
 import type { Names } from '../game/log';
 import { useDialogFocus } from '../ui/useDialogFocus';
-import { useAnchoredPosition } from './anchored';
+import { useAnchoredPosition, type Box } from './anchored';
 import { Countdown } from './Countdown';
 
 interface Props {
@@ -13,16 +13,18 @@ interface Props {
   deadline: number | null;
   /** My Just Say No card in the hand; the answers sit beside it. */
   anchor: Element | null;
+  /** Boxes the anchored tray keeps clear of when it can (my table, the seats). */
+  avoid?: () => readonly Box[];
   onSend(intent: Intent): void;
   /** Scenes are playing: answers wait (spec §7.3). */
   busy?: boolean;
 }
 
 /** An action aimed at me: play Just Say No, or accept it. */
-export function RespondTray({ view, legal, name, deadline, anchor, onSend, busy }: Props) {
+export function RespondTray({ view, legal, name, deadline, anchor, avoid, onSend, busy }: Props) {
   const ref = useRef<HTMLElement>(null);
   useDialogFocus(ref, '.tray-actions button');
-  const place = useAnchoredPosition(anchor, ref);
+  const place = useAnchoredPosition(anchor, ref, avoid);
   const jsn = legal.find((i): i is IntentOf<'respondJustSayNo'> => i.type === 'respondJustSayNo');
   const accept: Intent = legal.find((i) => i.type === 'acceptAction') ?? { type: 'acceptAction' };
   return (

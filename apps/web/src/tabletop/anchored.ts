@@ -20,23 +20,53 @@ export function pointAnchor(at: { x: number; y: number }): AnchorLike {
 export interface Placement {
   left: number;
   top: number;
-  side: 'above' | 'right' | 'left' | 'below';
+  side: 'above' | 'right' | 'left' | 'below' | 'corner';
 }
 
 /** Distance kept from the viewport edges. */
 const MARGIN = 8;
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(v, hi));
 
+const overlaps = (a: Box, b: Box) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
 /**
  * Places a box of `size` beside `anchor`: above it when it fits (the hand sits at the bottom),
  * else to its right, to its left, or below. The box always stays MARGIN px inside the viewport.
+ * With boxes to `avoid` (my table, the seats), the first place clear of them wins: above, right,
+ * left, then lifted above what it would cover, then the bottom right corner; if none is clear, the
+ * one that covers least.
  */
 export function placeBeside(
   anchor: Box,
   size: { width: number; height: number },
   viewport: { width: number; height: number },
   gap = 12,
+  avoid: readonly Box[] = [],
 ): Placement {
+  const plain = besideAnchor(anchor, size, viewport, gap);
+  if (avoid.length === 0) return plain;
+  const boxOf = (p: Placement): Box => ({ left: p.left, top: p.top, right: p.left + size.width, bottom: p.top + size.height });
+  const inView = (p: Placement) => p.left >= MARGIN && p.top >= MARGIN && p.left + size.width <= viewport.width - MARGIN && p.top + size.height <= viewport.height - MARGIN;
+  const area = (a: Box, b: Box) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+  const covered = (p: Placement) => avoid.reduce((sum, b) => sum + area(boxOf(p), b), 0);
+  const centerX = Math.round(clamp((anchor.left + anchor.right) / 2 - size.width / 2, MARGIN, viewport.width - size.width - MARGIN));
+  const centerY = Math.round(clamp((anchor.top + anchor.bottom) / 2 - size.height / 2, MARGIN, viewport.height - size.height - MARGIN));
+  const above: Placement = { left: centerX, top: Math.round(anchor.top - gap - size.height), side: 'above' };
+  const right: Placement = { left: Math.round(anchor.right + gap), top: centerY, side: 'right' };
+  const left: Placement = { left: Math.round(anchor.left - gap - size.width), top: centerY, side: 'left' };
+  // Lifted: above the anchor, then above each box it still covers, until clear or off the top.
+  const lifted = { ...above };
+  for (let hit = avoid.find((b) => overlaps(boxOf(lifted), b)); hit && lifted.top >= MARGIN; hit = avoid.find((b) => overlaps(boxOf(lifted), b))) {
+    lifted.top = Math.round(hit.top - gap - size.height);
+  }
+  const corner: Placement = { left: viewport.width - size.width - MARGIN, top: viewport.height - size.height - MARGIN, side: 'corner' };
+  // The first place that covers nothing, else the one that covers least (the first of equals).
+  const places = [above, right, left, lifted, corner].filter(inView);
+  if (places.length === 0) return plain;
+  return places.reduce((best, p) => (covered(p) < covered(best) ? p : best));
+}
+
+function besideAnchor(anchor: Box, size: { width: number; height: number }, viewport: { width: number; height: number }, gap: number): Placement {
   const centerX = Math.round(clamp((anchor.left + anchor.right) / 2 - size.width / 2, MARGIN, viewport.width - size.width - MARGIN));
   const centerY = Math.round(clamp((anchor.top + anchor.bottom) / 2 - size.height / 2, MARGIN, viewport.height - size.height - MARGIN));
   const above = Math.round(anchor.top - gap - size.height);
@@ -49,15 +79,15 @@ export function placeBeside(
   return { left: centerX, top: below, side: 'below' };
 }
 
-/** Keeps the element in `ref` placed beside `anchor` (in viewport coordinates, for position: fixed). */
-export function useAnchoredPosition(anchor: AnchorLike | null, ref: RefObject<HTMLElement | null>): Placement {
+/** Keeps the element in `ref` placed beside `anchor` (in viewport coordinates, for position: fixed), clear of `avoid`'s boxes if it can. */
+export function useAnchoredPosition(anchor: AnchorLike | null, ref: RefObject<HTMLElement | null>, avoid?: () => readonly Box[]): Placement {
   const [place, setPlace] = useState<Placement>({ left: MARGIN, top: MARGIN, side: 'above' });
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el || !anchor) return;
     const measure = () => {
       const box = el.getBoundingClientRect();
-      const next = placeBeside(anchor.getBoundingClientRect(), { width: box.width, height: box.height }, { width: window.innerWidth, height: window.innerHeight });
+      const next = placeBeside(anchor.getBoundingClientRect(), { width: box.width, height: box.height }, { width: window.innerWidth, height: window.innerHeight }, 12, avoid?.());
       setPlace((p) => (p.left === next.left && p.top === next.top && p.side === next.side ? p : next));
     };
     measure();

@@ -193,6 +193,9 @@ function GameTable({ game }: { game: GameStatePayload }) {
   // Found after commit: on the table's first draw (a reload mid-answer) the hand is not on the page yet.
   const [jsnAnchor, setJsnAnchor] = useState<Element | null>(null);
   useLayoutEffect(() => setJsnAnchor(jsnCard ? anchorOf('hand', jsnCard) : null));
+  // Beside that card, an answer tray keeps my table, the seats, the HUD and the action in play in view.
+  const answerAvoid = () =>
+    [...(rootRef.current?.querySelectorAll('.tableau.is-mine, .seat, .hud, .pending-stage') ?? [])].map((el) => el.getBoundingClientRect());
 
   const clockFor = (id: string) => {
     const who = id === view.me ? 'Your' : `${name(id)}'s`;
@@ -285,10 +288,10 @@ function GameTable({ game }: { game: GameStatePayload }) {
               <DiscardTray count={role.count} picked={discardPicked} deadline={deadlines.turnEndsAt} onDiscard={() => send({ type: 'discard', cards: [...discardPicked] })} busy={busy} />
             )}
             {role?.kind === 'respond' && (
-              <RespondTray view={view} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} onSend={send} busy={busy} />
+              <RespondTray view={view} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} avoid={answerAvoid} onSend={send} busy={busy} />
             )}
             {role?.kind === 'counter' && (
-              <CounterTray pending={role.pending} targets={role.targets} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} onSend={send} busy={busy} />
+              <CounterTray pending={role.pending} targets={role.targets} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} avoid={answerAvoid} onSend={send} busy={busy} />
             )}
             <TableScene>
               {places.map(({ playerId, spot }) => (
