@@ -284,6 +284,8 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
       if (game === state.game) return;
       const prev = state.game;
       if (!prev || !game || game.events.length === 0 || prev.view.me !== game.view.me) {
+        // A new game's first payload has nothing to fly from, but its first player still hears their turn.
+        if (!prev && game && deps.sound && game.events.some((e) => e.type === 'turnStarted' && e.playerId === game.view.me)) deps.sound('turn');
         reset(game);
         return;
       }

@@ -1,4 +1,4 @@
-import { applyIntent, removePlayer, type GameState, type Intent } from '@deal-city/engine';
+import { applyIntent, createGame, removePlayer, type GameState, type Intent } from '@deal-city/engine';
 import { makeState } from '@deal-city/engine/testing';
 import type { GameStatePayload } from '@deal-city/protocol';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -313,5 +313,20 @@ describe('createStage', () => {
     stage.snap();
     vi.advanceTimersByTime(5000);
     expect(sound).not.toHaveBeenCalled();
+  });
+
+  it('rings the turn chime for whoever opens a new game, though its deal is not animated', () => {
+    for (const mode of ['fly', 'instant'] as const) {
+      const { state, events } = createGame(['p1', 'p2'], 18);
+      const first = state.turn.playerId;
+      const other = first === 'p1' ? 'p2' : 'p1';
+      // The room turns to "playing" before the game's first payload: the table mounts with no game yet.
+      for (const [viewer, heard] of [[first, [['turn']]], [other, []]] as const) {
+        const { stage, sound } = setup(null, { mode });
+        show(stage, payload(state, viewer, { events }));
+        vi.advanceTimersByTime(5000);
+        expect(sound.mock.calls, `${mode} ${viewer}`).toEqual(heard);
+      }
+    }
   });
 });
