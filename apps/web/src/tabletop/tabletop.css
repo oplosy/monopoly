@@ -399,6 +399,10 @@
 @media (max-width: 640px) {
   .sound-control input[type='range'] { display: none; }
 }
+/* Narrow and short screens keep the HUD on one row: the room code is still read out, but not shown. */
+@media (max-width: 480px), (max-height: 500px) {
+  .hud-room { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
 .log-drawer {
   position: absolute;
   top: 0;
@@ -423,8 +427,9 @@
   .end-turn { right: 8px; bottom: calc(var(--hand-w) * 1.25); font-size: 1rem; padding: 0.6rem 1rem; }
   .my-clock { right: 12px; bottom: calc(var(--hand-w) * 1.25 + 3.2rem); font-size: 1.3rem; }
   .hud { top: 6px; right: 6px; }
-  .narrator { top: 3.5rem; }
-  .pending-stage { top: 6.5rem; }
+  /* Below the HUD, which is one row of 44 px buttons on a phone. */
+  .narrator { top: 4.5rem; }
+  .pending-stage { top: 7.5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .narrator,
@@ -574,4 +579,10 @@
   .narrator button,
   .gameover-actions button { min-height: 44px; }
   .hud .sound-toggle { min-width: 44px; }
+}
+
+/* ---------- Short screens (a phone in landscape) ---------- */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* The narrator speaks below the HUD, never under it. */
+  .narrator { top: calc(12px + 44px + 1.2rem); }
 }

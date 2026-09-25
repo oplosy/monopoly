@@ -15,6 +15,15 @@ async function boxOf(locator: Locator): Promise<Box> {
   return box;
 }
 
+const overlap = (a: Box, b: Box): number =>
+  Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
+
+/** Two boxes share no more than a sliver (anti-aliased edges). */
+async function expectApart(a: Locator, b: Locator): Promise<void> {
+  const [ba, bb] = [await boxOf(a), await boxOf(b)];
+  expect(overlap(ba, bb), `${a.toString()} overlaps ${b.toString()}: ${JSON.stringify([ba, bb])}`).toBeLessThanOrEqual(4);
+}
+
 /** Every control is at least 44×44 CSS px, a thumb's width. */
 async function expectTappable(...controls: Locator[]): Promise<void> {
   for (const control of controls) {
@@ -33,7 +42,7 @@ const tapHand = async (page: Page, card: string, option: string) => {
   await page.getByRole('dialog', { name: /^Play / }).getByRole('button', { name: option, exact: true }).tap();
 };
 
-test('a phone in portrait: every control fits a thumb', async ({ browser, baseURL }) => {
+test('a phone in portrait: the narrator clears the HUD, and every control fits a thumb', async ({ browser, baseURL }) => {
   const ann = await phonePlayer(browser, baseURL, 360, 740);
   const bob = await newPlayer(browser, baseURL);
   const link = await createRoom(ann, 'Ann');
@@ -50,10 +59,15 @@ test('a phone in portrait: every control fits a thumb', async ({ browser, baseUR
   await expectTappable(popover.getByRole('button', { name: 'Close' }), popover.getByRole('button', { name: 'Bank it (+2M)' }));
   await popover.getByRole('button', { name: 'Bank it (+2M)' }).tap();
 
+  // The narrator tells the table what just happened, in full view.
+  const narrator = ann.locator('.narrator.is-shown .narrator-text');
+  await expect(narrator).toContainText('2M');
+  await expectApart(narrator, menu);
+
   for (const page of [bob, ann]) await leaveRoom(page);
 });
 
-test('a phone in landscape: the pay tray fits a thumb', async ({ browser, baseURL }) => {
+test('a phone in landscape: the narrator clears the HUD, and the pay tray fits a thumb', async ({ browser, baseURL }) => {
   const ann = await phonePlayer(browser, baseURL, 844, 390);
   const bob = await newPlayer(browser, baseURL);
   const cy = await newPlayer(browser, baseURL);
@@ -74,6 +88,7 @@ test('a phone in landscape: the pay tray fits a thumb', async ({ browser, baseUR
   const tray = ann.getByRole('region', { name: 'You owe Bob 2M' });
   await expect(tray).toBeVisible();
   await expectTappable(tray.getByRole('button', { name: 'Pay 2M' }), tray.getByRole('button', { name: 'Auto' }));
+  await expectApart(ann.locator('.narrator.is-shown .narrator-text'), ann.getByRole('navigation', { name: 'Game menu' }));
 
   await tray.getByRole('button', { name: 'Pay 2M' }).tap();
   for (const page of [cy, bob, ann]) await leaveRoom(page);
