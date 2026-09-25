@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Effect, Flight, FlightStyle, Scene } from '../src/motion/scenes';
-import { BUDGET_MS, MIN_FLIGHT_MS, schedule, STYLE_MS } from '../src/motion/timing';
+import { BUDGET_MS, flightMs, MIN_FLIGHT_MS, REF_PX, schedule, STYLE_MS } from '../src/motion/timing';
 
 const flight = (style: FlightStyle, i = 0): Flight => ({ id: `f${i}`, card: null, face: 'down', from: ['deck'], to: ['hand:p2'], style });
 const scene = (flights: Flight[], stagger = 0, effects: Effect[] = []): Scene => ({ kind: 'played', flights, stagger, effects });
@@ -57,5 +57,24 @@ describe('schedule', () => {
       ['played', 0],
       ['paid', 1],
     ]);
+  });
+});
+
+describe('flightMs', () => {
+  it('keeps the natural length at the reference distance, and scales travel by its square root within bounds', () => {
+    expect(flightMs('arc', REF_PX)).toBe(STYLE_MS.arc);
+    expect(flightMs('arc', REF_PX * 1.21)).toBe(Math.round(STYLE_MS.arc * 1.1));
+    expect(flightMs('slide', 10)).toBe(Math.round(STYLE_MS.slide * 0.75));
+    expect(flightMs('slide', 50_000)).toBe(Math.round(STYLE_MS.slide * 1.3));
+  });
+
+  it('keeps paths that pause at their fixed length', () => {
+    for (const style of ['action', 'slam', 'float'] as const) expect(flightMs(style, 5000)).toBe(STYLE_MS[style]);
+  });
+
+  it("lets schedule use each flight's own length", () => {
+    const t = schedule([scene([flight('slide')])], 0, () => 700);
+    expect(t.flights[0]!.duration).toBe(700);
+    expect(t.total).toBe(700);
   });
 });

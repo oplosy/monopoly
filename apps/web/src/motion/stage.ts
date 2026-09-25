@@ -6,7 +6,7 @@ import type { MotionMode } from './mode';
 import { planBatch } from './planner';
 import type { Pose } from './pose';
 import { effectSlot, type Effect, type Face, type Flight, type FlightStyle, type Scene } from './scenes';
-import { EFFECT_MS, schedule } from './timing';
+import { EFFECT_MS, flightMs, schedule, STYLE_MS } from './timing';
 
 /** At most this many flight clones at once (spec §9.4); further cards simply appear. */
 export const MAX_CLONES = 12;
@@ -196,8 +196,17 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
       deps.poses.snapshot();
       return;
     }
-    const timeline = schedule(batch.scenes, waiting.length);
     const center = deps.poses.measure(['center']);
+    // Where each flight starts and lands, known before scheduling: a flight's length follows its distance.
+    const ends = new Map<Flight, { from: Pose | null; to: Pose | null }>();
+    for (const scene of batch.scenes) {
+      for (const f of scene.flights) ends.set(f, { from: firstPose(batch.poses, f.from) ?? deps.poses.measure(f.from), to: deps.poses.measure(f.to) });
+    }
+    const length = (f: Flight): number => {
+      const e = ends.get(f);
+      return e?.from && e.to ? flightMs(f.style, Math.hypot(e.to.cx - e.from.cx, e.to.cy - e.from.cy)) : STYLE_MS[f.style];
+    };
+    const timeline = schedule(batch.scenes, waiting.length, length);
     const make = (key: string, f: Flight, from: Pose | null, to: Pose | null, delay: number, duration: number): Clone | null =>
       from && to ? { key, card: f.card, color: f.color, face: f.face, style: f.style, from, to, center, delay, duration } : null;
 
@@ -224,7 +233,7 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
           if (clone) addClones([clone]);
         });
       } else {
-        const clone = make(key, f, firstPose(batch.poses, f.from) ?? deps.poses.measure(f.from), deps.poses.measure(f.to), delay, duration);
+        const clone = make(key, f, ends.get(f)!.from, ends.get(f)!.to, delay, duration);
         if (clone) clones.push(clone);
       }
       if (f.leaves) {
