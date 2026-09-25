@@ -253,6 +253,10 @@ function GameTable({ game }: { game: GameStatePayload }) {
     );
   }
 
+  // No card preview over the popover's options: the pointer crosses the other hand cards on its way.
+  const popoverOpen = popover !== null;
+  useEffect(() => inspect.quiet(popoverOpen), [inspect, popoverOpen]);
+
   const onBackground = (e: MouseEvent<HTMLDivElement>) => {
     if (e.target instanceof Element && e.target.closest(INTERACTIVE)) return;
     cancel();

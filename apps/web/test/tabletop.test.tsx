@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { handFan, tableLayout } from '../src/scene/layout';
@@ -7,6 +7,7 @@ import { fitTableau } from '../src/scene/tableau-fit';
 import { LINE_MS, MAX_QUEUE } from '../src/tabletop/narration';
 import { renderApp, renderTabletop, sentIntents } from './dom';
 import { atTable, payload, play, roomOf } from './fixtures';
+import { HOVER_MS } from '../src/tabletop/inspect';
 
 afterEach(() => vi.useRealTimers());
 
@@ -288,5 +289,34 @@ describe('game over', () => {
     renderApp('/room/ABCDEF', { state: atTable(base(), 'p1') });
     expect(screen.getByRole('heading', { level: 1, name: 'Your turn' })).toBeInTheDocument();
     expect(screen.getByRole('list', { name: 'Your hand, 2 cards' })).toBeInTheDocument();
+  });
+});
+
+describe('the card preview and the play popover', () => {
+  const hover = (el: Element) => fireEvent.pointerEnter(el, { pointerType: 'mouse' });
+  const preview = () => document.querySelector('.inspect-preview');
+
+  it('shows no preview over an open popover while the pointer crosses the other hand cards', () => {
+    vi.useFakeTimers();
+    renderTabletop({ state: atTable(base(), 'p1') });
+    const hand = screen.getByRole('list', { name: /^Your hand/ });
+    fireEvent.click(within(hand).getByRole('button', { name: /Red property/ }));
+    expect(screen.getByRole('dialog', { name: /^Play / })).toBeInTheDocument();
+    hover(within(hand).getByRole('button', { name: /^1M money/ }));
+    act(() => vi.advanceTimersByTime(HOVER_MS + 50));
+    expect(preview()).toBeNull();
+  });
+
+  it('hides a preview already shown when a popover opens', () => {
+    vi.useFakeTimers();
+    renderTabletop({ state: atTable(base(), 'p1') });
+    const hand = screen.getByRole('list', { name: /^Your hand/ });
+    const card = within(hand).getByRole('button', { name: /Red property/ });
+    hover(card);
+    act(() => vi.advanceTimersByTime(HOVER_MS + 50));
+    expect(preview()).not.toBeNull();
+    fireEvent.click(card);
+    expect(screen.getByRole('dialog', { name: /^Play / })).toBeInTheDocument();
+    expect(preview()).toBeNull();
   });
 });

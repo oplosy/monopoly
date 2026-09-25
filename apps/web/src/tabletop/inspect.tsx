@@ -34,13 +34,15 @@ export interface InspectApi {
   /** Shows the preview beside `el`, or hides it when this card is already shown (click, Enter, Space). */
   toggle(card: InspectCard, el: Element | null): void;
   hide(): void;
+  /** While quiet (a popover is open), hovering and long presses show no preview, and one shown hides. */
+  quiet(on: boolean): void;
   /** Hovering with a mouse, or a long press with touch or a pen, shows the preview. */
   handlers(card: InspectCard): InspectHandlers;
 }
 
 const noop = () => undefined;
 const NO_HANDLERS: InspectHandlers = { onPointerEnter: noop, onPointerLeave: noop, onPointerDown: noop, onPointerUp: noop, onPointerCancel: noop };
-const NONE: InspectApi = { toggle: noop, hide: noop, handlers: () => NO_HANDLERS };
+const NONE: InspectApi = { toggle: noop, hide: noop, quiet: noop, handlers: () => NO_HANDLERS };
 const InspectContext = createContext<InspectApi>(NONE);
 
 export function useInspect(): InspectApi {
@@ -56,6 +58,7 @@ function boxOf(el: Element | null): Box {
 export function InspectProvider({ children }: { children: ReactNode }) {
   const [shown, setShown] = useState<Shown | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hushed = useRef(false);
 
   const api = useMemo<InspectApi>(() => {
     const clear = () => {
@@ -64,6 +67,7 @@ export function InspectProvider({ children }: { children: ReactNode }) {
     };
     const later = (card: InspectCard, el: Element, ms: number) => {
       clear();
+      if (hushed.current) return;
       timer.current = setTimeout(() => setShown({ ...card, box: boxOf(el) }), ms);
     };
     const hide = () => {
@@ -76,6 +80,10 @@ export function InspectProvider({ children }: { children: ReactNode }) {
         setShown((s) => (s?.id === card.id ? null : { ...card, box: boxOf(el) }));
       },
       hide,
+      quiet(on) {
+        hushed.current = on;
+        if (on) hide();
+      },
       handlers(card) {
         return {
           onPointerEnter: (e) => {
