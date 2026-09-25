@@ -131,3 +131,4 @@ PR: https://github.com/oplosy/monopoly/pull/8 (merged into `main` as 307c77b).
   e2e 15 passed (Chromium via scratch config).
 - Ruling: the anchored-tray fix is checked in the scratch harness only (seed 18 reaches no Just Say No). —
   cost if wrong: a CSS regression there would be caught by eye, not by CI.
+- PR: https://github.com/oplosy/monopoly/pull/9 (base `feat/table-sound`, stacked on #8; retarget to `main` after #8 merges; not merged).
