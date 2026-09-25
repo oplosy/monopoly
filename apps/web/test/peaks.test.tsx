@@ -74,7 +74,7 @@ describe('peak moments', () => {
     if (!r.ok) throw new Error(r.error);
     const effects = new Map([
       ['rent', { effect: { type: 'bigRent' as const, stamp: '×2' }, pose: null }],
-      ['jsn', { effect: { type: 'justSayNo' as const }, pose: null }],
+      ['jsn', { effect: { type: 'justSayNo' as const, action: null }, pose: null }],
     ]);
     render(
       <StageProvider value={staticStage({ effects })}>
@@ -106,6 +106,26 @@ describe('peak moments', () => {
       expect(action).not.toHaveTextContent(/Waiting for/);
       act(() => vi.advanceTimersByTime(EFFECT_MS.justSayNo));
       expect(screen.queryByRole('region', { name: 'Action in play' })).toBeNull();
+    }));
+
+  it('shudders the right action even when the table never drew it (two payloads before one render)', () =>
+    flying(() => {
+      const s0 = play({ players: [{ id: 'p1', hand: ['act-justSayNo-1', 'money-1-1'] }, { id: 'p2', hand: ['act-debtCollector-1'] }], turn: 'p2' });
+      const { store } = renderTabletop({ state: atTable(s0, 'p1') });
+      const asked = applyIntent(s0, 'p2', { type: 'playDebtCollector', card: 'act-debtCollector-1', target: 'p1' });
+      if (!asked.ok) throw new Error(asked.error);
+      act(() => {
+        store.setState({ game: payload(asked.state, 'p1', { events: asked.events }) });
+        store.setState({ game: change(asked.state, 'p1', { type: 'respondJustSayNo', card: 'act-justSayNo-1' }) });
+      });
+      // The Debt Collector's scene plays first; the Just Say No's starts once it is over.
+      let action: HTMLElement | null = null;
+      for (let t = 0; t < 3000 && !action?.classList.contains('is-shaken'); t += 50) {
+        act(() => vi.advanceTimersByTime(50));
+        action = screen.queryByRole('region', { name: 'Action in play' });
+      }
+      expect(action).toHaveClass('is-shaken');
+      expect(action).toHaveTextContent(/Debt Collector/);
     }));
 
   it('shakes the timer ring in the last three seconds', () => {

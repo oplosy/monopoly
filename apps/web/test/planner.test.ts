@@ -121,7 +121,8 @@ describe('planBatch', () => {
     const scenes = planOf(s1, 'p2', { type: 'respondJustSayNo', card: 'act-justSayNo-1' });
     expect(kinds(scenes)).toEqual(['justSayNo']);
     expect(scenes[0]).toMatchObject({
-      effects: [{ type: 'justSayNo' }],
+      // It carries the action it answers, so the stage can shake it even once the action is over.
+      effects: [{ type: 'justSayNo', action: { cardIds: ['act-debtCollector-1'] } }],
       flights: [{ card: 'act-justSayNo-1', face: 'reveal', style: 'slam', from: ['hand:p2', 'seat:p2'], to: ['card:act-justSayNo-1', 'discard'] }],
     });
   });

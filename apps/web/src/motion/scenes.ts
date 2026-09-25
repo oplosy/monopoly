@@ -1,4 +1,4 @@
-import type { Color, GameEvent } from '@deal-city/engine';
+import type { Color, GameEvent, GameView } from '@deal-city/engine';
 
 /** How a card travels; keyframes.ts draws each path. */
 export type FlightStyle = 'slide' | 'arc' | 'action' | 'slam' | 'float' | 'flip' | 'gather';
@@ -32,7 +32,8 @@ export interface Flight {
 export type Effect =
   | { type: 'yourTurn' }
   | { type: 'setComplete'; groupId: string }
-  | { type: 'justSayNo' }
+  /** The action it answers, as it stood just before: the stage shows it shuddering, even if a Just Say No ended it. */
+  | { type: 'justSayNo'; action: GameView['pending'] }
   | { type: 'bigRent'; stamp: string }
   | { type: 'leave'; playerId: string }
   | { type: 'confetti' };

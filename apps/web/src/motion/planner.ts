@@ -169,7 +169,7 @@ export function planBatch(prev: GameView, next: GameView, events: readonly GameE
         break;
       }
       case 'justSayNo':
-        scene(e.type, fromHand(e.card, e.playerId, 'slam'), 0, [{ type: 'justSayNo' }]);
+        scene(e.type, fromHand(e.card, e.playerId, 'slam'), 0, [{ type: 'justSayNo', action: prev.pending }]);
         break;
       case 'paid':
         scene(e.type, e.cards.flatMap((card) => move(card, 'arc')), isBigRent(prev) ? FAST_STAGGER : PAY_STAGGER);
