@@ -562,3 +562,16 @@
 .gameover-card .card-svg { display: block; width: 100%; height: auto; }
 .gameover-card + .gameover-card { margin-left: -32px; }
 .gameover-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; align-items: center; }
+
+/* ---------- Touch: every control fits a thumb (44×44 CSS px) ---------- */
+@media (pointer: coarse) {
+  .hud button,
+  .tray-actions button,
+  .pill,
+  .pill-back,
+  .popover-close,
+  .chip,
+  .narrator button,
+  .gameover-actions button { min-height: 44px; }
+  .hud .sound-toggle { min-width: 44px; }
+}
