@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
-import type { AudioDeps, AudioFormat } from '../src/audio/manager';
+import type { Cue } from '../src/audio/cues';
+import type { AudioDeps, AudioFormat, AudioManager } from '../src/audio/manager';
 import { DEFAULT_SETTINGS, type AudioSettings, type SettingsStore } from '../src/audio/settings';
 
 /** An AudioParam that remembers the first value it was scheduled to, and its latest value. */
@@ -143,3 +144,30 @@ export async function flushAudio(): Promise<void> {
 
 /** The URL a played buffer was decoded from. */
 export const urlOf = (buffer: unknown): string => (buffer as { decoded: string }).decoded;
+
+/** An audio manager that only records what it was asked to play. */
+export function recordingAudio(initial: Partial<AudioSettings> = {}): AudioManager & { played: Cue[] } {
+  let current: AudioSettings = { ...DEFAULT_SETTINGS, ...initial };
+  const listeners = new Set<() => void>();
+  const played: Cue[] = [];
+  const change = (next: AudioSettings) => {
+    current = next;
+    for (const listener of [...listeners]) listener();
+  };
+  return {
+    played,
+    getSettings: () => current,
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    setVolume: (volume) => change({ volume, muted: volume > 0 ? false : current.muted }),
+    toggleMute: () => change({ ...current, muted: !current.muted }),
+    unlock: vi.fn(),
+    play(cue) {
+      played.push(cue);
+    },
+  };
+}

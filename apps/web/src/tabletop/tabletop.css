@@ -390,6 +390,15 @@
 .hud button { padding: 0.3rem 0.8rem; font-size: 0.85rem; border-radius: 999px; }
 .hud button.link { color: #fff8ec; }
 .hud-room { font-size: 0.85rem; }
+.sound-control { display: inline-flex; align-items: center; gap: 0.4rem; }
+.hud .sound-toggle { display: inline-grid; place-items: center; padding: 0.3rem 0.55rem; }
+.sound-toggle svg { display: block; width: 1.05rem; height: 1.05rem; }
+.sound-toggle[aria-pressed='false'] { opacity: 0.75; }
+.sound-control input[type='range'] { width: 5.5rem; accent-color: var(--gold); }
+/* Phones keep the speaker button; the HUD has no room for the slider there. */
+@media (max-width: 640px) {
+  .sound-control input[type='range'] { display: none; }
+}
 .log-drawer {
   position: absolute;
   top: 0;

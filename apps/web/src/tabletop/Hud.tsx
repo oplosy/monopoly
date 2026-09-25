@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router';
+import { SoundControl } from '../audio/SoundControl';
 import { LeaveButton } from '../pages/LeaveButton';
 
-/** The top-right corner: room code, the game log and leaving. Sound controls join it in Plan 8. */
+/** The top-right corner: sound, room code, the game log and leaving. */
 export function Hud({ code, logOpen, onToggleLog }: { code: string; logOpen: boolean; onToggleLog(): void }) {
   const navigate = useNavigate();
   return (
     <nav className="hud" aria-label="Game menu">
+      <SoundControl />
       <span className="hud-room">
         Room <strong className="num">{code}</strong>
       </span>

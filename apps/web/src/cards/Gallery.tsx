@@ -1,4 +1,6 @@
 import { CARDS, type Color } from '@deal-city/engine';
+import { useSound } from '../audio/audio-context';
+import { CUE_LABEL, CUES } from '../audio/cues';
 import { Avatar } from '../avatars/Avatar';
 import { CHARACTERS } from '../avatars/characters';
 import { PROP_KINDS } from '../scene/geometry';
@@ -15,6 +17,7 @@ const WILD_STATES: { id: string; activeColor: Color }[] = [
 
 /** Every card on one page, for visual review of the SVG art. */
 export function Gallery() {
+  const sound = useSound();
   return (
     <main className="gallery">
       <h1>Deal City card sheet</h1>
@@ -60,6 +63,15 @@ export function Gallery() {
             </figure>
           );
         })}
+      </div>
+      <h2>Sounds</h2>
+      <p>Click a sound to hear it. The first click also switches sound on for this page.</p>
+      <div role="group" aria-label="Sounds" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+        {CUES.map((cue) => (
+          <button key={cue} type="button" onClick={() => sound(cue)}>
+            {CUE_LABEL[cue]}
+          </button>
+        ))}
       </div>
     </main>
   );
