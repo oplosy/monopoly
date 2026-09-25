@@ -27,7 +27,7 @@ describe('resolveInteraction: playing', () => {
   it('opens a hand card, and closes it on a second click', () => {
     const { actions, interaction } = resolve(table(), 'p1');
     const card = interaction.card('hand', 'money-1-1', 'p1');
-    expect(card).toMatchObject({ tone: 'normal', pressed: false });
+    expect(card).toMatchObject({ tone: 'playable', pressed: false });
     card.onActivate!();
     expect(actions.select).toHaveBeenCalledWith({ zone: 'hand', card: 'money-1-1' });
     const open = resolve(table(), 'p1', { selected: { zone: 'hand', card: 'money-1-1' } });
@@ -36,9 +36,9 @@ describe('resolveInteraction: playing', () => {
     expect(open.actions.select).toHaveBeenCalledWith(null);
   });
 
-  it("dims every hand card on another player's turn but still opens it", () => {
+  it("leaves every hand card plain on another player's turn, and still opens it", () => {
     const card = resolve(table(), 'p2').interaction.card('hand', 'money-2-1', 'p2');
-    expect(card.tone).toBe('dim');
+    expect(card.tone).toBe('normal');
     expect(card.onActivate).toBeDefined();
   });
 
@@ -58,7 +58,7 @@ describe('resolveInteraction: aiming', () => {
     const { actions, interaction } = resolve(table(), 'p1', { aim });
     expect(interaction.card('tableau', 'prop-yellow-1', 'p2')).toEqual({ tone: 'target', onActivate: steal });
     expect(interaction.card('tableau', 'prop-brown-1', 'p2')).toEqual({ tone: 'dim' });
-    expect(interaction.card('hand', 'money-1-1', 'p1')).toEqual({ tone: 'dim' });
+    expect(interaction.card('hand', 'money-1-1', 'p1')).toEqual({ tone: 'normal' });
     expect(interaction.player('p2')).toEqual({ target: true, onPick: pickBob });
     expect(interaction.player('p1').target).toBe(false);
     const played = interaction.card('hand', 'act-slyDeal-1', 'p1');
@@ -99,14 +99,14 @@ describe('resolveInteraction: answering', () => {
     );
     const { interaction } = resolve(s, 'p2');
     expect(interaction.card('hand', 'act-justSayNo-1', 'p2')).toEqual({ tone: 'target' });
-    expect(interaction.card('hand', 'money-2-1', 'p2')).toEqual({ tone: 'dim' });
+    expect(interaction.card('hand', 'money-2-1', 'p2')).toEqual({ tone: 'normal' });
     const countered = play(
       { players: [{ id: 'p1', hand: ['act-debtCollector-1', 'act-justSayNo-2', 'money-1-1'] }, { id: 'p2', hand: ['act-justSayNo-1'], bank: ['money-5-1'] }] },
       [['p1', dc], ['p2', { type: 'respondJustSayNo', card: 'act-justSayNo-1' }]],
     );
     const actor = resolve(countered, 'p1').interaction;
     expect(actor.card('hand', 'act-justSayNo-2', 'p1')).toEqual({ tone: 'target' });
-    expect(actor.card('hand', 'money-1-1', 'p1')).toEqual({ tone: 'dim' });
+    expect(actor.card('hand', 'money-1-1', 'p1')).toEqual({ tone: 'normal' });
   });
 
   it('lights up my Just Say No when I can answer with it', () => {

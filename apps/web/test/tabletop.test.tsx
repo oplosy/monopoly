@@ -2,7 +2,7 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { tableLayout } from '../src/scene/layout';
+import { handFan, tableLayout } from '../src/scene/layout';
 import { fitTableau } from '../src/scene/tableau-fit';
 import { LINE_MS, MAX_QUEUE } from '../src/tabletop/narration';
 import { renderApp, renderTabletop, sentIntents } from './dom';
@@ -75,6 +75,23 @@ describe('the table', () => {
     expect(mine.style.getPropertyValue('--cascade')).toBe(String(fit.cascade));
     expect(mine.style.getPropertyValue('--gap')).toBe(String(fit.gap));
     expect(mine.dataset.rows).toBe('1');
+  });
+
+  it('spaces my hand by the layout, and scrolls a long hand on a phone instead of shrinking it (Review Focus 2)', () => {
+    const long = [1, 2, 3, 4, 5, 6].map((i) => `money-1-${i}`).concat([1, 2, 3, 4, 5].map((i) => `money-2-${i}`), ['money-3-1']);
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 375 });
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 812 });
+    try {
+      renderTabletop({ state: atTable(play({ players: [{ id: 'p1', hand: long }, { id: 'p2' }] }), 'p1') });
+      const fan = screen.getByRole('list', { name: 'Your hand, 12 cards' });
+      const L = tableLayout({ width: 375, height: 812 }, 2);
+      expect(fan).toHaveClass('is-scrolling');
+      expect(fan.style.getPropertyValue('--step')).toBe(`${handFan(L, 12).step}px`);
+      for (const li of within(fan).getAllByRole('listitem')) expect(li.style.getPropertyValue('--rot')).toBe('0deg');
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: 768 });
+    }
   });
 
   it('re-lays the table when the window turns (Review Focus 1)', () => {

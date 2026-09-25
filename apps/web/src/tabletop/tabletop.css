@@ -237,22 +237,32 @@
 }
 .hand-fan > li {
   flex: none;
-  /* Overlap 35%, or more when --n cards would not fit between the reserves (a big hand squeezes). */
-  margin-left: min(
-    calc(var(--hand-w) * -0.35),
-    calc((100vw - 2 * var(--hand-reserve) - var(--hand-w)) / max(var(--n, 1) - 1, 1) - var(--hand-w))
-  );
+  /* Each card's step from the one before comes from the layout (handFan): at least 28 % of a card shows. */
+  margin-left: calc(var(--step, calc(var(--hand-w) * 0.62)) - var(--hand-w));
   transform-origin: 50% 160%;
   transform: translateY(var(--drop, 0px)) rotate(var(--rot, 0deg));
-  transition: transform 0.15s ease, translate 0.15s ease;
+  transition: transform 0.15s ease-out, translate 0.15s ease-out;
 }
 .hand-fan > li:first-child { margin-left: 0; }
 .hand-fan > li:hover,
-.hand-fan > li:focus-within { z-index: 2; transform: translateY(calc(var(--drop, 0px) - 12px)) rotate(calc(var(--rot, 0deg) * 0.5)); }
+.hand-fan > li:focus-within { z-index: 2; transform: translateY(calc(var(--drop, 0px) - 12px)) rotate(calc(var(--rot, 0deg) * 0.5)) scale(1.05); }
 /* The hovered card's neighbours part a little, by transform only, so the fan never re-centres. */
 .hand-fan > li:hover ~ li { translate: calc(var(--hand-w) * 0.1) 0; }
 .hand-fan > li:has(~ li:hover) { translate: calc(var(--hand-w) * -0.1) 0; }
-.hand-fan > li:has(> .is-pressed) { z-index: 3; transform: translateY(calc(var(--hand-w) * -0.3)) scale(1.18); }
+/* The selected card (its popover open) rises fully on screen. */
+.hand-fan > li:has(> .is-pressed) { z-index: 3; transform: translateY(calc(var(--hand-rest) * -1 - 8px)) scale(1.08); }
+/* A hand too long to fan scrolls sideways at full size; the strip's padding leaves the lifted cards room. */
+.hand-fan.is-scrolling {
+  max-width: calc(100vw - 2 * var(--hand-reserve));
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-top: calc(var(--hand-rest) + var(--hand-h) * 0.15);
+  pointer-events: none;
+  scrollbar-width: thin;
+}
+.hand-fan.is-scrolling > li { pointer-events: auto; }
+/* On my turn, the cards I can play have a gold edge; the others stay plain, never greyed out. */
+.hand-fan .table-card.tone-playable { box-shadow: 0 0 0 2px var(--gold), 0 6px 14px rgb(0 0 0 / 0.4); }
 .hand-fan .table-card { width: var(--hand-w); box-shadow: 0 6px 14px rgb(0 0 0 / 0.4); }
 .hand-fan .table-card.tone-target { outline: none; box-shadow: 0 0 0 3px var(--gold), 0 0 24px 4px rgb(255 216 74 / 0.9); }
 .hand-fan.is-empty {

@@ -16,7 +16,7 @@ export interface Aim {
 export type Selection = { zone: 'hand' | 'tableau'; card: string } | null;
 
 export type CardZone = 'hand' | 'tableau' | 'bank' | 'pile';
-export type CardTone = 'normal' | 'dim' | 'target' | 'selectable';
+export type CardTone = 'normal' | 'dim' | 'target' | 'selectable' | 'playable';
 
 export interface CardInteraction {
   tone: CardTone;

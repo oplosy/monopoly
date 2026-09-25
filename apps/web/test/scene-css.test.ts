@@ -46,4 +46,17 @@ describe('the plain table (spec 2026-09-25-table-layout §3–4)', () => {
     expect(table).toMatch(/margin-left:\s*calc\(var\(--card-w\) \* var\(--gap/);
     expect(table).not.toMatch(/\.group-stack:has\(> \.tone-target, > \.tone-selectable\)/);
   });
+
+  it('lifts a hovered hand card 12 px and scales it to 1.05, and a selected one fully on screen at 1.08 (spec §5.5)', () => {
+    const table = readCss(new URL('../src/tabletop/tabletop.css', import.meta.url));
+    const hover = rule(table, '.hand-fan > li:hover,\n.hand-fan > li:focus-within');
+    expect(hover).toMatch(/translateY\(calc\(var\(--drop, 0px\) - 12px\)\)/);
+    expect(hover).toMatch(/scale\(1\.05\)/);
+    expect(rule(table, '.hand-fan > li')).toMatch(/transition:\s*transform 0\.15s ease-out/);
+    const pressed = rule(table, '.hand-fan > li:has(> .is-pressed)');
+    expect(pressed).toMatch(/var\(--hand-rest\)/);
+    expect(pressed).toMatch(/scale\(1\.08\)/);
+    expect(rule(table, '.hand-fan > li')).toMatch(/margin-left:\s*calc\(var\(--step/);
+    expect(table).toMatch(/\.hand-fan \.table-card\.tone-playable/);
+  });
 });

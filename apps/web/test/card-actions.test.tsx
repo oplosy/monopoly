@@ -111,13 +111,18 @@ describe('the card popover', () => {
     expect(sentIntents(socket)).toEqual([{ type: 'moveProperty', card: 'wild-darkBlue-green-1', toGroup: 'new', color: 'darkBlue' }]);
   });
 
-  it("fades my cards on another player's turn and says why they cannot be played", async () => {
+  it("leaves my cards plain on another player's turn and says why they cannot be played", async () => {
     const { user } = setup('p2');
-    expect(handCard(/^2M money$/)).toHaveClass('tone-dim');
+    expect(handCard(/^2M money$/)).toHaveClass('tone-normal');
     await user.click(handCard(/^2M money$/));
     const popover = screen.getByRole('dialog', { name: 'Play 2M' });
     expect(within(popover).getByText("It's not your turn.")).toBeInTheDocument();
     expect(within(popover).queryByRole('button', { name: /Bank it/ })).not.toBeInTheDocument();
+  });
+
+  it('marks the cards I can play on my turn with a gold edge', () => {
+    setup();
+    expect(handCard(/^1M money$/)).toHaveClass('tone-playable');
   });
 });
 
