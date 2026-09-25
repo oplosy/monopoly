@@ -472,7 +472,7 @@ These are rough wireframes for layout decisions, not final art. Each file is a s
    - The redesign work branch is `feat/table-redesign`, which holds this spec, its mockups and a `.gitignore` entry for `.superpowers/`.
    - Plan 6 (`docs/superpowers/plans/2026-09-24-plan-6-table-world.md`) is merged to `main` (PR #6).
    - Plan 7 (`docs/superpowers/plans/2026-09-25-plan-7-motion.md`) is implemented on `feat/table-motion`.
-3. **Next step:** invoke the writing-plans skill for **Plan 8** (sound, §13.3), save it as `docs/superpowers/plans/<date>-plan-8-sound.md`, and ask the user to review it. The user has consistently chosen **native (inline) execution**.
+3. **Next step:** read the newest file in `docs/superpowers/handoff/` (the work queue) and the repo's `CLAUDE.md` (the standing rules). As of 2026-09-25, Plan 8 (`docs/superpowers/plans/2026-09-25-plan-8-sound.md`) is written and approved on `feat/table-sound`, waiting to be executed. The user has consistently chosen **native (inline) execution**.
 4. **Working conventions (from the user's global CLAUDE.md and past sessions):**
    - Never work on `main`; branch first (`feat/…`).
    - One PR per plan, stacked if needed, merged in order by the user's request only.
