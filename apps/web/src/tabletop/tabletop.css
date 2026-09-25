@@ -399,6 +399,14 @@
 @media (max-width: 640px) {
   .sound-control input[type='range'] { display: none; }
 }
+/* Up to tablet widths, and on short screens, the HUD stays one short row, clear of the seat across the
+   table: the room code is still read out, but not shown. */
+@media (max-width: 1100px), (max-height: 500px) {
+  .hud-room { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  /* There the HUD reaches the middle of the screen: the narrator and the action in play sit below it. */
+  .narrator { top: calc(12px + 44px + 1.2rem); }
+  .pending-stage { top: calc(12px + 44px + 4.2rem); }
+}
 .log-drawer {
   position: absolute;
   top: 0;
@@ -423,8 +431,9 @@
   .end-turn { right: 8px; bottom: calc(var(--hand-w) * 1.25); font-size: 1rem; padding: 0.6rem 1rem; }
   .my-clock { right: 12px; bottom: calc(var(--hand-w) * 1.25 + 3.2rem); font-size: 1.3rem; }
   .hud { top: 6px; right: 6px; }
-  .narrator { top: 3.5rem; }
-  .pending-stage { top: 6.5rem; }
+  /* Below the HUD, which is one row of 44 px buttons on a phone. */
+  .narrator { top: 4.5rem; }
+  .pending-stage { top: 7.5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
   .narrator,
@@ -562,3 +571,48 @@
 .gameover-card .card-svg { display: block; width: 100%; height: auto; }
 .gameover-card + .gameover-card { margin-left: -32px; }
 .gameover-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; align-items: center; }
+
+/* ---------- Touch: every control fits a thumb (44×44 CSS px) ---------- */
+@media (pointer: coarse) {
+  .hud button,
+  .tray-actions button,
+  .pill,
+  .pill-back,
+  .popover-close,
+  .chip,
+  .narrator button,
+  .end-turn,
+  .log-close,
+  .gameover-actions button { min-height: 44px; }
+  .hud .sound-toggle { min-width: 44px; }
+}
+
+/* ---------- Short screens (a phone in landscape) ---------- */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* A smaller hand leaves the height to the table. */
+  .tabletop { --hand-w: 64px; --hand-reserve: 24vw; --short-plane: min(56vw, calc((100vh - 80px) * 1.3)); --side: calc((100vw - var(--short-plane)) / 2 - 16px); }
+  /* :has() matches the ≤700 px rule that lifts a portrait table while paying: landscape keeps it level. */
+  .tabletop .scene,
+  .tabletop:has(.pay-tray) .scene { --plane: var(--short-plane); --plane-shift: 4%; }
+  /* The HUD keeps to the corner, clear of the far seats: the slider waits for a taller screen. */
+  .sound-control input[type='range'] { display: none; }
+  /* The narrator speaks below the HUD, never under it. */
+  .narrator { top: calc(12px + 44px + 1.2rem); }
+  .end-turn { right: 10px; bottom: 10px; font-size: 1rem; padding: 0.55rem 1rem; }
+  .my-clock { right: 14px; bottom: calc(10px + 3.6rem); font-size: 1.2rem; }
+  /* Beside the table, not over it: the action in play at the top left, the trays at the bottom right
+     (End turn's corner, empty while a tray shows), so my cards stay pickable. */
+  .pending-stage { left: 8px; top: 8px; transform: none; justify-items: start; max-width: calc(var(--side) - 24px); }
+  .pending-cards .card-svg { width: 48px; }
+  .pending-text, .pending-wait { font-size: 0.8rem; text-align: left; border-radius: 12px; }
+  /* A tray anchored beside my Just Say No card keeps its own place and size. */
+  .tray:not(.is-anchored) { left: auto; right: 8px; bottom: calc(var(--hand-w) * 1.02); transform: none; width: min(var(--side), 24rem); max-width: min(var(--side), 24rem); padding: 0.6rem 0.7rem; }
+  .pay-tray { grid-template-columns: 1fr; }
+  .pay-tray > .tray-meter,
+  .pay-tray > .tray-actions { grid-row: auto; grid-column: 1; }
+  .pay-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .tray-meter meter { min-width: 0; }
+  .tray-title { font-size: 0.8rem; }
+  /* Paying picks cards on my table, not in my hand: the hand tucks down out of their way. */
+  .tabletop:has(.pay-tray) .hand-fan { bottom: calc(var(--hand-w) * -1.12); }
+}
