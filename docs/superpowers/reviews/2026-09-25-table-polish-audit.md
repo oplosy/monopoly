@@ -72,6 +72,13 @@ D1–D13, the plans' "Decisions"); every proposed fix polishes them.
   bottom right (End turn's corner, which is empty while a tray shows), and a compact pending stage at
   the top left, below nothing.
 
+**I4. On tablets, the HUD covers the seat across the table in a 2-player game.** *(Found while checking
+the fixes at every viewport.)*
+- *Where:* 1024×768 with touch. The HUD (with 44 px targets) reaches x = 518; the opponent's seat, at the
+  top center, spans x = 476–548.
+- *What a player sees:* the opponent's name ribbon under the HUD.
+- *Fix:* up to 1100 px wide, the room code leaves the visible HUD (it stays in the accessibility tree).
+
 ### Minor
 
 - **M1. Portrait phones: a small table low on the screen.** The round table is width-bound (`--plane:
@@ -100,3 +107,31 @@ D1–D13, the plans' "Decisions"); every proposed fix polishes them.
 
 - A real iPhone or Android device, and real Safari (WebKit is not installed here).
 - A full screen-reader pass. Names, the live narrator and the sr-only texts were only read in code.
+
+## Fixes (on `fix/table-polish`)
+
+Each fix started with a failing check in `apps/e2e/tests/mobile.spec.ts`, which drives a seeded game
+by taps on emulated phones and a tablet:
+
+| Finding | Commit | Check |
+|---|---|---|
+| I2 tap targets | `fix: give every table control a 44 px target on touch screens` | HUD, End turn, popover, pay tray ≥ 44 px |
+| I1 narrator under the HUD | `fix: keep the narrator below the HUD on phones` | the narrator's box and the HUD's are apart, portrait and landscape |
+| I3 landscape phones | `fix: lay the table out for phones in landscape` | while paying: the tray, my area and my hand apart; the pending stage apart from the HUD and every seat |
+| I4 tablet HUD | `fix: keep the HUD clear of the seat across the table on tablets` | the HUD and the opposite seat apart |
+
+What changed, in CSS only (`tabletop.css`, `index.css`):
+- **Touch (`pointer: coarse`):** 44 px minimum for the HUD buttons, tray buttons, popover pills and
+  Close/Back, colour chips, the narrator's Cancel, the game-over buttons and the toast's Dismiss.
+- **The HUD:** up to 1100 px wide and on short screens, the room code is hidden visually (still read
+  out), so the HUD is one row. On short screens the volume slider also waits for a taller screen, as it
+  already does on narrow ones.
+- **Phones:** the narrator at 4.5rem and the pending stage at 7.5rem, below the HUD.
+- **Short landscape screens (≤ 500 px high):** a 64 px hand and a table plane up to 56vw wide;
+  the pending stage compact at the top left; the trays docked at the bottom right, beside the table
+  (End turn's corner, empty while a tray shows); End turn and my clock smaller; while paying, the hand
+  tucks down so the cards on my table can be picked.
+
+After the fixes, the full audit was run again at every viewport: no new overlap, no horizontal scroll.
+The remaining overlaps are the Minor ones above (M2), and the lifted hand card reaching my seat with a
+10-card hand on a landscape phone (the hand is what matters while discarding).

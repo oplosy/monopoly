@@ -104,3 +104,24 @@ Gates after the fixes: web 408 (engine 108, protocol 6, server 59); typecheck, l
 is back and fails with `public/sounds/` moved away (Bob hears 0 sounds). Gates on Windows with Chrome:
 engine 108, protocol 6, server 59, web 410; typecheck, lint, build clean; e2e 10 passed. Step 6 (the
 listening review) is the user's.
+
+PR: https://github.com/oplosy/monopoly/pull/8 (merged into `main` as 307c77b).
+
+## Job 2: table polish audit, branch `fix/table-polish` (from `feat/table-sound`)
+
+- Report: `docs/superpowers/reviews/2026-09-25-table-polish-audit.md`.
+- Method: a scratch harness (outside the repo) bundled the real app routes with esbuild and fed them
+  engine-built states, so every tray could be laid out at 12 viewports; the real test server for the
+  seeded game, flights and home/lobby pages.
+- Important findings, all fixed test-first with `apps/e2e/tests/mobile.spec.ts` (3 tests):
+  I1 narrator under the HUD on phones; I2 touch targets under 44 px; I3 landscape phones (tiny table,
+  trays over my cards, pending stage over the seats); I4 the HUD over the opposite seat on tablets.
+- Rulings:
+  - The room code is hidden visually (kept for screen readers) up to 1100 px and on short screens, to keep
+    the HUD one row. — the HUD otherwise covers seats or the narrator — cost if wrong: players look up the
+    code in the lobby link instead.
+  - On short landscape screens the volume slider is hidden like on narrow phones (decision 10 said
+    "phones (≤640 px)"; a landscape phone is a phone). — cost if wrong: the slider is one CSS line.
+  - Trays dock at the bottom right on short landscape screens (not bottom center as elsewhere).
+- Minors deferred: see the report (M1–M7, known candidates).
+- Animation: worst landing error 1 px; batches ≤ 1.6 s; no clones left behind.
