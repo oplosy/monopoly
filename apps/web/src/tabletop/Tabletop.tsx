@@ -44,7 +44,7 @@ import '../motion/motion.css';
 /** Clicks inside these never count as clicking the empty table. */
 const INTERACTIVE = 'button, input, label, [role="dialog"], .tray, .log-drawer, .hud';
 
-/** The game table: the picnic scene with everyone's cards, my hand, the seats and the HUD. */
+/** The game table: the felt table with everyone's cards, my hand, the seats and the HUD. */
 export function Tabletop() {
   return (
     <InspectProvider>

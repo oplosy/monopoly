@@ -1,5 +1,5 @@
-/* Motion (Plan 7). Positions and states live outside the media blocks. Every animation and
-   transition lives in the no-preference block, so asking for less motion switches them all off. */
+/* Motion (Plan 7). Positions and states are plain rules. Every animation and transition is behind
+   :root[data-motion='on'], so the in-game Animations switch turns them all off; 'off' keeps only fades. */
 
 /* ---------- Effects layer: cards in flight ---------- */
 .flight-layer {
