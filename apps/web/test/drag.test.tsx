@@ -242,6 +242,26 @@ describe('drag and drop', () => {
     }
   });
 
+  it('keeps a dropped card at the lean it had while it waits, so its flight starts from that very turn', async () => {
+    renderTabletop({ state: tableWith(['wild-red-yellow-1']) });
+    under(screen.getByRole('region', { name: 'Your area' }));
+    const card = handCard(/^Property wildcard/);
+    vi.spyOn(card, 'getBoundingClientRect').mockReturnValue(box(80, 560, 100, 140));
+    fireEvent.pointerDown(card, { ...mouse, button: 0, clientX: 100, clientY: 600 });
+    for (let i = 1; i <= 8; i++) {
+      fireEvent.pointerMove(card, { ...mouse, clientX: 100 + i * 60, clientY: 300 });
+      await act(() => new Promise((resolve) => setTimeout(resolve, 16)));
+    }
+    const turnNow = () => Number(/rotate\(([-\d.]+)deg\)/.exec(document.querySelector<HTMLElement>('.drag-ghost')!.style.transform)?.[1] ?? 0);
+    // Released mid-sweep over my table, where several plays fit: the card waits there for a choice.
+    fireEvent.pointerUp(card, { ...mouse, clientX: 580, clientY: 300 });
+    expect(screen.getByRole('dialog', { name: /^Play / })).toBeInTheDocument();
+    const dropped = turnNow();
+    expect(Math.abs(dropped)).toBeGreaterThan(1);
+    await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
+    expect(turnNow()).toBe(dropped);
+  });
+
   it('works out where the ghost goes home: its grabbed point placed so it lies exactly on the resting card, turned like it', () => {
     // Held by its middle, the ghost's grabbed point is the card's center, whatever the turn.
     expect(ghostHome({ cx: 300, cy: 700, width: 100, height: 140, rotate: 12 }, { x: 0.5, y: 0.5 })).toEqual({ x: 300, y: 700, rotate: 12 });

@@ -116,8 +116,10 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
   const lean = useSpring(useTransform(useVelocity(x), (v) => Math.max(-8, Math.min(8, v / 120))), { stiffness: 700, damping: 50 });
   const turn = useMotionValue(0);
   useMotionValueEvent(lean, 'change', (v) => {
-    // With animations off the ghost stays upright.
-    if (live.current?.phase !== 'returning') turn.set(getMotion() === 'off' ? 0 : v);
+    // Only while dragging: a dropped card keeps the lean it had while it waits, so its flight starts from
+    // that very turn (the flight measures it once; a settling lean would drift from it). With animations
+    // off the ghost stays upright.
+    if (live.current?.phase === 'dragging') turn.set(getMotion() === 'off' ? 0 : v);
   });
 
   const update = (next: DragState | null) => {
@@ -214,6 +216,7 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
             }
             x.jump(e.clientX);
             y.jump(e.clientY);
+            turn.jump(0);
             update({ card, phase: 'dragging', ok, hot: zoneAt(e.clientX, e.clientY, ok), grab: { x: p.gx, y: p.gy } });
             return;
           }

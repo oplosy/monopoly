@@ -157,7 +157,13 @@ test('a card dropped while it leans flies from where it leans, with no snap upri
     requestAnimationFrame(watch);
     const animate = Element.prototype.animate;
     Element.prototype.animate = function (frames, opts) {
-      if (this.classList.contains('flight') && Array.isArray(frames)) w.starts.push(turn(String(frames[0]!.transform)));
+      if (this.classList.contains('flight') && Array.isArray(frames)) {
+        w.starts.push(turn(String(frames[0]!.transform)));
+        // The ghost's own turn at this very instant, when it is still there: a loaded machine can skip
+        // the frame between the watch's last look and the flight's start, while the lean still settles.
+        const ghost = document.querySelector('.drag-ghost');
+        if (ghost) w.ghostTurn = turn(getComputedStyle(ghost).transform);
+      }
       return animate.call(this, frames, opts);
     };
   });
