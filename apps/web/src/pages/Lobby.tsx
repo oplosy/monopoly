@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Avatar } from '../avatars/Avatar';
 import { AvatarPicker } from '../avatars/AvatarPicker';
-import { PicnicScene } from '../scene/PicnicScene';
+import { TableScene } from '../scene/TableScene';
 import { seatLayout, seatPlan } from '../scene/geometry';
 import { PlaneAnchor, ProjectionProvider, useProjected } from '../scene/projection';
 import { useGameStore } from '../store/context';
@@ -50,11 +50,11 @@ export function Lobby({ room }: { room: RoomState }) {
     <ProjectionProvider rootRef={tableRef}>
       <div className="lobby">
         <section ref={tableRef} className="lobby-table" aria-label="The table">
-          <PicnicScene players={MAX_SEATS}>
+          <TableScene>
             {spots.map((spot) => (
               <PlaneAnchor key={spot.angle} id={chairId(spot.angle)} at={spot.ui} />
             ))}
-          </PicnicScene>
+          </TableScene>
           <ul className="chairs" aria-label="Players">
             {room.seats.map((seat) => (
               <Chair

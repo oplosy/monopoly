@@ -245,7 +245,7 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
     for (const { effect, at } of timeline.effects) {
       const slot = effectSlot(effect);
       const pose = effect.type === 'leave' ? firstPose(batch.poses, [`seat:${effect.playerId}`]) : null;
-      later(at, () => {
+      const start = () => {
         const active: ActiveEffect = { effect, pose };
         set({ effects: new Map(state.effects).set(slot, active) });
         later(EFFECT_MS[effect.type], () => {
@@ -254,7 +254,11 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
           effects.delete(slot);
           set({ effects });
         });
-      });
+      };
+      // An effect due at once starts with the batch, before the frame is painted, like the flights leaving
+      // now: behind a timer, the table would show a frame without it (a Just Say No's stage blinking out).
+      if (at <= 0) start();
+      else later(at, start);
     }
 
     // Each sound plays on the flights' clock: a skipped or snapped batch clears these timers, and stays silent.

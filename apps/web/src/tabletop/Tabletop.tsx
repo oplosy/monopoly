@@ -8,7 +8,7 @@ import { meAsPlayer, myRole, namesFrom } from '../game/derive';
 import { cardName } from '../game/log';
 import { PaperPage } from '../pages/PaperPage';
 import { MY_SEAT_UI, seatPlan } from '../scene/geometry';
-import { PicnicScene } from '../scene/PicnicScene';
+import { TableScene } from '../scene/TableScene';
 import { PlaneAnchor, ProjectionProvider } from '../scene/projection';
 import { useGameStore } from '../store/context';
 import { pointAnchor } from './anchored';
@@ -44,7 +44,7 @@ import '../motion/motion.css';
 /** Clicks inside these never count as clicking the empty table. */
 const INTERACTIVE = 'button, input, label, [role="dialog"], .tray, .log-drawer, .hud';
 
-/** The game table: the picnic scene with everyone's cards, my hand, the seats and the HUD. */
+/** The game table: the felt table with everyone's cards, my hand, the seats and the HUD. */
 export function Tabletop() {
   return (
     <InspectProvider>
@@ -65,10 +65,10 @@ function StagedTable() {
       </PaperPage>
     );
   }
-  return <TableScene game={game} />;
+  return <GameTable game={game} />;
 }
 
-function TableScene({ game }: { game: GameStatePayload }) {
+function GameTable({ game }: { game: GameStatePayload }) {
   const room = useGameStore((s) => s.room);
   const names = useGameStore((s) => s.names);
   const log = useGameStore((s) => s.log);
@@ -190,7 +190,12 @@ function TableScene({ game }: { game: GameStatePayload }) {
     rootRef.current?.querySelector(`[data-zone="${zone}"][data-card="${card}"]`) ?? null;
   const responseDeadline = deadlines.responseEndsAt[view.me] ?? null;
   const jsnCard = legal.find((i): i is IntentOf<'respondJustSayNo'> => i.type === 'respondJustSayNo')?.card;
-  const jsnAnchor = jsnCard ? anchorOf('hand', jsnCard) : null;
+  // Found after commit: on the table's first draw (a reload mid-answer) the hand is not on the page yet.
+  const [jsnAnchor, setJsnAnchor] = useState<Element | null>(null);
+  useLayoutEffect(() => setJsnAnchor(jsnCard ? anchorOf('hand', jsnCard) : null));
+  // Beside that card, an answer tray keeps my table, the seats, the HUD and the action in play in view.
+  const answerAvoid = () =>
+    [...(rootRef.current?.querySelectorAll('.tableau.is-mine, .seat, .hud, .pending-stage') ?? [])].map((el) => el.getBoundingClientRect());
 
   const clockFor = (id: string) => {
     const who = id === view.me ? 'Your' : `${name(id)}'s`;
@@ -283,12 +288,12 @@ function TableScene({ game }: { game: GameStatePayload }) {
               <DiscardTray count={role.count} picked={discardPicked} deadline={deadlines.turnEndsAt} onDiscard={() => send({ type: 'discard', cards: [...discardPicked] })} busy={busy} />
             )}
             {role?.kind === 'respond' && (
-              <RespondTray view={view} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} onSend={send} busy={busy} />
+              <RespondTray view={view} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} avoid={answerAvoid} onSend={send} busy={busy} />
             )}
             {role?.kind === 'counter' && (
-              <CounterTray pending={role.pending} targets={role.targets} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} onSend={send} busy={busy} />
+              <CounterTray pending={role.pending} targets={role.targets} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} avoid={answerAvoid} onSend={send} busy={busy} />
             )}
-            <PicnicScene players={places.length}>
+            <TableScene>
               {places.map(({ playerId, spot }) => (
                 <Tableau key={playerId} player={players.get(playerId)!} name={name(playerId)} isMe={playerId === view.me} at={spot.tableau} />
               ))}
@@ -296,7 +301,7 @@ function TableScene({ game }: { game: GameStatePayload }) {
               {places.map(({ playerId, spot }) => (
                 <PlaneAnchor key={playerId} id={`seat:${playerId}`} at={playerId === view.me ? MY_SEAT_UI : spot.ui} />
               ))}
-            </PicnicScene>
+            </TableScene>
             {places.map(({ playerId }) => {
               const handCount = playerId === view.me ? view.hand.length : players.get(playerId)!.handCount;
               return (

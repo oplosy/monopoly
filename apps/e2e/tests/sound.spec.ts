@@ -15,9 +15,10 @@ function countSounds() {
   }
 }
 
-/** A player whose page counts its sounds, asking for less motion or not. */
-async function listener(browser: Browser, baseURL: string | undefined, reducedMotion: 'reduce' | 'no-preference'): Promise<Page> {
-  const context = await browser.newContext({ baseURL, reducedMotion });
+/** A player whose page counts its sounds, with the game's animations on or off. */
+async function listener(browser: Browser, baseURL: string | undefined, motion: 'on' | 'off'): Promise<Page> {
+  const context = await browser.newContext({ baseURL });
+  if (motion === 'off') await context.addInitScript(() => localStorage.setItem('dealcity.motion', 'off'));
   await context.addInitScript(countSounds);
   return context.newPage();
 }
@@ -46,10 +47,10 @@ test('the sound toggle and the volume are remembered across a reload', async ({ 
   for (const page of [bob, ann]) await leaveRoom(page);
 });
 
-test('the other players hear a card being banked, also when they ask for less motion', async ({ browser, baseURL }) => {
+test('the other players hear a card being banked, also with animations switched off', async ({ browser, baseURL }) => {
   const ann = await newPlayer(browser, baseURL);
-  const bob = await listener(browser, baseURL, 'reduce');
-  const cy = await listener(browser, baseURL, 'no-preference');
+  const bob = await listener(browser, baseURL, 'off');
+  const cy = await listener(browser, baseURL, 'on');
   const link = await createRoom(ann, 'Ann');
   // Clicking Join is the gesture that switches their sound on.
   await joinRoom(bob, link, 'Bob');

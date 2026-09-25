@@ -3,8 +3,6 @@ import { useSound } from '../audio/audio-context';
 import { CUE_LABEL, CUES } from '../audio/cues';
 import { Avatar } from '../avatars/Avatar';
 import { CHARACTERS } from '../avatars/characters';
-import { PROP_KINDS } from '../scene/geometry';
-import { PROP_ART } from '../scenery/props';
 import { CardBack } from './CardBack';
 import { CardFace } from './CardFace';
 
@@ -21,7 +19,7 @@ export function Gallery() {
   return (
     <main className="gallery">
       <h1>Deal City card sheet</h1>
-      <p>{`${CARDS.length} cards plus the back, the characters and the picnic props. Captions are ids.`}</p>
+      <p>{`${CARDS.length} cards plus the back and the characters. Captions are ids.`}</p>
       <div className="gallery-grid">
         {CARDS.map((c) => (
           <figure key={c.id}>
@@ -51,18 +49,6 @@ export function Gallery() {
             <figcaption>{`${i} ${c.name}`}</figcaption>
           </figure>
         ))}
-      </div>
-      <h2>Picnic props</h2>
-      <div className="gallery-grid">
-        {PROP_KINDS.map((kind) => {
-          const Art = PROP_ART[kind];
-          return (
-            <figure key={kind}>
-              <Art className="card" />
-              <figcaption>{kind}</figcaption>
-            </figure>
-          );
-        })}
       </div>
       <h2>Sounds</h2>
       <p>Click a sound to hear it. The first click also switches sound on for this page.</p>

@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { ACTION_TITLES } from '../game/derive';
 import type { Names } from '../game/log';
 import { useDialogFocus } from '../ui/useDialogFocus';
-import { useAnchoredPosition } from './anchored';
+import { useAnchoredPosition, type Box } from './anchored';
 import { Countdown } from './Countdown';
 
 interface Props {
@@ -14,16 +14,18 @@ interface Props {
   name: Names;
   deadline: number | null;
   anchor: Element | null;
+  /** Boxes the anchored tray keeps clear of when it can (my table, the seats). */
+  avoid?: () => readonly Box[];
   onSend(intent: Intent): void;
   /** Scenes are playing: answers wait (spec §7.3). */
   busy?: boolean;
 }
 
 /** My answer to each player who played Just Say No against me: say no again, or let it go. */
-export function CounterTray({ pending, targets, legal, name, deadline, anchor, onSend, busy }: Props) {
+export function CounterTray({ pending, targets, legal, name, deadline, anchor, avoid, onSend, busy }: Props) {
   const ref = useRef<HTMLElement>(null);
   useDialogFocus(ref, '.tray-actions button');
-  const place = useAnchoredPosition(anchor, ref);
+  const place = useAnchoredPosition(anchor, ref, avoid);
   return (
     <section
       ref={ref}

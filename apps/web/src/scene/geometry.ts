@@ -56,33 +56,6 @@ export function seatPlan(ids: readonly string[], me: string, seatCount = ids.len
   return order.map((playerId, k) => ({ playerId, spot: spots[k]! }));
 }
 
-export type PropKind = 'melon' | 'chips' | 'sandwich' | 'glass';
-export const PROP_KINDS: readonly PropKind[] = ['melon', 'chips', 'sandwich', 'glass'];
-
-export interface PropSpot {
-  kind: PropKind;
-  at: PlanePoint;
-  /** Degrees, in the plane. */
-  rotate: number;
-  /** Width in percent of the plane. */
-  size: number;
-}
-
-const PROP_SIZE: Record<PropKind, number> = { melon: 12, chips: 11, sandwich: 12, glass: 5 };
-
-/** [kind, angle, radius, rotation]: props sit on the rim between seats, never on play zones. */
-const PROPS: Record<number, readonly (readonly [PropKind, number, number, number])[]> = {
-  1: [['melon', 200, 0.8, -20], ['chips', 340, 0.8, 0], ['sandwich', 90, 0.8, 8], ['glass', 120, 0.88, 0], ['glass', 60, 0.88, 0]],
-  2: [['melon', 200, 0.8, -20], ['chips', 340, 0.8, 0], ['sandwich', 160, 0.8, 12], ['glass', 20, 0.86, 0], ['glass', 35, 0.88, 0]],
-  3: [['melon', 210, 0.8, -20], ['chips', 330, 0.8, 0], ['sandwich', 90, 0.84, 8], ['glass', 110, 0.88, 0], ['glass', 70, 0.88, 0]],
-};
-
-/** Fixed prop positions for a player count. */
-export function propLayout(playerCount: number): PropSpot[] {
-  const n = Math.min(3, Math.max(1, Math.trunc(playerCount)));
-  return PROPS[n]!.map(([kind, angle, radius, rotate]) => ({ kind, at: planePoint(angle, radius), rotate, size: PROP_SIZE[kind] }));
-}
-
 /** FNV-1a hash of a string, as an unsigned 32-bit number. */
 function hashString(text: string): number {
   let h = 0x811c9dc5;

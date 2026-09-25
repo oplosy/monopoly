@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { setMotion } from '../src/motion/setting';
 import type { Stage, StageState } from '../src/motion/stage';
 
 export interface AnimateCall {
@@ -26,8 +27,14 @@ export function stubAnimations(): { calls: AnimateCall[]; restore(): void } {
   };
 }
 
-/** Makes the OS ask for less motion (needs the matchMedia stub from ./dom). */
+/** The player switched animations off in the HUD (spec 2026-09-25-table-layout §6.1). */
 export function reduceMotion(): { restore(): void } {
+  setMotion('off');
+  return { restore: () => setMotion('on') };
+}
+
+/** Makes the OS ask for less motion (needs the matchMedia stub from ./dom); the game no longer listens. */
+export function osAsksLessMotion(): { restore(): void } {
   const spy = vi.spyOn(window, 'matchMedia').mockImplementation(
     (query: string) =>
       ({

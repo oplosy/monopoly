@@ -32,3 +32,41 @@ describe('placeBeside', () => {
     }
   });
 });
+
+describe('placeBeside, keeping clear of boxes to avoid (my table, the seats)', () => {
+  const landscape = { width: 844, height: 390 };
+  const tray = { width: 300, height: 90 };
+  const card = box(530, 340, 64, 90);
+
+  it('stays above the card when that is clear', () => {
+    expect(placeBeside(card, tray, landscape, 12, [box(100, 20, 60, 100)])).toEqual(placeBeside(card, tray, landscape));
+  });
+
+  it('goes beside the card when above it would cover a box', () => {
+    const mine = box(560, 250, 60, 30);
+    expect(placeBeside(card, tray, landscape, 12, [mine])).toEqual({ left: 218, top: 292, side: 'left' });
+  });
+
+  it('lifts above the boxes it would cover when no side is free', () => {
+    const mine = box(380, 250, 80, 60);
+    const seat = box(140, 250, 60, 80);
+    // Above the card covers my table, its left covers my seat, its right runs off the screen.
+    expect(placeBeside(card, tray, landscape, 12, [mine, seat])).toEqual({ left: 412, top: 148, side: 'above' });
+  });
+
+  it('waits in the bottom right corner when lifting would cover a box too', () => {
+    const avoid = [box(380, 250, 80, 60), box(140, 250, 60, 80), box(560, 20, 60, 180)];
+    expect(placeBeside(card, tray, landscape, 12, avoid)).toEqual({ left: 536, top: 292, side: 'corner' });
+  });
+
+  it('covers the least it can when no place is clear', () => {
+    // Every place touches a box; the bottom right corner only grazes one.
+    const avoid = [box(380, 250, 80, 60), box(140, 250, 60, 80), box(560, 20, 60, 180), box(530, 285, 30, 20)];
+    expect(placeBeside(card, tray, landscape, 12, avoid)).toEqual({ left: 536, top: 292, side: 'corner' });
+  });
+
+  it('opens above the card, as without boxes, when nothing is clear', () => {
+    const everywhere = [box(0, 0, 844, 390)];
+    expect(placeBeside(card, tray, landscape, 12, everywhere)).toEqual(placeBeside(card, tray, landscape));
+  });
+});

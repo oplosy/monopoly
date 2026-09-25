@@ -2,7 +2,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { useRef, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PicnicScene } from '../src/scene/PicnicScene';
+import { TableScene } from '../src/scene/TableScene';
 import { PlaneAnchor, ProjectionProvider, useProjected } from '../src/scene/projection';
 import './dom';
 
@@ -30,26 +30,27 @@ function Stage({ children }: { children?: ReactNode }) {
   return (
     <ProjectionProvider rootRef={ref}>
       <div ref={ref}>
-        <PicnicScene players={2}>
+        <TableScene>
           <PlaneAnchor id="seat:p2" at={{ x: 50, y: 4 }} />
-        </PicnicScene>
+        </TableScene>
         {children}
       </div>
     </ProjectionProvider>
   );
 }
 
-describe('PicnicScene', () => {
-  it('lays the children on the tilted plane, over decorative scenery', () => {
+describe('TableScene', () => {
+  it('lays the children on the tilted plane, on a plain felt table', () => {
     const { container } = render(
-      <PicnicScene players={3}>
+      <TableScene>
         <p>On the table</p>
-      </PicnicScene>,
+      </TableScene>,
     );
     const plane = container.querySelector('.plane')!;
     expect(plane).toContainElement(screen.getByText('On the table'));
-    expect(container.querySelector('.scenery')).toHaveAttribute('aria-hidden', 'true');
-    expect(container.querySelectorAll('.prop')).toHaveLength(5);
+    expect(plane.querySelector('.table-felt')).toHaveAttribute('aria-hidden', 'true');
+    expect(container.querySelector('.scene-ground')).toHaveAttribute('aria-hidden', 'true');
+    expect(container.querySelectorAll('.prop, .cloth, .dapple')).toHaveLength(0);
   });
 });
 

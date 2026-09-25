@@ -2,11 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { viewFor } from '@deal-city/engine';
 import { opponentsInOrder } from '../src/game/derive';
 import {
-  discardJitter, fanLayout, MY_SEAT_UI, planePoint, propLayout, seatLayout, seatPlan, SEAT_UI_RADIUS, TABLEAU_RADIUS,
+  discardJitter, fanLayout, MY_SEAT_UI, planePoint, seatLayout, seatPlan, SEAT_UI_RADIUS, TABLEAU_RADIUS,
 } from '../src/scene/geometry';
 import { play } from './fixtures';
-
-const dist = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
 
 describe('planePoint', () => {
   it('puts 270° nearest the viewer and 90° at the far side', () => {
@@ -57,19 +55,6 @@ describe('seatPlan', () => {
 
   it('keeps seat order when the viewer is not seated', () => {
     expect(seatPlan(['p1', 'p2'], 'p9').map((p) => p.playerId)).toEqual(['p1', 'p2']);
-  });
-});
-
-describe('propLayout', () => {
-  it('keeps props on the rim, away from every tableau and the center', () => {
-    for (const n of [1, 2, 3]) {
-      const props = propLayout(n);
-      expect(props.map((p) => p.kind).sort()).toEqual(['chips', 'glass', 'glass', 'melon', 'sandwich']);
-      for (const prop of props) {
-        expect(dist(prop.at, { x: 50, y: 50 }), `${n}p ${prop.kind}`).toBeGreaterThan(25);
-        for (const seat of seatLayout(n)) expect(dist(prop.at, seat.tableau), `${n}p ${prop.kind}`).toBeGreaterThan(18);
-      }
-    }
   });
 });
 

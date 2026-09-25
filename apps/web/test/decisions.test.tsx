@@ -33,6 +33,12 @@ describe('answering an action', () => {
     expect(sentIntents(socket)).toEqual([{ type: 'respondJustSayNo', card: 'act-justSayNo-1' }]);
   });
 
+  it('stands beside my Just Say No card from the first draw of the table (a reload mid-answer)', () => {
+    const s = play({ players: [{ id: 'p1', hand: ['act-debtCollector-1'] }, { id: 'p2', hand: ['act-justSayNo-1'], bank: ['money-5-1'] }] }, [['p1', dc]]);
+    show(s, 'p2');
+    expect(screen.getByRole('region', { name: 'Ann wants 5M (Debt Collector)' })).toHaveClass('is-anchored');
+  });
+
   it('keeps the answer buttons usable when I click my glowing Just Say No card', async () => {
     const s = play({ players: [{ id: 'p1', hand: ['act-debtCollector-1'] }, { id: 'p2', hand: ['act-justSayNo-1'], bank: ['money-5-1'] }] }, [['p1', dc]]);
     const { user } = show(s, 'p2');
@@ -48,6 +54,7 @@ describe('answering an action', () => {
     );
     const { user, socket } = show(s, 'p1');
     const tray = screen.getByRole('region', { name: 'Answer Just Say No' });
+    expect(tray).toHaveClass('is-anchored');
     const bob = within(tray).getByRole('group', { name: 'Bob said Just Say No to your Debt Collector' });
     expect(within(bob).getByRole('button', { name: 'Just Say No!' })).toBeInTheDocument();
     await user.click(within(bob).getByRole('button', { name: 'Let it go' }));

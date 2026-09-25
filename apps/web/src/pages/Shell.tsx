@@ -1,6 +1,7 @@
 import { MotionConfig } from 'motion/react';
 import { Outlet } from 'react-router';
 import { AudioProvider } from '../audio/audio-context';
+import { useMotionSetting } from '../motion/setting';
 import { useGameStore } from '../store/context';
 import { PaperPage } from './PaperPage';
 import { Toast } from './Toast';
@@ -11,9 +12,10 @@ export function Shell() {
   const replaced = useGameStore((s) => s.replaced);
   const resume = useGameStore((s) => s.resume);
   const forget = useGameStore((s) => s.forgetSession);
+  const motion = useMotionSetting();
   return (
     <AudioProvider>
-      <MotionConfig reducedMotion="user">
+      <MotionConfig reducedMotion={motion === 'on' ? 'never' : 'always'}>
         {!connected && (
           <div className="banner" role="status">
             Connecting to the server…

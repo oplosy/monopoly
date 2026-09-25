@@ -272,12 +272,10 @@
 .inspect-preview { position: fixed; z-index: 50; pointer-events: none; filter: drop-shadow(0 14px 24px rgb(0 0 0 / 0.45)); }
 .inspect-preview .card-svg { display: block; width: 100%; height: auto; }
 
-@media (prefers-reduced-motion: reduce) {
-  .table-card,
-  .hand-fan > li,
-  .turn-ring,
-  .timer-ring { transition: none; }
-}
+:root[data-motion='off'] .table-card,
+:root[data-motion='off'] .hand-fan > li,
+:root[data-motion='off'] .turn-ring,
+:root[data-motion='off'] .timer-ring { transition: none; }
 
 /* ---------- The table screen ---------- */
 .tabletop {
@@ -292,7 +290,7 @@
   --hand-reserve: 26vw;
 }
 /* The whole table fits the screen: the far seats below the narrator, the near rim under my hand. */
-.tabletop .scene { --plane: min(70vw, calc((100vh - 170px) * 1.12)); --plane-shift: -9%; }
+.tabletop .scene { --plane: min(64vw, calc((100vh - 210px) * 0.9)); --plane-shift: -8%; }
 .narrator {
   position: absolute;
   left: 50%;
@@ -345,6 +343,9 @@
   text-align: center;
 }
 .pending-wait { font-weight: 600; font-size: 0.85rem; }
+/* With 2 players the far seat sits at the top middle, where the action in play stands: the action
+   stands just left of that seat instead, so it never hides who played it. */
+.tabletop.players-2 .pending-stage { left: auto; right: calc(50% + 3.2rem); transform: none; justify-items: end; max-width: calc(50% - 3.2rem - 8px); }
 .my-clock {
   /* Just above End turn, by the hand, so a lifted hand card never runs into it. */
   position: absolute;
@@ -391,13 +392,22 @@
 .hud button.link { color: #fff8ec; }
 .hud-room { font-size: 0.85rem; }
 .sound-control { display: inline-flex; align-items: center; gap: 0.4rem; }
-.hud .sound-toggle { display: inline-grid; place-items: center; padding: 0.3rem 0.55rem; }
-.sound-toggle svg { display: block; width: 1.05rem; height: 1.05rem; }
-.sound-toggle[aria-pressed='false'] { opacity: 0.75; }
+.hud .sound-toggle,
+.hud .motion-toggle { display: inline-grid; place-items: center; padding: 0.3rem 0.55rem; }
+.sound-toggle svg,
+.motion-toggle svg { display: block; width: 1.05rem; height: 1.05rem; }
+.sound-toggle[aria-pressed='false'],
+.motion-toggle[aria-pressed='false'] { opacity: 0.75; }
 .sound-control input[type='range'] { width: 5.5rem; accent-color: var(--gold); }
 /* Phones keep the speaker button; the HUD has no room for the slider there. */
 @media (max-width: 640px) {
   .sound-control input[type='range'] { display: none; }
+}
+/* Narrow phones: tighter spacing keeps the HUD's four controls on one row. */
+@media (max-width: 480px) {
+  .hud { gap: 0.3rem; padding: 0.3rem 0.35rem 0.3rem 0.5rem; }
+  .hud button { padding-inline: 0.6rem; }
+  .hud button.link { padding-inline: 0.3rem; }
 }
 /* Up to tablet widths, and on short screens, the HUD stays one short row, clear of the seat across the
    table: the room code is still read out, but not shown. */
@@ -427,7 +437,9 @@
 
 @media (max-width: 700px) {
   .tabletop { --hand-w: 68px; --hand-reserve: 8px; }
-  .tabletop .scene { --plane: 100vw; --plane-shift: 4%; }
+  /* As wide as the screen, smaller on a short phone, where the HUD, the far seats, a tray and the hand
+     share the height. */
+  .tabletop .scene { --plane: min(100vw, calc((100vh - 215px) * 0.75)); --plane-shift: 4%; }
   .end-turn { right: 8px; bottom: calc(var(--hand-w) * 1.25); font-size: 1rem; padding: 0.6rem 1rem; }
   .my-clock { right: 12px; bottom: calc(var(--hand-w) * 1.25 + 3.2rem); font-size: 1.3rem; }
   .hud { top: 6px; right: 6px; }
@@ -435,10 +447,8 @@
   .narrator { top: 4.5rem; }
   .pending-stage { top: 7.5rem; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .narrator,
-  .end-turn { transition: none; }
-}
+:root[data-motion='off'] .narrator,
+:root[data-motion='off'] .end-turn { transition: none; }
 
 /* ---------- Card popover ---------- */
 .popover { position: fixed; z-index: 30; width: max-content; max-width: min(22rem, calc(100vw - 16px)); }
@@ -488,11 +498,9 @@
 .rent-form legend { font-weight: 700; margin-bottom: 0.2rem; }
 .rent-form label { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500; }
 .rent-form input { width: auto; }
-@media (prefers-reduced-motion: reduce) {
-  .pill,
-  .pill-back,
-  .popover-close { transition: none; }
-}
+:root[data-motion='off'] .pill,
+:root[data-motion='off'] .pill-back,
+:root[data-motion='off'] .popover-close { transition: none; }
 
 /* ---------- Decision trays (above the hand) ---------- */
 .tray {
@@ -512,6 +520,10 @@
   box-shadow: 0 10px 24px rgb(0 0 0 / 0.35);
 }
 .tray.is-anchored { position: fixed; transform: none; bottom: auto; }
+/* Paying picks cards on my table, not in my hand: the hand tucks down and the tray sits at the bottom,
+   so the cards to pay with stay clear at the 22° tilt. */
+.tabletop:has(.pay-tray) .hand-fan { bottom: calc(var(--hand-w) * -1.12); }
+.tabletop .pay-tray { bottom: 12px; }
 .tray-title { margin: 0; font-weight: 700; font-size: 0.9rem; }
 /* The pay tray is one compact strip (mockup 05): the meter and the buttons share a row. */
 .pay-tray { grid-template-columns: minmax(8rem, 1fr) auto; grid-auto-flow: row dense; column-gap: 0.9rem; align-items: center; }
@@ -528,6 +540,11 @@
 .tray-actions button.primary { background: var(--gold); border-color: var(--gold); color: #3b2a10; }
 .counter-row { display: grid; gap: 0.35rem; }
 .counter-row + .counter-row { border-top: 1px solid rgb(255 255 255 / 0.2); padding-top: 0.45rem; }
+/* On a wide screen a tray over the hand's middle reaches my seat and my table: it waits at the right,
+   beside the table and above the hand's end (End turn's corner, empty while a tray shows). */
+@media (min-width: 1024px) and (min-aspect-ratio: 4/3) and (min-height: 501px) {
+  .tray:not(.is-anchored, .pay-tray) { left: auto; right: 3vw; transform: none; max-width: min(26rem, calc(var(--hand-reserve) - 3vw - 16px)); }
+}
 @media (max-width: 700px) {
   .tray { bottom: calc(var(--hand-w) * 1.3); max-width: calc(100vw - 1rem); }
   .pay-tray { grid-template-columns: 1fr; }
@@ -535,9 +552,19 @@
   .pay-tray > .tray-actions { grid-row: auto; grid-column: 1; }
   .tray-title { font-size: 0.8rem; }
   /* Paying on a phone: the tray keeps only the meter and buttons (the action is written in the stage
-     above the table, and the region is still named), and the table moves up so my cards stay clear. */
+     above the table, and the region is still named). */
   .pay-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  .tabletop:has(.pay-tray) .scene { --plane-shift: -6%; }
+  /* While any tray shows, the table moves up so my seat and my cards stay clear of it. */
+  .tabletop:has(.tray) .scene { --plane-shift: -7%; }
+}
+/* The narrowest phones (320 px): the HUD keeps to one row, the trays are tighter, and my seat steps up
+   clear of a tray. */
+@media (max-width: 359px) {
+  .hud { max-width: calc(100vw - 12px); gap: 0.2rem; padding: 0.3rem; }
+  .hud button { padding-inline: 0.5rem; font-size: 0.8rem; }
+  .tray { padding: 0.45rem 0.7rem; gap: 0.3rem; }
+  .tray-title { font-size: 0.75rem; }
+  .tabletop:has(.tray) .seat.is-me { translate: 0 -12px; }
 }
 
 /* ---------- Game over ---------- */
@@ -584,35 +611,54 @@
   .end-turn,
   .log-close,
   .gameover-actions button { min-height: 44px; }
-  .hud .sound-toggle { min-width: 44px; }
+  .hud .sound-toggle,
+  .hud .motion-toggle { min-width: 44px; }
 }
 
 /* ---------- Short screens (a phone in landscape) ---------- */
 @media (max-height: 500px) and (orientation: landscape) {
-  /* A smaller hand leaves the height to the table. */
-  .tabletop { --hand-w: 64px; --hand-reserve: 24vw; --short-plane: min(56vw, calc((100vh - 80px) * 1.3)); --side: calc((100vw - var(--short-plane)) / 2 - 16px); }
-  /* :has() matches the ≤700 px rule that lifts a portrait table while paying: landscape keeps it level. */
+  /* A smaller hand, resting lower (a thumb's height still shows), leaves the height to the table, which
+     sits a little high so my table clears the hand. At 22° a round table is nearly as tall as it is
+     wide: with 2 players the far seat sits on its top edge, so that table is smaller. */
+  .tabletop { --hand-w: 64px; --hand-reserve: 28vw; --short-plane: min(56vw, calc(100vh * 0.9)); --short-shift: -5%; --side: calc((100vw - var(--short-plane)) / 2 - 16px); }
+  .tabletop.players-2 { --short-plane: min(56vw, calc(100vh * 0.66)); --short-shift: 4%; }
+  .hand-fan { bottom: calc(var(--hand-w) * -0.55); }
+  /* :has() matches the ≤700 px rule that lifts a portrait table under a tray: landscape keeps it put. */
   .tabletop .scene,
-  .tabletop:has(.pay-tray) .scene { --plane: var(--short-plane); --plane-shift: 4%; }
-  /* The HUD keeps to the corner, clear of the far seats: the slider waits for a taller screen. */
+  .tabletop:has(.tray) .scene { --plane: var(--short-plane); --plane-shift: var(--short-shift); }
+  /* The HUD stands as a column in the top right corner, clear of the far seats; the slider waits for a
+     taller screen. My seat moves left, clear of the hand. */
+  .hud { display: grid; grid-template-columns: auto auto; align-items: stretch; border-radius: 22px; padding: 0.4rem; }
+  .hud > :not(.sound-control, .motion-toggle) { grid-column: 1 / -1; }
   .sound-control input[type='range'] { display: none; }
-  /* The narrator speaks below the HUD, never under it. */
-  .narrator { top: calc(12px + 44px + 1.2rem); }
+  .seat.is-me { translate: -80px 0; }
+  /* The narrator speaks at the left, beside the table and below the action in play. */
+  .narrator { left: 8px; top: 42%; transform: none; max-width: calc(var(--side) - 8px); }
+  .narrator-text { text-align: left; border-radius: 16px; }
   .end-turn { right: 10px; bottom: 10px; font-size: 1rem; padding: 0.55rem 1rem; }
   .my-clock { right: 14px; bottom: calc(10px + 3.6rem); font-size: 1.2rem; }
   /* Beside the table, not over it: the action in play at the top left, the trays at the bottom right
      (End turn's corner, empty while a tray shows), so my cards stay pickable. */
-  .pending-stage { left: 8px; top: 8px; transform: none; justify-items: start; max-width: calc(var(--side) - 24px); }
+  .pending-stage,
+  .tabletop.players-2 .pending-stage { left: 8px; right: auto; top: 8px; transform: none; justify-items: start; max-width: calc(var(--side) - 24px); }
   .pending-cards .card-svg { width: 48px; }
   .pending-text, .pending-wait { font-size: 0.8rem; text-align: left; border-radius: 12px; }
   /* A tray anchored beside my Just Say No card keeps its own place and size. */
-  .tray:not(.is-anchored) { left: auto; right: 8px; bottom: calc(var(--hand-w) * 1.02); transform: none; width: min(var(--side), 24rem); max-width: min(var(--side), 24rem); padding: 0.6rem 0.7rem; }
+  .tray:not(.is-anchored) { left: auto; right: 8px; bottom: 8px; transform: none; width: min(24rem, max(var(--side), 30vw)); max-width: min(24rem, max(var(--side), 30vw)); padding: 0.6rem 0.7rem; }
+  /* Discarding picks cards in my hand: that tray waits above the hand's right end. */
+  .tabletop .discard-tray:not(.is-anchored) { bottom: calc(var(--hand-w) * 1.02); }
   .pay-tray { grid-template-columns: 1fr; }
   .pay-tray > .tray-meter,
   .pay-tray > .tray-actions { grid-row: auto; grid-column: 1; }
-  .pay-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  /* The answer tray keeps only its buttons too: the action is written in the stage, the region is named. */
+  .pay-tray > .tray-title,
+  .respond-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .tray-meter meter { min-width: 0; }
   .tray-title { font-size: 0.8rem; }
-  /* Paying picks cards on my table, not in my hand: the hand tucks down out of their way. */
-  .tabletop:has(.pay-tray) .hand-fan { bottom: calc(var(--hand-w) * -1.12); }
+}
+/* The shortest landscape phones (320 px high): the discard tray, below the HUD column, keeps only its
+   button (my hand's cards show what to pick; the region is still named). */
+@media (max-height: 340px) and (orientation: landscape) {
+  .tray:not(.is-anchored) { padding: 0.4rem 0.6rem; gap: 0.25rem; }
+  .discard-tray > .tray-title { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }

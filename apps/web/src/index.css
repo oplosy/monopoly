@@ -3,15 +3,11 @@
   --ink: #1b1b1f;
   --muted: #6b6760;
   --cream: #fbf3e6;
-  --gingham: rgb(205 40 40 / 0.55);
-  --wood-1: #e7c08e;
-  --wood-2: #c99461;
-  --wood-3: #a8733f;
-  --wood-rim: #8a5a2e;
   --wood-dark: #5b3a1e;
-  --grass-1: #8cc463;
-  --grass-2: #5e9a3c;
-  --grass-3: #3f7a2c;
+  --bg: #1d3445;
+  --felt-1: #3b6e57;
+  --felt-2: #2d5847;
+  --rim: #5a4232;
   --ribbon-1: #1aa3c8;
   --ribbon-2: #58d3ee;
   --gold: #ffd84a;
@@ -24,7 +20,7 @@
 
 body {
   margin: 0;
-  background: var(--grass-2);
+  background: var(--bg);
   color: var(--ink);
   font-family: var(--font-display);
 }

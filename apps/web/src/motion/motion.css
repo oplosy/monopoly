@@ -1,5 +1,5 @@
-/* Motion (Plan 7). Positions and states live outside the media blocks. Every animation and
-   transition lives in the no-preference block, so asking for less motion switches them all off. */
+/* Motion (Plan 7). Positions and states are plain rules. Every animation and transition is behind
+   :root[data-motion='on'], so the in-game Animations switch turns them all off; 'off' keeps only fades. */
 
 /* ---------- Effects layer: cards in flight ---------- */
 .flight-layer {
@@ -73,51 +73,48 @@
 .rent-wheel { transform-box: fill-box; transform-origin: center; }
 .seat-ghost { position: fixed; pointer-events: none; filter: grayscale(1); }
 
-@media (prefers-reduced-motion: no-preference) {
-  .turn-pulse { animation: turn-pulse 1.3s ease-out both; }
-  .group-stack.is-celebrating::after { animation: shine 0.9s ease-out; }
-  .group-stack.is-celebrating .set-stamp { animation: stamp-slam 0.4s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
-  .pending-stage.is-shaken .pending-cards { animation: shudder 0.5s ease-in-out; }
-  .pending-stage.is-big-rent .rent-wheel { animation: wheel-spin 1.1s cubic-bezier(0.2, 0.8, 0.2, 1); }
-  .pending-stamp { animation: stamp-slam 0.4s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
-  .gameover { animation: banner-drop 0.4s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
-  .seat-ghost { animation: ghost-leave 0.9s ease-in forwards; }
-  .timer-ring.is-low { animation: ring-pulse 1s ease-in-out infinite; }
-  /* The last seconds shake as well as pulse: the two move different properties (scale, translate). */
-  .timer-ring.is-critical { animation: ring-pulse 1s ease-in-out infinite, ring-shake 0.35s linear infinite; }
-
-  @keyframes turn-pulse {
+:root[data-motion='on'] .turn-pulse { animation: turn-pulse 1.3s ease-out both; }
+:root[data-motion='on'] .group-stack.is-celebrating::after { animation: shine 0.9s ease-out; }
+:root[data-motion='on'] .group-stack.is-celebrating .set-stamp { animation: stamp-slam 0.4s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+:root[data-motion='on'] .pending-stage.is-shaken .pending-cards { animation: shudder 0.5s ease-in-out; }
+:root[data-motion='on'] .pending-stage.is-big-rent .rent-wheel { animation: wheel-spin 1.1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+:root[data-motion='on'] .pending-stamp { animation: stamp-slam 0.4s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+:root[data-motion='on'] .gameover { animation: banner-drop 0.4s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
+:root[data-motion='on'] .seat-ghost { animation: ghost-leave 0.9s ease-in forwards; }
+:root[data-motion='on'] .timer-ring.is-low { animation: ring-pulse 1s ease-in-out infinite; }
+/* The last seconds shake as well as pulse: the two move different properties (scale, translate). */
+:root[data-motion='on'] .timer-ring.is-critical { animation: ring-pulse 1s ease-in-out infinite, ring-shake 0.35s linear infinite; }
+@keyframes turn-pulse {
     0% { opacity: 0; scale: 0.6; }
     20% { opacity: 1; scale: 1.08; }
     35% { scale: 1; }
     80% { opacity: 1; }
     100% { opacity: 0; scale: 1.04; }
   }
-  @keyframes shine {
+@keyframes shine {
     0% { opacity: 0; translate: -40% 0; }
     30% { opacity: 1; }
     100% { opacity: 0; translate: 40% 0; }
   }
-  @keyframes stamp-slam {
+@keyframes stamp-slam {
     0% { opacity: 0; scale: 2.4; }
     60% { opacity: 1; scale: 0.9; }
     100% { scale: 1; }
   }
-  @keyframes shudder {
+@keyframes shudder {
     20% { translate: -6px 0; rotate: -2deg; }
     40% { translate: 6px 0; rotate: 2deg; }
     60% { translate: -4px 0; rotate: -1deg; }
     80% { translate: 3px 0; rotate: 0deg; }
   }
-  @keyframes wheel-spin { from { transform: rotate(-540deg); } }
-  @keyframes banner-drop { from { opacity: 0; translate: 0 -40px; scale: 0.92; } }
-  @keyframes ghost-leave { to { opacity: 0; scale: 0.8; translate: 0 -12px; } }
-  @keyframes ring-pulse { 50% { opacity: 0.55; scale: 1.06; } }
-  @keyframes ring-shake {
+@keyframes wheel-spin { from { transform: rotate(-540deg); } }
+@keyframes banner-drop { from { opacity: 0; translate: 0 -40px; scale: 0.92; } }
+@keyframes ghost-leave { to { opacity: 0; scale: 0.8; translate: 0 -12px; } }
+@keyframes ring-pulse { 50% { opacity: 0.55; scale: 1.06; } }
+@keyframes ring-shake {
     25% { translate: -2px 0; }
     75% { translate: 2px 0; }
   }
-}
 
 /* ---------- Controls waiting for scenes to finish (spec §7.3) ---------- */
 /* They keep focus (aria-disabled, not disabled) but look like they are waiting. Cards keep their look. */
@@ -130,58 +127,49 @@
 .popover.side-right { transform-origin: 0% 50%; }
 .popover.side-left { transform-origin: 100% 50%; }
 
-@media (prefers-reduced-motion: no-preference) {
-  /* Valid targets breathe; with less motion they keep their still gold outline. */
-  .table-card.tone-target,
-  .seat-pick,
-  .group-pick { animation: breathe 1.6s ease-in-out infinite; }
-  /* A picked card ticks up. */
-  .tableau .table-card.is-pressed { animation: tick 0.18s ease-out; }
-  /* The popover springs out of its card. */
-  .popover { animation: pop-in 0.18s cubic-bezier(0.3, 1.4, 0.5, 1); }
-  /* Buttons squash when pressed. */
-  .tray-actions button,
-  .hud button,
-  .narrator button,
-  .gameover-actions button { transition: scale 0.1s ease; }
-  .tray-actions button:active,
-  .hud button:active,
-  .narrator button:active,
-  .gameover-actions button:active { scale: 0.96; }
-  /* The turn ring swings to the next seat. */
-  .turn-ring { transition: rotate 0.6s cubic-bezier(0.3, 1.2, 0.5, 1); }
-  /* The dappled light drifts, very slowly. */
-  .dapple { animation: dapple-drift 30s ease-in-out infinite alternate; }
+/* Valid targets breathe; with less motion they keep their still gold outline. */
+:root[data-motion='on'] .table-card.tone-target,
+:root[data-motion='on'] .seat-pick,
+:root[data-motion='on'] .group-pick { animation: breathe 1.6s ease-in-out infinite; }
+/* A picked card ticks up. */
+:root[data-motion='on'] .tableau .table-card.is-pressed { animation: tick 0.18s ease-out; }
+/* The popover springs out of its card. */
+:root[data-motion='on'] .popover { animation: pop-in 0.18s cubic-bezier(0.3, 1.4, 0.5, 1); }
+/* Buttons squash when pressed. */
+:root[data-motion='on'] .tray-actions button,
+:root[data-motion='on'] .hud button,
+:root[data-motion='on'] .narrator button,
+:root[data-motion='on'] .gameover-actions button { transition: scale 0.1s ease; }
+:root[data-motion='on'] .tray-actions button:active,
+:root[data-motion='on'] .hud button:active,
+:root[data-motion='on'] .narrator button:active,
+:root[data-motion='on'] .gameover-actions button:active { scale: 0.96; }
+/* The turn ring swings to the next seat. */
+:root[data-motion='on'] .turn-ring { transition: rotate 0.6s cubic-bezier(0.3, 1.2, 0.5, 1); }
+@keyframes breathe { 50% { scale: 1.035; } }
+@keyframes tick { from { scale: 0.9; } }
+@keyframes pop-in { from { opacity: 0; scale: 0.85; } }
 
-  @keyframes breathe { 50% { scale: 1.035; } }
-  @keyframes tick { from { scale: 0.9; } }
-  @keyframes pop-in { from { opacity: 0; scale: 0.85; } }
-  @keyframes dapple-drift { to { translate: 3% 2%; } }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  /* Flights become fades in place: a card that appears somewhere fades in (spec §6.4). */
-  .table-card { animation: card-fade 0.15s ease-out; }
-  @keyframes card-fade { from { opacity: 0; } }
-}
+/* Flights become fades in place: a card that appears somewhere fades in (spec §6.4). */
+:root[data-motion='off'] .table-card { animation: card-fade 0.15s ease-out; }
+@keyframes card-fade { from { opacity: 0; } }
 
 /* ---------- Drag and drop (spec §5.2) ---------- */
 .table-card.is-dragging { opacity: 0.35; }
+.table-card.is-returning { visibility: hidden; }
 .drag-ghost {
   position: fixed;
   left: 0;
   top: 0;
   z-index: 45;
   width: var(--hand-w);
-  margin: calc(var(--hand-w) * -0.7) 0 0 calc(var(--hand-w) / -2);
+  margin: calc(var(--hand-w) * -1.4 * var(--gy, 0.5)) 0 0 calc(var(--hand-w) * -1 * var(--gx, 0.5));
+  transform-origin: calc(var(--gx, 0.5) * 100%) calc(var(--gy, 0.5) * 100%);
   pointer-events: none;
-  rotate: 6deg;
   filter: drop-shadow(0 18px 24px rgb(0 0 0 / 0.45));
 }
 .drag-ghost .card-svg { display: block; width: 100%; height: auto; }
 .drop-ok { outline: 3px dashed var(--gold); outline-offset: 4px; border-radius: 10px; }
 .drop-hot { outline-style: solid; box-shadow: 0 0 0 4px rgb(255 216 74 / 0.35), 0 0 26px rgb(255 216 74 / 0.9); }
 
-@media (prefers-reduced-motion: no-preference) {
-  .drop-ok { animation: breathe 1.6s ease-in-out infinite; }
-}
+:root[data-motion='on'] .drop-ok { animation: breathe 1.6s ease-in-out infinite; }
