@@ -182,11 +182,11 @@ The fixes of the phone polish (PR #9: 44 px touch targets, narrator below the HU
   - my zone and my seat end above the resting hand, with room for End turn in portrait;
   - the seats beside it stay on screen;
   - on landscape phones, it keeps a 118 px column clear for the HUD.
-- **The shape.** On desktops and landscape phones the plane is 1.8:1 and the felt a stadium (corner radius half the short side). In portrait it is as wide as the screen less 16 px, no wider than tall, with a radius of 18 % of its width.
+- **The shape.** On desktops and landscape phones the plane is 1.8:1 and the felt a stadium (corner radius half the short side); a plane held back by the width, not the height, grows taller instead, down to 1.45:1. In portrait it is as wide as the screen less 16 px, no wider than tall, with a radius of 18 % of its width.
 - **Zones.**
   - The far zones span from 6 % down to the center ring, and my zone from the ring to 95 %.
-  - The center ring is 2.4 card widths across.
-  - Every zone corner stays 4 px inside the felt, and no zones touch.
+  - The center is 2.8 × 1.62 card widths: the deck and the discard pile side by side, the turn ring a circle behind them.
+  - Zone edges follow the stadium's round ends (6 px in); every zone holds at least one card on every supported screen, and no zones touch.
   - On landscape phones my zone is 22–68 %, leaving the plane's lower right corner to the docked trays.
 - **Seats.**
   - Desktop: all seats sit beside the plane; the opponents are level with the far zones, and I am at the lower left.
@@ -196,11 +196,11 @@ The fixes of the phone polish (PR #9: 44 px touch targets, narrator below the HU
 - **Trays in portrait** get 56 px more room above the hand (`tray: true`). The table refits smaller; the cards keep their size.
 
 **Tableaus** (`src/scene/tableau-fit.ts`). A tableau fills its zone, and `fitTableau` lays it out in this order:
-1. a loose row (gap 0.18 card widths), then a tight one (0.08);
+1. a stack taller than the zone tightens its fan, down to each card's colour band (0.3 card widths); a loose row (gap 0.18 card widths), then a tight one (0.08);
 2. two rows, when the zone is tall enough;
 3. overlapping groups, each keeping half its width in view;
 4. smaller cards, down to the floor;
-5. at the floor, the tableau is flagged `data-overflow`.
+5. at the floor, the tableau is flagged `data-overflow`, keeping the row spacing its width allows.
 
 Other rules:
 - The bank is a tight pile, each note 0.14 card widths from the one below.
