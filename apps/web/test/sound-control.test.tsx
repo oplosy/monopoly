@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { AudioProvider } from '../src/audio/audio-context';
 import { createAudioManager } from '../src/audio/manager';
@@ -46,6 +46,15 @@ describe('the sound control', () => {
     fireEvent.pointerDown(document.body);
     fireEvent.keyDown(document.body, { key: 'a' });
     expect(createContext).toHaveBeenCalledTimes(1);
+  });
+
+  it('switches sound on when a finger lifts: browsers count a touch as a gesture only then', () => {
+    for (const lift of [(el: Element) => fireEvent.pointerUp(el, { pointerType: 'touch' }), (el: Element) => fireEvent.touchEnd(el)]) {
+      const { createContext } = control();
+      lift(document.body);
+      expect(createContext).toHaveBeenCalledTimes(1);
+      cleanup();
+    }
   });
 
   it('sits in the game menu at the table', () => {

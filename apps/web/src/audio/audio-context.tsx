@@ -10,13 +10,13 @@ export function AudioProvider({ manager, children }: { manager?: AudioManager; c
   const [audio] = useState(() => manager ?? createAudioManager(browserAudioDeps()));
   useEffect(() => {
     // Browsers let a page make sound only from a user gesture. Every gesture also resumes a context
-    // the system paused (a phone call, a locked screen).
+    // the system paused (a phone call, a locked screen). A touch counts as a gesture only when the
+    // finger lifts (pointerup, touchend), a mouse as soon as it presses (pointerdown).
     const unlock = () => audio.unlock();
-    window.addEventListener('pointerdown', unlock, true);
-    window.addEventListener('keydown', unlock, true);
+    const gestures = ['pointerdown', 'pointerup', 'touchend', 'keydown'] as const;
+    for (const type of gestures) window.addEventListener(type, unlock, true);
     return () => {
-      window.removeEventListener('pointerdown', unlock, true);
-      window.removeEventListener('keydown', unlock, true);
+      for (const type of gestures) window.removeEventListener(type, unlock, true);
     };
   }, [audio]);
   return <AudioManagerContext.Provider value={audio}>{children}</AudioManagerContext.Provider>;
