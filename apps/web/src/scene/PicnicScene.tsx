@@ -1,6 +1,7 @@
 import { memo, type CSSProperties, type ReactNode } from 'react';
 import { DISH_ART, PORTRAIT, SCENE_ART, sceneUrl } from './art';
 import { propLayout } from './geometry';
+import { clipPath, LAKE, type Polygon } from './lake';
 import './scene.css';
 
 interface Props {
@@ -38,10 +39,23 @@ const Ground = memo(function Ground() {
           <source media={PORTRAIT} srcSet={sceneUrl(SCENE_ART.platePortrait)} />
           <img className="plate-art" src={sceneUrl(SCENE_ART.plateLandscape)} alt="" decoding="async" />
         </picture>
+        <Lake which="landscape" polygon={LAKE.landscape} />
+        <Lake which="portrait" polygon={LAKE.portrait} />
       </div>
     </div>
   );
 });
+
+/** Two caustics layers sliding across each other, masked to the painted water. */
+function Lake({ which, polygon }: { which: 'landscape' | 'portrait'; polygon: Polygon }) {
+  const texture = { backgroundImage: `url(${sceneUrl(SCENE_ART.caustics)})` };
+  return (
+    <div className={`lake lake-${which}`} style={{ clipPath: clipPath(polygon) }}>
+      <div className="caustics" style={texture} />
+      <div className="caustics caustics-b" style={texture} />
+    </div>
+  );
+}
 
 /** Out-of-focus branches at the edges of the view: above the table, beneath the flat UI, never clickable. */
 const Leaves = memo(function Leaves() {

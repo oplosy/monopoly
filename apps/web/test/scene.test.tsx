@@ -88,6 +88,17 @@ describe('PicnicScene', () => {
     const backdrop = render(<PicnicScene players={3} variant="backdrop" />);
     expect(backdrop.container.querySelector('.scene-leaves')).toBeNull();
   });
+  it('shimmers the lake of each plate, masked to its water', () => {
+    const { container } = render(<PicnicScene players={2} />);
+    const plate = container.querySelector('.scene-plate')!;
+    for (const which of ['landscape', 'portrait']) {
+      const lake = plate.querySelector(`.lake-${which}`) as HTMLElement;
+      expect(lake.style.clipPath).toMatch(/^polygon\(/);
+      const layers = [...lake.querySelectorAll<HTMLElement>('.caustics')];
+      expect(layers).toHaveLength(2);
+      for (const layer of layers) expect(layer.style.backgroundImage).toMatch(/\/scene\/caustics\.webp/);
+    }
+  });
 });
 
 describe('projection', () => {

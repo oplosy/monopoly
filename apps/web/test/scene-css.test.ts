@@ -47,4 +47,12 @@ describe('scene.css', () => {
   it('never lets the leaves take a click', () => {
     expect(rule(css, '.scene-leaves')).toMatch(/pointer-events:\s*none/);
   });
+
+  it('switches the lake with the plate, and hides it behind the paper pages', () => {
+    const portrait = split(css, `@media ${PORTRAIT}`).inside;
+    expect(rule(css, '.lake-portrait')).toMatch(/display:\s*none/);
+    expect(rule(portrait, '.lake-landscape')).toMatch(/display:\s*none/);
+    expect(rule(portrait, '.lake-portrait')).toMatch(/display:\s*block/);
+    expect(rule(css, '.scene-backdrop .lake')).toMatch(/display:\s*none/);
+  });
 });
