@@ -49,7 +49,57 @@ describe('PicnicScene', () => {
     const plane = container.querySelector('.plane')!;
     expect(plane).toContainElement(screen.getByText('On the table'));
     expect(container.querySelector('.scenery')).toHaveAttribute('aria-hidden', 'true');
-    expect(container.querySelectorAll('.prop')).toHaveLength(5);
+    const dishes = [...container.querySelectorAll('img.prop')];
+    expect(dishes.map((d) => d.getAttribute('src')!.replace(/^.*\/scene\//, '')).sort()).toEqual([
+      'dish-berries.webp',
+      'dish-chips.webp',
+      'dish-melon.webp',
+    ]);
+    for (const dish of dishes) expect(dish).toHaveAttribute('alt', '');
+  });
+
+  it('paints the meadow, in portrait on tall screens', () => {
+    const { container } = render(<PicnicScene players={2} />);
+    const source = container.querySelector('.scene-ground source')!;
+    expect(source).toHaveAttribute('media', '(orientation: portrait)');
+    expect(source.getAttribute('srcset')).toMatch(/\/scene\/bg-portrait\.webp$/);
+    const plate = container.querySelector('.plate-art')!;
+    expect(plate.getAttribute('src')).toMatch(/\/scene\/bg-landscape\.webp$/);
+    expect(plate).toHaveAttribute('alt', '');
+    expect(container.querySelector('.scene-ground')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('lays the painted tabletop, the cloth and the light on the table', () => {
+    const { container } = render(<PicnicScene players={2} />);
+    const wood = container.querySelector('.scenery .table-wood')!;
+    expect(wood.querySelector('.table-art')!.getAttribute('src')).toMatch(/\/scene\/table-top\.webp$/);
+    expect(wood.querySelector('.cloth')!.getAttribute('src')).toMatch(/\/scene\/cloth\.webp$/);
+    expect((wood.querySelector('.dapple') as HTMLElement).style.backgroundImage).toMatch(/\/scene\/dapple\.webp/);
+  });
+  it('hangs painted leaves over the table, but not behind the paper pages', () => {
+    const table = render(<PicnicScene players={2} />);
+    const leaves = table.container.querySelector('.scene-leaves')!;
+    expect(leaves).toHaveAttribute('aria-hidden', 'true');
+    expect([...leaves.querySelectorAll('img')].map((i) => i.getAttribute('src')!.replace(/^.*\/scene\//, ''))).toEqual([
+      'leaves-left.webp',
+      'leaves-top.webp',
+    ]);
+    table.unmount();
+    const backdrop = render(<PicnicScene players={3} variant="backdrop" />);
+    expect(backdrop.container.querySelector('.scene-leaves')).toBeNull();
+  });
+  it('shimmers the lake of each plate, masked to its water', () => {
+    const { container } = render(<PicnicScene players={2} />);
+    const plate = container.querySelector('.scene-plate')!;
+    for (const which of ['landscape', 'portrait']) {
+      const lake = plate.querySelector(`.lake-${which}`) as HTMLElement;
+      expect(lake.style.clipPath).toMatch(/^polygon\(/);
+      // Only the water's box is drawn, never the whole plate.
+      expect(parseFloat(lake.style.width) * parseFloat(lake.style.height)).toBeLessThan(40 * 100);
+      const layers = [...lake.querySelectorAll<HTMLElement>('.caustics')];
+      expect(layers).toHaveLength(2);
+      for (const layer of layers) expect(layer.style.backgroundImage).toMatch(/\/scene\/caustics\.webp/);
+    }
   });
 });
 

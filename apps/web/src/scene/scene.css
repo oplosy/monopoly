@@ -17,6 +17,7 @@
   position: absolute;
   inset: 0;
   background: radial-gradient(ellipse at 50% 35%, var(--grass-1) 0%, var(--grass-2) 55%, var(--grass-3) 100%);
+  container-type: size;
 }
 .scene-ground::before {
   content: '';
@@ -31,7 +32,33 @@
   content: '';
   position: absolute;
   inset: 0;
+  /* Painted after the plate (it comes last), so it darkens it without a z-index: `container-type`
+     makes no stacking context, and a z-index here would lift it over the whole table and take its clicks. */
   background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgb(0 0 0 / 0.35) 100%);
+}
+
+/* The painted plate covers the scene like object-fit: cover, in a box of its own ratio, so layers
+   drawn in its coordinates (the lake) stay on it however the screen crops it. */
+.scene-plate {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100cqw, 150cqh);
+  aspect-ratio: 3 / 2;
+  translate: -50% -50%;
+}
+.scene-plate picture, .plate-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* The lake's shimmer: two caustics layers, masked to the water of the plate on show. */
+.lake { position: absolute; mix-blend-mode: screen; opacity: 0.3; pointer-events: none; }
+.lake-portrait { display: none; }
+.scene-backdrop .lake { display: none; }
+/* Each layer overhangs its lake box only on the side it slides from, by exactly one tile. */
+.caustics { position: absolute; inset: -220px 0 0 -220px; background-size: 220px 220px; will-change: transform; }
+.caustics-b { inset: 0 -300px 0 0; background-size: 300px 300px; opacity: 0.7; }
+@media (orientation: portrait) {
+  .scene-plate { width: max(100cqw, 66.667cqh); aspect-ratio: 2 / 3; }
+  .lake-landscape { display: none; }
+  .lake-portrait { display: block; }
 }
 
 .scene-perspective {
@@ -57,59 +84,87 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
+  overflow: hidden;
   background:
     repeating-linear-gradient(90deg, rgb(90 50 20 / 0.35) 0 2px, transparent 2px 12.3%),
     radial-gradient(circle at 40% 35%, var(--wood-1), var(--wood-2) 60%, var(--wood-3));
-  box-shadow: 0 0 0 calc(var(--plane) * 0.017) var(--wood-rim), 0 calc(var(--plane) * 0.066) calc(var(--plane) * 0.1) rgb(0 0 0 / 0.55);
+  /* The thick rim: two copies of the disk toward the viewer, then the shadow on the grass. */
+  box-shadow:
+    0 calc(var(--plane) * 0.012) 0 var(--wood-rim),
+    0 calc(var(--plane) * 0.024) 0 color-mix(in srgb, var(--wood-rim) 70%, black),
+    0 calc(var(--plane) * 0.066) calc(var(--plane) * 0.1) rgb(0 0 0 / 0.55);
 }
+.table-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .cloth {
   position: absolute;
-  left: -8%;
-  top: 8%;
-  width: 55%;
-  height: 84%;
-  border-radius: 50% 18% 18% 50% / 50% 30% 30% 50%;
-  background:
-    repeating-linear-gradient(0deg, var(--gingham) 0 3.33%, transparent 3.33% 6.67%),
-    repeating-linear-gradient(90deg, var(--gingham) 0 6%, transparent 6% 12%),
-    var(--cream);
-  box-shadow: 1px 1.5px 2.5px rgb(0 0 0 / 0.25);
+  left: 12%;
+  top: 14%;
+  width: 36%;
+  height: auto;
   transform: rotate(-8deg);
+  filter: drop-shadow(1px 2px 3px rgb(0 0 0 / 0.3));
 }
+/* Leaf shadows over the wood and the cloth, beneath every card. */
 .dapple {
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  opacity: 0.35;
-  background:
-    radial-gradient(circle at 25% 30%, rgb(255 255 230 / 0.9) 0 6%, transparent 7%),
-    radial-gradient(circle at 62% 22%, rgb(255 255 230 / 0.8) 0 4%, transparent 5%),
-    radial-gradient(circle at 70% 60%, rgb(255 255 230 / 0.7) 0 5%, transparent 6%),
-    radial-gradient(circle at 35% 70%, rgb(255 255 230 / 0.7) 0 3%, transparent 4%);
+  inset: -10%;
+  background-size: calc(var(--plane) * 0.45) auto;
+  mix-blend-mode: multiply;
+  opacity: 0.45;
   pointer-events: none;
 }
 .prop {
   position: absolute;
   height: auto;
   transform: translate(-50%, -50%) rotate(var(--r, 0deg));
-  filter: drop-shadow(3px 5px 4px rgb(0 0 0 / 0.35));
+  filter: drop-shadow(2px 4px 4px rgb(0 0 0 / 0.3));
 }
 .plane-anchor { position: absolute; width: 0; height: 0; }
 
-/* Behind the paper pages: blurred, slowly drifting. */
-.scene-backdrop .scene-perspective {
-  filter: blur(5px) saturate(1.05);
-  animation: scene-drift 40s ease-in-out infinite alternate;
-}
-@keyframes scene-drift {
-  from { transform: translate(-1.5%, -1%) scale(1.04); }
-  to { transform: translate(1.5%, 1%) scale(1.06); }
+/* The butterfly: one image split into its two wings, each folding toward the body line. */
+.butterfly { position: absolute; left: 0; top: 0; width: 5%; aspect-ratio: 1; pointer-events: none; will-change: transform; }
+.wing { position: absolute; inset: 0; width: 100%; height: 100%; }
+.wing-left { clip-path: inset(0 50% 0 0); }
+.wing-right { clip-path: inset(0 0 0 50%); }
+
+/* Behind the paper pages: blurred (and slowly drifting, below). */
+.scene-backdrop .scene-perspective { filter: blur(5px) saturate(1.05); }
+
+.scene-leaves { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.leaves { position: absolute; will-change: transform; }
+/* The art is cut where its branches ran on: fade those cut edges so no straight line shows. */
+.leaves-left { left: 0; top: 6%; height: min(80%, 820px); width: auto; transform-origin: 0% 45%; mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent); }
+.leaves-top { top: 0; right: 4%; width: min(36%, 560px); height: auto; transform-origin: 50% 0%; mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent); }
+@media (orientation: portrait) {
+  .leaves-left { top: 12%; height: 22%; }
+  .leaves-top { right: -6%; width: 62%; }
 }
 
 @media (max-width: 700px) {
   .scene { --plane: 100vw; --tilt: 50deg; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .scene-backdrop .scene-perspective { animation: none; }
+/* Ambient life (spec 2026-09-25 §5): slow, small, transform-only; a still picture when less motion is asked for. */
+@media (prefers-reduced-motion: no-preference) {
+  .scene-table .leaves-left { animation: sway-left 7s ease-in-out infinite alternate; }
+  .scene-table .leaves-top { animation: sway-top 9s ease-in-out -4s infinite alternate; }
+  .scene-table .dapple { will-change: transform; animation: dapple-drift 50s ease-in-out infinite alternate; }
+  .scene-backdrop .scene-perspective { animation: scene-drift 40s ease-in-out infinite alternate; }
+  .butterfly.is-flying .wing { animation: flap 0.16s ease-in-out infinite alternate; }
+  .butterfly.is-resting .wing { animation: flap-rest 2.6s ease-in-out infinite; }
+  /* Each loop moves exactly one tile, so it wraps without a jump. */
+  .scene-table .caustics { animation: caustics-a 26s linear infinite; }
+  .scene-table .caustics-b { animation: caustics-b 19s linear infinite; }
+
+  @keyframes sway-left { from { rotate: -1.5deg; } to { rotate: 2deg; scale: 1.01; } }
+  @keyframes sway-top { from { rotate: 1.2deg; } to { rotate: -2.2deg; } }
+  @keyframes dapple-drift { from { translate: 0 0; } to { translate: 6% 4%; } }
+  @keyframes flap { to { scale: 0.3 1; } }
+  @keyframes flap-rest { 0%, 70%, 100% { scale: 1 1; } 80% { scale: 0.45 1; } }
+  @keyframes caustics-a { to { translate: 220px 220px; } }
+  @keyframes caustics-b { to { translate: -300px 0; } }
+  @keyframes scene-drift {
+    from { transform: translate(-1.5%, -1%) scale(1.04); }
+    to { transform: translate(1.5%, 1%) scale(1.06); }
+  }
 }

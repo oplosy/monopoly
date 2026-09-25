@@ -33,7 +33,7 @@ These are the project's standing rules. Every session, local or cloud, follows t
 ## Guardrails
 
 - **No new npm dependencies** without the user's approval. `canvas-confetti` (Plan 7) is the only one added by the redesign.
-- **Ask before downloading assets**. The one exception already approved is the Kenney CC0 sound packs for Plan 8 Task 7.
+- **Ask before downloading assets**. Approved exceptions: the Kenney CC0 sound packs (Plan 8 Task 7) and one CC0 ambience recording from OpenGameArt (Plan 9 Task 8).
 - Do not start Docker Desktop.
 - `for_table/` holds the user's reference images and is **never committed**. Leave it alone.
 - Original art only: no UNO, Hasbro or Monopoly assets.

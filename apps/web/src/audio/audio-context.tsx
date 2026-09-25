@@ -41,6 +41,21 @@ export function useSound(): (cue: Cue) => void {
   );
 }
 
+/** Plays the picnic ambience while `on`, except while the tab is hidden (spec §8: a hidden tab hears only my turn). */
+export function useAmbience(on: boolean): void {
+  const audio = useContext(AudioManagerContext);
+  useEffect(() => {
+    if (!audio) return;
+    const apply = () => audio.setAmbience(on && !document.hidden);
+    apply();
+    document.addEventListener('visibilitychange', apply);
+    return () => {
+      document.removeEventListener('visibilitychange', apply);
+      audio.setAmbience(false);
+    };
+  }, [audio, on]);
+}
+
 const noSubscribe = () => () => undefined;
 
 export function useAudioSettings(): AudioSettings {

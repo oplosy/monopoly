@@ -56,8 +56,8 @@ export function seatPlan(ids: readonly string[], me: string, seatCount = ids.len
   return order.map((playerId, k) => ({ playerId, spot: spots[k]! }));
 }
 
-export type PropKind = 'melon' | 'chips' | 'sandwich' | 'glass';
-export const PROP_KINDS: readonly PropKind[] = ['melon', 'chips', 'sandwich', 'glass'];
+export type PropKind = 'melon' | 'chips' | 'berries';
+export const PROP_KINDS: readonly PropKind[] = ['melon', 'chips', 'berries'];
 
 export interface PropSpot {
   kind: PropKind;
@@ -68,13 +68,13 @@ export interface PropSpot {
   size: number;
 }
 
-const PROP_SIZE: Record<PropKind, number> = { melon: 12, chips: 11, sandwich: 12, glass: 5 };
+const PROP_SIZE: Record<PropKind, number> = { melon: 12, chips: 11, berries: 10 };
 
-/** [kind, angle, radius, rotation]: props sit on the rim between seats, never on play zones. */
+/** [kind, angle, radius, rotation]: the painted dishes sit on the rim between seats, never on play zones. */
 const PROPS: Record<number, readonly (readonly [PropKind, number, number, number])[]> = {
-  1: [['melon', 200, 0.8, -20], ['chips', 340, 0.8, 0], ['sandwich', 90, 0.8, 8], ['glass', 120, 0.88, 0], ['glass', 60, 0.88, 0]],
-  2: [['melon', 200, 0.8, -20], ['chips', 340, 0.8, 0], ['sandwich', 160, 0.8, 12], ['glass', 20, 0.86, 0], ['glass', 35, 0.88, 0]],
-  3: [['melon', 210, 0.8, -20], ['chips', 330, 0.8, 0], ['sandwich', 90, 0.84, 8], ['glass', 110, 0.88, 0], ['glass', 70, 0.88, 0]],
+  1: [['melon', 200, 0.8, -20], ['chips', 340, 0.8, 0], ['berries', 90, 0.8, 0]],
+  2: [['melon', 200, 0.8, -20], ['chips', 340, 0.8, 0], ['berries', 160, 0.8, 0]],
+  3: [['melon', 210, 0.8, -20], ['chips', 330, 0.8, 0], ['berries', 90, 0.84, 0]],
 };
 
 /** Fixed prop positions for a player count. */

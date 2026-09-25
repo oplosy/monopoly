@@ -1,28 +1,7 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readCss, split } from './css';
 
-const css = readFileSync(new URL('../src/motion/motion.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-
-/** The bodies of every block opened by `header`, and the text outside them. */
-function split(text: string, header: string): { inside: string; outside: string } {
-  let inside = '';
-  let outside = '';
-  let at = 0;
-  for (;;) {
-    const start = text.indexOf(header, at);
-    if (start < 0) return { inside, outside: outside + text.slice(at) };
-    outside += text.slice(at, start);
-    const open = text.indexOf('{', start);
-    let depth = 0;
-    let i = open;
-    for (; i < text.length; i++) {
-      if (text[i] === '{') depth++;
-      else if (text[i] === '}' && --depth === 0) break;
-    }
-    inside += text.slice(open + 1, i);
-    at = i + 1;
-  }
-}
+const css = readCss(new URL('../src/motion/motion.css', import.meta.url));
 
 const moving = split(css, '@media (prefers-reduced-motion: no-preference)');
 const reduced = split(moving.outside, '@media (prefers-reduced-motion: reduce)');

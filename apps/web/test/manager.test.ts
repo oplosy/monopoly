@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { GAIN, SAMPLES } from '../src/audio/cues';
-import { createAudioManager, UNLOCK_GRACE_MS } from '../src/audio/manager';
+import { AMBIENCE_FADE_OUT_S, AMBIENCE_GAIN, createAudioManager, UNLOCK_GRACE_MS } from '../src/audio/manager';
 import { fakeAudioDeps, flushAudio, urlOf } from './audio';
 
 async function unlocked(opts: Parameters<typeof fakeAudioDeps>[0] = {}) {
@@ -119,5 +119,54 @@ describe('createAudioManager', () => {
     expect(fetchSound).not.toHaveBeenCalled();
     audio.toggleMute();
     expect(audio.getSettings().muted).toBe(true);
+  });
+});
+
+describe('the ambience', () => {
+  const ambienceVoices = <V extends { buffer: unknown }>(voices: V[]) => voices.filter((v) => v.buffer !== null && urlOf(v.buffer).includes('/ambience/'));
+
+  it('plays a quiet loop that fades in, once sound is unlocked', async () => {
+    const f = fakeAudioDeps();
+    const audio = createAudioManager(f.deps);
+    audio.setAmbience(true);
+    expect(f.fetchSound).not.toHaveBeenCalledWith('/ambience/meadow.ogg');
+    audio.unlock();
+    await flushAudio();
+    expect(f.fetchSound).toHaveBeenCalledWith('/ambience/meadow.ogg');
+    const [voice] = ambienceVoices(f.fake.voices);
+    expect(voice).toBeDefined();
+    expect((voice!.node as unknown as { loop: boolean }).loop).toBe(true);
+    const gain = voice!.node.connected[0] as { gain: { first: number | null; value: number }; connected: unknown[] };
+    expect(gain.gain.first).toBe(0);
+    expect(gain.gain.value).toBe(AMBIENCE_GAIN);
+    // Through the master gain: the master volume and mute rule it.
+    expect(gain.connected).toEqual([f.fake.gains[0]]);
+  });
+
+  it('fades out and stops, and starts again from the loaded loop', async () => {
+    const { audio, fake, fetchSound } = await unlocked();
+    audio.setAmbience(true);
+    await flushAudio();
+    const [first] = ambienceVoices(fake.voices);
+    audio.setAmbience(false);
+    const gain = first!.node.connected[0] as { gain: { value: number } };
+    expect(gain.gain.value).toBe(0);
+    expect((first!.node as unknown as { stop: ReturnType<typeof vi.fn> }).stop).toHaveBeenCalledWith(AMBIENCE_FADE_OUT_S);
+    audio.setAmbience(true);
+    audio.setAmbience(true);
+    expect(ambienceVoices(fake.voices)).toHaveLength(2);
+    expect(fetchSound.mock.calls.filter(([url]) => url.includes('/ambience/'))).toHaveLength(1);
+  });
+
+  it('is silent when muted, and when the file is missing', async () => {
+    const muted = await unlocked({ settings: { muted: true } });
+    muted.audio.setAmbience(true);
+    await flushAudio();
+    expect(muted.fake.gains[0]!.gain.value).toBe(0);
+
+    const missing = await unlocked({ failing: ['meadow'] });
+    missing.audio.setAmbience(true);
+    await flushAudio();
+    expect(ambienceVoices(missing.fake.voices)).toEqual([]);
   });
 });

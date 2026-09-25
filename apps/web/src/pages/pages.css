@@ -60,6 +60,8 @@
 .lobby-table, .lobby-table .scene { --plane: min(62vw, 70vh); }
 .lobby-table { position: relative; overflow: hidden; height: calc(var(--plane) * 0.78 + 150px); }
 .lobby-table .scene { --plane-shift: calc(-9% - 75px); }
+/* The painted meadow fills the whole lobby, under the paper panel too: no plain green band below the table. */
+.lobby-table .scene-ground { position: fixed; inset: 0; }
 .chairs { list-style: none; margin: 0; padding: 0; }
 .chair {
   position: absolute;

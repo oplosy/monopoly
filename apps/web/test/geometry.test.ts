@@ -64,7 +64,7 @@ describe('propLayout', () => {
   it('keeps props on the rim, away from every tableau and the center', () => {
     for (const n of [1, 2, 3]) {
       const props = propLayout(n);
-      expect(props.map((p) => p.kind).sort()).toEqual(['chips', 'glass', 'glass', 'melon', 'sandwich']);
+      expect(props.map((p) => p.kind).sort()).toEqual(['berries', 'chips', 'melon']);
       for (const prop of props) {
         expect(dist(prop.at, { x: 50, y: 50 }), `${n}p ${prop.kind}`).toBeGreaterThan(25);
         for (const seat of seatLayout(n)) expect(dist(prop.at, seat.tableau), `${n}p ${prop.kind}`).toBeGreaterThan(18);

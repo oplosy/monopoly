@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
-import { motionMode } from '../src/motion/mode';
+import { canAnimate, motionMode } from '../src/motion/mode';
 import './dom';
 import { reduceMotion, stubAnimations } from './motion';
 
@@ -25,6 +25,21 @@ describe('motionMode', () => {
       expect(motionMode()).toBe('instant');
     } finally {
       reduced.restore();
+      animations.restore();
+    }
+  });
+});
+
+describe('canAnimate', () => {
+  it('needs the Web Animations API and no request for less motion, but not a visible tab', () => {
+    expect(canAnimate()).toBe(false);
+    const animations = stubAnimations();
+    try {
+      expect(canAnimate()).toBe(true);
+      const reduced = reduceMotion();
+      expect(canAnimate()).toBe(false);
+      reduced.restore();
+    } finally {
       animations.restore();
     }
   });
