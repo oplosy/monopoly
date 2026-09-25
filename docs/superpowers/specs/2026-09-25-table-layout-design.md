@@ -69,6 +69,16 @@ The user's words: "we are playing a card game; the cards must never be the small
 - The perspective distance is chosen so that the farthest table card renders at **0.88× or more** of the nearest. Plan 11 measures this; if it falls short, the distance is increased.
 - Seats keep their angles (parent §4.2): 2 players face to face; 3 players with me at the bottom, the others upper left and upper right. My seat's UI stays at the lower left, clear of my hand.
 
+**As built (Plan 10).**
+- **Scene.** `TableScene` (was `PicnicScene`): the navy ground (`--bg`), a felt plane (`--felt-1`, `--felt-2`) with a rim (`--rim`, 1.2 % of the plane) and its shadow, tilted `--tilt: 22deg`. The props, cloth, light, grass tokens and the paper pages' backdrop scene are gone. The table's own component in `Tabletop.tsx` is now `GameTable`.
+- **Still round.** The oval arrives with the layout model in Plan 11 (Plan 10 decision 1); the plane is the old square, restyled as felt.
+- **Fit values** (measured at 14 viewports in 6 states; Plan 11 replaces them all):
+  - desktop: `--plane: min(64vw, calc((100vh - 210px) * 0.9))`, `--plane-shift: -8%`;
+  - lobby: `--plane: min(56vw, 58vh)`, height `plane × 1.05 + 110px`, shift `−17% − 8px`;
+  - short landscape (≤ 500 px high): `min(56vw, 100vh × 0.9)` for 3 players and `min(56vw, 100vh × 0.78)`, shift 9 %, for 2 (a round table at 22° is nearly as tall as wide); the resting hand shows a little less; the HUD is a 2-column grid in the top right corner; my seat moves 64 px left, clear of the hand; the narrator speaks at the left; docked trays sit at the bottom right, the discard tray above the hand;
+  - while paying, at every size, the hand tucks down and the pay tray sits at the bottom, so the cards to pay with stay pickable at the lower rim of the 22° table.
+- **Known fit gaps for Plan 11:** on landscape phones my area's bottom edge dips a few px under the resting hand; the discard, answer and counter trays can cover my seat and area at 1280×720, 1366×768 and 360×740 (none of these states picks table cards); the far chair of a 2-player game touches the top at 568×320.
+
 ---
 
 ## 5. The layout model (Plan 11)
@@ -168,6 +178,13 @@ The fixes of the phone polish (PR #9: 44 px touch targets, narrator below the HU
 - The ghost keeps the offset where the card was grabbed, so the grabbed point stays under the pointer (±2 px), and it follows with **no spring lag**.
 - It leans slightly with the horizontal speed (up to 8°) and settles back in 150 ms.
 - Drop zones, the legal-intent mapping and held drops are unchanged (Plan 7).
+
+**As built (Plan 10).**
+- **The switch.** `motion/setting.ts` keeps `dealcity.motion` (`'on'` unless a stored `'off'`), writes it on `<html data-motion>` before the first render (`main.tsx`), and tells its listeners; blocked storage keeps the choice for the page. `motionMode()` and Framer's `MotionConfig` (`never` / `always`) read it; nothing asks `prefers-reduced-motion` any more. The HUD's "Animations" button (`aria-pressed`) sits right after Sound.
+- **The CSS.** Every former `@media (prefers-reduced-motion: …)` block is now selectors on `:root[data-motion='on' | 'off']`, with its `@keyframes` at the top level (a one-off script did the rewrite). Off keeps only the 150 ms card fade.
+- **Dragging.** The grabbed point is kept as fractions of the card (`grab`, 0–1; a card without a layout box is held by its middle) and drawn with `--gx`, `--gy` on the ghost, which follows the pointer with no spring. It leans up to 8° with the horizontal speed on a spring that settles in about 150 ms (`stiffness 700, damping 50`). The ghost's anchor measures with its parent's real turn (`data-rot="parent"`), so a dropped card's flight starts at the lean it had. A missed drop flies home onto the card's live pose (its hover settling, its fan angle), with the card hidden underneath, and they swap unseen; with animations off it is there at once.
+- **Peaks fixed on the way** (asked by the user: animations complete and bug-free): an action cancelled by a Just Say No stays on stage while it shudders; effects due at 0 ms start with their batch, before paint.
+- e2e players who need a calm table switch animations off through `localStorage` (`newPlayer(…, { motion: 'off' })`).
 
 ### 6.3 Animation polish (Plan 12)
 
