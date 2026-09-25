@@ -50,6 +50,9 @@ export const SAMPLES: Partial<Record<Cue, readonly string[]>> = {
   error: ['impactSoft_medium_000'],
 };
 
+/** The only cue a hidden tab still plays: my turn is worth hearing while I am away (spec §8). */
+export const BACKGROUND_CUES: ReadonlySet<Cue> = new Set<Cue>(['turn']);
+
 /** Cues drawn with the Web Audio API (synth.ts): tunes and air, which the packs do not have. */
 export const SYNTHS: ReadonlySet<Cue> = new Set<Cue>(['whoosh', 'breaker', 'chime', 'turn', 'win', 'lose']);
 

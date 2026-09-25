@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
-import type { Cue } from './cues';
+import { BACKGROUND_CUES, type Cue } from './cues';
 import { browserAudioDeps, createAudioManager, type AudioManager } from './manager';
 import { DEFAULT_SETTINGS, type AudioSettings } from './settings';
 
@@ -26,11 +26,15 @@ export function useAudio(): AudioManager | null {
   return useContext(AudioManagerContext);
 }
 
-/** A stable function that plays a cue; a no-op away from an AudioProvider. */
+/**
+ * A stable function that plays a cue; a no-op away from an AudioProvider. In a hidden tab only my
+ * turn is heard: the rest would be noise nobody watches.
+ */
 export function useSound(): (cue: Cue) => void {
   const audio = useContext(AudioManagerContext);
   return useCallback(
     (cue: Cue) => {
+      if (document.hidden && !BACKGROUND_CUES.has(cue)) return;
       audio?.play(cue);
     },
     [audio],
