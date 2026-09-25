@@ -31,8 +31,8 @@ const nothing = (): PickInteraction => NOTHING;
  * What clicking each card, set and seat does in the current mode. Aiming at a target comes first,
  * then paying, then discarding, then answering an action (hand cards only preview; the tray
  * holds the answers). Otherwise hand cards open their play popover and my movable table
- * cards open their move popover. Everything else only shows its preview. Hand cards are never dimmed:
- * on my turn the ones I can play are marked (spec 2026-09-25-table-layout §5.5).
+ * cards open their move popover. Everything else only shows its preview. On my turn the hand cards I can play
+ * are marked; the ones I cannot (my plays spent, or another player's turn) darken (spec 2026-09-25-table-controls D2).
  */
 export function resolveInteraction({ view, legal, role, aim, selected, payPicked, discardPicked, actions }: ResolveInput): TableInteraction {
   const me = view.me;
@@ -42,7 +42,7 @@ export function resolveInteraction({ view, legal, role, aim, selected, payPicked
     const answers = legal.some((i) => i.type === 'respondJustSayNo' && i.card === id);
     const blocked = playBlocker(view, playOptions(legal, id)) !== null;
     return {
-      tone: answers ? 'target' : blocked ? 'normal' : 'playable',
+      tone: answers ? 'target' : blocked ? 'dim' : 'playable',
       pressed: open,
       onActivate: () => actions.select(open ? null : { zone: 'hand', card: id }),
     };

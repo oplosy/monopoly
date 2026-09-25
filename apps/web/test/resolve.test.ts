@@ -36,9 +36,9 @@ describe('resolveInteraction: playing', () => {
     expect(open.actions.select).toHaveBeenCalledWith(null);
   });
 
-  it("leaves every hand card plain on another player's turn, and still opens it", () => {
+  it("darkens every hand card on another player's turn, and still opens it", () => {
     const card = resolve(table(), 'p2').interaction.card('hand', 'money-2-1', 'p2');
-    expect(card.tone).toBe('normal');
+    expect(card.tone).toBe('dim');
     expect(card.onActivate).toBeDefined();
   });
 

@@ -157,8 +157,9 @@ function zonesFor(mode: LayoutMode, players: number, plane: Size, piles: Size, s
   const outX = pctX(seatHalf.w + 8);
   const aboveY = -pctY(seatHalf.h + 4);
   if (mode === 'portrait') {
-    // My seat stands beside my zone, its foot level with the zone's, so it never reaches down to my hand.
-    const mine: SeatSlot = { angle: 270, zone: { x: 26, y: nearTop, w: 66, h: nearH }, ui: { x: 13, y: round1(nearTop + nearH - pctY(seatHalf.h)) } };
+    // My seat stands beside my zone, its foot level with the zone's, so it never reaches down to my hand; End turn
+    // stands on the other side, above the hand's right end, so my zone stops short of it.
+    const mine: SeatSlot = { angle: 270, zone: { x: 26, y: nearTop, w: plane.w <= 500 ? 46 : 54, h: nearH }, ui: { x: 13, y: round1(nearTop + nearH - pctY(seatHalf.h)) } };
     if (players <= 1) return { seats: [mine], center };
     if (players === 2) return { seats: [mine, { angle: 90, zone: { x: 8, y: farTop, w: 84, h: farH }, ui: { x: 50, y: aboveY } }], center };
     return {

@@ -370,7 +370,7 @@
   --end: 112px;
   --ring-color: var(--gold);
   position: absolute;
-  right: calc(var(--hand-reserve) / 2 - var(--end) / 2 - 1vw);
+  right: max(20px, calc(var(--hand-reserve) / 2 - var(--end) / 2 - 1vw));
   bottom: calc(var(--hand-w) * 0.5 + 12px);
   z-index: 11;
   width: var(--end);
@@ -505,7 +505,7 @@
 .log-drawer ol { margin: 0; padding-left: 1.2rem; overflow-y: auto; display: grid; gap: 0.3rem; align-content: start; font-size: 0.9rem; }
 
 /* In portrait the hand spans the width: End turn waits above its right end (layout.ts leaves it room). */
-.tabletop[data-layout='portrait'] .end-turn { --end: 84px; right: 20px; bottom: calc(var(--hand-h) - var(--hand-rest) + 14px); }
+.tabletop[data-layout='portrait'] .end-turn { --end: 104px; right: 24px; bottom: calc(var(--hand-h) - var(--hand-rest) + 24px); }
 .tabletop[data-layout='portrait'][data-compact] .end-turn { --end: 76px; }
 .tabletop[data-layout='portrait'][data-compact] .hud { top: 6px; right: 6px; }
 /* Over the table's middle (the deck and the discard pile), where the plane's center lands on screen: the far
@@ -685,7 +685,7 @@
 .tabletop[data-layout='landscape'] .narrator { left: auto; right: 8px; top: 76px; transform: none; max-width: calc(var(--side) + 8px); }
 .tabletop[data-layout='landscape'] .narrator-text { text-align: left; border-radius: 16px; }
 /* End turn stands in the right-hand column too, off the corner. */
-.tabletop[data-layout='landscape'] .end-turn { --end: 72px; right: max(16px, calc((var(--side) + 16px - var(--end)) / 2)); bottom: 16px; }
+.tabletop[data-layout='landscape'] .end-turn { --end: 72px; right: max(16px, calc((var(--side) + 16px - var(--end)) / 2)); bottom: 28px; }
 /* The action in play stands at the top middle, between the far seats (which sit at the sides) and below
    nothing; the trays wait at the bottom right (End turn's corner, empty while a tray shows), beside my zone. */
 .tabletop[data-layout='landscape'] .pending-stage,

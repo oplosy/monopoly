@@ -111,9 +111,9 @@ describe('the card popover', () => {
     expect(sentIntents(socket)).toEqual([{ type: 'moveProperty', card: 'wild-darkBlue-green-1', toGroup: 'new', color: 'darkBlue' }]);
   });
 
-  it("leaves my cards plain on another player's turn and says why they cannot be played", async () => {
+  it("darkens my cards on another player's turn and says why they cannot be played", async () => {
     const { user } = setup('p2');
-    expect(handCard(/^2M money$/)).toHaveClass('tone-normal');
+    expect(handCard(/^2M money$/)).toHaveClass('tone-dim');
     await user.click(handCard(/^2M money$/));
     const popover = screen.getByRole('dialog', { name: 'Play 2M' });
     expect(within(popover).getByText("It's not your turn.")).toBeInTheDocument();

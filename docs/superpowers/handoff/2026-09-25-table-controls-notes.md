@@ -69,3 +69,9 @@ glow (task 2) and its new shape (task 4) share rules, and the gear's rules (task
   first; 12/12 with the lean test under 2 workers. Both: `test: read drag timings at the moments they happen`.
 - Gates: engine 108, protocol 6, server 59, web 450; typecheck, lint, build clean; e2e 39 of 40 on the full run
   (the race above), then the fixed test 12/12.
+
+## Rebased onto Plan 11 (local session, 2026-09-25)
+- Rebased onto `feat/table-layout` (PR #12). One conflict, `tabletop.css`: the phone and landscape rules now use Plan 11's layout modes (`.tabletop[data-layout][data-compact]`) and variables (`--hand-h`, `--hand-rest`); the old HUD column rules and the separate clock are gone.
+- Ruling: hand cards that cannot be played darken again (`resolve.ts`: blocked → `dim`), overriding Plan 11 §5.5's "never greyed out": the user asked for a spent hand to darken. Plan 11's tests that pinned "plain" now pin "dim".
+- End turn on Plan 11's layout: 112 px on desktops (at least 20 px off the edge), 104 px on portrait tablets and 76 px on portrait phones above the hand's right end (my zone stops short of it: 46 % wide on phones, 54 % on tablets), 72 px in the landscape column (28 px up). The landscape narrator sits right under the gear (76 px).
+- Gates: engine 108, protocol 6, server 59, web 502; typecheck, lint, build clean; e2e 52/52 in Chrome.

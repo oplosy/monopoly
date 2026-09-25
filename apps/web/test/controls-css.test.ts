@@ -23,7 +23,7 @@ describe('a round End turn with its clock (D5)', () => {
     expect(end).toMatch(/--end:\s*112px/);
     expect(end).toMatch(/width:\s*var\(--end\)/);
     expect(rule(table, '.end-turn-button')).toMatch(/border-radius:\s*50%/);
-    expect(table).toMatch(/@media \(max-width: 700px\)[\s\S]*?\.end-turn \{[^}]*--end:\s*76px/);
+    expect(rule(table, ".tabletop[data-layout='portrait'][data-compact] .end-turn")).toMatch(/--end:\s*76px/);
   });
 
   it('rings itself with my clock, red in the last seconds', () => {
