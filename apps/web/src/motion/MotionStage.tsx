@@ -5,7 +5,7 @@ import { AnchorProvider } from './anchor-context';
 import { AnchorRegistry } from './anchors';
 import { FlightLayer } from './FlightLayer';
 import { motionMode } from './mode';
-import { settleCards } from './settle';
+import { landCard, landingTilt, settleCards } from './settle';
 import { createStage } from './stage';
 import { StageProvider } from './stage-context';
 
@@ -25,6 +25,11 @@ export function MotionStage({ children }: { children: ReactNode }) {
         settle: (before, skip) => settleCards(registry, before, skip),
         // useSound keeps a background tab down to my turn.
         sound,
+        tilt: landingTilt,
+        land: (key, tilt) => {
+          const el = registry.element(key);
+          if (el) landCard(el, tilt);
+        },
       },
       store.getState().game,
     ),

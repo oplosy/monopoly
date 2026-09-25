@@ -12,7 +12,7 @@ import { staticStage, stubAnimations } from './motion';
 const from: Pose = { cx: 100, cy: 500, width: 110, height: 154, rotate: 0 };
 const to: Pose = { cx: 600, cy: 300, width: 60, height: 50, rotate: 0 };
 const clone = (patch: Partial<Clone> = {}): Clone => ({
-  key: '1:f0', card: 'money-5-1', face: 'up', style: 'arc', from, to, center: null, delay: 120, duration: 550, ...patch,
+  key: '1:f0', card: 'money-5-1', face: 'up', style: 'arc', from, to, center: null, delay: 120, duration: 550, tilt: 0, ...patch,
 });
 const layer = (clones: Clone[]) =>
   render(

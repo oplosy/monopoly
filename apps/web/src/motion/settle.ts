@@ -36,3 +36,25 @@ export function settleCards(registry: AnchorRegistry, before: ReadonlyMap<string
     el.animate([{ translate: `${offset.x}px ${offset.y}px` }, { translate: '0px 0px' }], { duration: SETTLE_MS, easing: EASE });
   }
 }
+
+/** How long a card that landed takes to settle from its tilt. */
+export const LAND_MS = 340;
+
+/** A landing tilt of 1.5–3°, either way (spec 2026-09-25 §6.3: a Balatro-like settle). */
+export function landingTilt(random: () => number = Math.random): number {
+  const size = 1.5 + random() * 1.5;
+  return Math.round((random() < 0.5 ? size : -size) * 10) / 10;
+}
+
+/**
+ * Settles a card that just landed from the tilt its clone landed with. `composite: 'add'` turns it on
+ * top of its own rotation (a bank note's or a discard's jitter), so it ends at its own angle.
+ */
+export function landCard(el: HTMLElement, tilt: number): void {
+  if (typeof el.animate !== 'function' || tilt === 0) return;
+  el.animate([{ rotate: `${tilt}deg` }, { offset: 0.55, rotate: `${Math.round(-tilt * 35) / 100}deg` }, { rotate: '0deg' }], {
+    duration: LAND_MS,
+    easing: 'ease-out',
+    composite: 'add',
+  });
+}

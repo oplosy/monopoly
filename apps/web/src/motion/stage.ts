@@ -27,6 +27,8 @@ export interface Clone {
   /** Ms the clone waits at its start before it flies. */
   delay: number;
   duration: number;
+  /** Degrees the clone lands turned by; the real card settles from them (0: none). */
+  tilt: number;
 }
 
 /** A running effect; `pose` is where it happened (the seat of a player who left). */
@@ -62,6 +64,10 @@ export interface StageDeps {
   settle(before: ReadonlyMap<string, Pose>, skip: ReadonlySet<string>): void;
   /** Plays a sound cue (spec §8), on the same clock as the flights. */
   sound?(cue: Cue): void;
+  /** A landing tilt for a card that lands on the table (spec 2026-09-25 §6.3); none without it. */
+  tilt?(): number;
+  /** The real card `key` was just revealed by a flight that landed turned by `tilt`. */
+  land?(key: string, tilt: number): void;
 }
 
 export interface Stage {
@@ -207,8 +213,8 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
       return e?.from && e.to ? flightMs(f.style, Math.hypot(e.to.cx - e.from.cx, e.to.cy - e.from.cy)) : STYLE_MS[f.style];
     };
     const timeline = schedule(batch.scenes, waiting.length, length);
-    const make = (key: string, f: Flight, from: Pose | null, to: Pose | null, delay: number, duration: number): Clone | null =>
-      from && to ? { key, card: f.card, color: f.color, face: f.face, style: f.style, from, to, center, delay, duration } : null;
+    const make = (key: string, f: Flight, from: Pose | null, to: Pose | null, delay: number, duration: number, tilt: number): Clone | null =>
+      from && to ? { key, card: f.card, color: f.color, face: f.face, style: f.style, from, to, center, delay, duration, tilt } : null;
 
     const clones: Clone[] = [];
     const started = Date.now();
@@ -226,14 +232,19 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
     };
     for (const { flight: f, delay, duration } of timeline.flights) {
       const key = `${batch.id}:${f.id}`;
+      // A card that lands on the table lands a little turned and settles; the deck stays neat.
+      const tilt = f.reveals && f.style !== 'gather' ? (deps.tilt?.() ?? 0) : 0;
+      let flew = false;
       if (f.fromLive) {
         // Measured as it leaves: from where the card is now, onto a place that is only now on the page.
         later(delay, () => {
-          const clone = make(key, f, deps.poses.measure(f.from), deps.poses.measure(f.to), 0, duration);
+          const clone = make(key, f, deps.poses.measure(f.from), deps.poses.measure(f.to), 0, duration, tilt);
+          flew = clone !== null;
           if (clone) addClones([clone]);
         });
       } else {
-        const clone = make(key, f, ends.get(f)!.from, ends.get(f)!.to, delay, duration);
+        const clone = make(key, f, ends.get(f)!.from, ends.get(f)!.to, delay, duration, tilt);
+        flew = clone !== null;
         if (clone) clones.push(clone);
       }
       if (f.leaves) {
@@ -248,6 +259,7 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
         if (f.enters) bump(batch.counts, f.enters, 1);
         set({ ...tally(), clones: state.clones.filter((c) => c.key !== key) });
         refill();
+        if (f.reveals && flew && tilt !== 0) deps.land?.(f.reveals, tilt);
       });
     }
 

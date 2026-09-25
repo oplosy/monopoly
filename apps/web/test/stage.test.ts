@@ -53,6 +53,25 @@ beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
 
 describe('createStage', () => {
+  it('lands a revealed card with the tilt its clone carries, and nothing lands with motion off', () => {
+    const s0 = banker();
+    const poses = fakePoses({ 'card:money-1-1': pose(0, 0) }, { 'card:money-1-1': pose(480, 0) });
+    const land = vi.fn();
+    const stage = createStage({ poses, mode: () => 'fly', settle: vi.fn(), tilt: () => 2.5, land }, payload(s0, 'p1'));
+    const { game } = next(s0, 'p1', { type: 'playToBank', card: 'money-1-1' });
+    show(stage, game);
+    const clone = stage.getState().clones[0]!;
+    expect(clone.tilt).toBe(2.5);
+    vi.advanceTimersByTime(clone.delay + clone.duration);
+    expect(land).toHaveBeenCalledWith('card:money-1-1', 2.5);
+
+    const off = vi.fn();
+    const instant = createStage({ poses, mode: () => 'instant', settle: vi.fn(), tilt: () => 2.5, land: off }, payload(s0, 'p1'));
+    show(instant, game);
+    vi.runAllTimers();
+    expect(off).not.toHaveBeenCalled();
+  });
+
   it('gives a flight the length of its distance', () => {
     const s0 = banker();
     const poses = fakePoses({ 'card:money-1-1': pose(0, 0) }, { 'card:money-1-1': pose(960, 0) });
