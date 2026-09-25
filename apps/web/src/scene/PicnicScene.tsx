@@ -24,6 +24,7 @@ export function PicnicScene({ players, children, variant = 'table', className }:
           {children}
         </div>
       </div>
+      {variant === 'table' && <Leaves />}
     </div>
   );
 }
@@ -38,6 +39,16 @@ const Ground = memo(function Ground() {
           <img className="plate-art" src={sceneUrl(SCENE_ART.plateLandscape)} alt="" decoding="async" />
         </picture>
       </div>
+    </div>
+  );
+});
+
+/** Out-of-focus branches at the edges of the view: above the table, beneath the flat UI, never clickable. */
+const Leaves = memo(function Leaves() {
+  return (
+    <div className="scene-leaves" aria-hidden="true">
+      <img className="leaves leaves-left" src={sceneUrl(SCENE_ART.leavesLeft)} alt="" decoding="async" />
+      <img className="leaves leaves-top" src={sceneUrl(SCENE_ART.leavesTop)} alt="" decoding="async" />
     </div>
   );
 });

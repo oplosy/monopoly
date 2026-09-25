@@ -111,20 +111,34 @@
 }
 .plane-anchor { position: absolute; width: 0; height: 0; }
 
-/* Behind the paper pages: blurred, slowly drifting. */
-.scene-backdrop .scene-perspective {
-  filter: blur(5px) saturate(1.05);
-  animation: scene-drift 40s ease-in-out infinite alternate;
-}
-@keyframes scene-drift {
-  from { transform: translate(-1.5%, -1%) scale(1.04); }
-  to { transform: translate(1.5%, 1%) scale(1.06); }
+/* Behind the paper pages: blurred (and slowly drifting, below). */
+.scene-backdrop .scene-perspective { filter: blur(5px) saturate(1.05); }
+
+.scene-leaves { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.leaves { position: absolute; will-change: transform; }
+.leaves-left { left: 0; top: 6%; height: min(80%, 820px); width: auto; transform-origin: 0% 45%; }
+.leaves-top { top: 0; right: 8%; width: min(44%, 680px); height: auto; transform-origin: 50% 0%; }
+@media (orientation: portrait) {
+  .leaves-left { top: 26%; height: 34%; }
+  .leaves-top { right: -6%; width: 62%; }
 }
 
 @media (max-width: 700px) {
   .scene { --plane: 100vw; --tilt: 50deg; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .scene-backdrop .scene-perspective { animation: none; }
+/* Ambient life (spec 2026-09-25 §5): slow, small, transform-only; a still picture when less motion is asked for. */
+@media (prefers-reduced-motion: no-preference) {
+  .scene-table .leaves-left { animation: sway-left 7s ease-in-out infinite alternate; }
+  .scene-table .leaves-top { animation: sway-top 9s ease-in-out -4s infinite alternate; }
+  .scene-table .dapple { will-change: transform; animation: dapple-drift 50s ease-in-out infinite alternate; }
+  .scene-backdrop .scene-perspective { animation: scene-drift 40s ease-in-out infinite alternate; }
+
+  @keyframes sway-left { from { rotate: -1.5deg; } to { rotate: 2deg; scale: 1.01; } }
+  @keyframes sway-top { from { rotate: 1.2deg; } to { rotate: -2.2deg; } }
+  @keyframes dapple-drift { from { translate: 0 0; } to { translate: 6% 4%; } }
+  @keyframes scene-drift {
+    from { transform: translate(-1.5%, -1%) scale(1.04); }
+    to { transform: translate(1.5%, 1%) scale(1.06); }
+  }
 }

@@ -3,6 +3,7 @@ import { PORTRAIT } from '../src/scene/art';
 import { readCss, rule, split } from './css';
 
 const css = readCss(new URL('../src/scene/scene.css', import.meta.url));
+const moving = split(css, '@media (prefers-reduced-motion: no-preference)');
 
 describe('scene.css', () => {
   it('keeps the grass and wood gradients under the painted art, for slow networks', () => {
@@ -20,5 +21,30 @@ describe('scene.css', () => {
   it('clips the cloth and the light to the round tabletop', () => {
     expect(rule(css, '.table-wood')).toMatch(/overflow:\s*hidden/);
     expect(rule(css, '.table-wood')).toMatch(/border-radius:\s*50%/);
+  });
+
+  it('keeps every ambient animation behind prefers-reduced-motion: no-preference', () => {
+    expect(moving.inside).toMatch(/animation:/);
+    expect(moving.outside).not.toMatch(/animation|transition|@keyframes/);
+  });
+
+  it('runs the ambient life at the table only, never behind the paper pages', () => {
+    for (const [, selector] of moving.inside.matchAll(/([^{}]+)\{\s*animation:/g)) {
+      expect(selector!.trim()).toMatch(/^\.scene-table |^\.butterfly|^\.scene-backdrop \.scene-perspective$/);
+    }
+  });
+
+  it('moves the scene on the compositor only', () => {
+    for (const [, name, body] of moving.inside.matchAll(/@keyframes ([\w-]+)\s*\{((?:[^{}]*\{[^}]*\})*[^{}]*)\}/g)) {
+      for (const [, prop] of body!.matchAll(/([\w-]+)\s*:/g)) expect(`${name}: ${prop}`).toMatch(/: (transform|translate|rotate|scale|opacity)$/);
+    }
+  });
+
+  it('defines every keyframes it uses', () => {
+    for (const [, name] of css.matchAll(/animation:\s*([\w-]+)/g)) expect(css, name).toContain(`@keyframes ${name}`);
+  });
+
+  it('never lets the leaves take a click', () => {
+    expect(rule(css, '.scene-leaves')).toMatch(/pointer-events:\s*none/);
   });
 });

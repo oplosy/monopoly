@@ -76,6 +76,18 @@ describe('PicnicScene', () => {
     expect(wood.querySelector('.cloth')!.getAttribute('src')).toMatch(/\/scene\/cloth\.webp$/);
     expect((wood.querySelector('.dapple') as HTMLElement).style.backgroundImage).toMatch(/\/scene\/dapple\.webp/);
   });
+  it('hangs painted leaves over the table, but not behind the paper pages', () => {
+    const table = render(<PicnicScene players={2} />);
+    const leaves = table.container.querySelector('.scene-leaves')!;
+    expect(leaves).toHaveAttribute('aria-hidden', 'true');
+    expect([...leaves.querySelectorAll('img')].map((i) => i.getAttribute('src')!.replace(/^.*\/scene\//, ''))).toEqual([
+      'leaves-left.webp',
+      'leaves-top.webp',
+    ]);
+    table.unmount();
+    const backdrop = render(<PicnicScene players={3} variant="backdrop" />);
+    expect(backdrop.container.querySelector('.scene-leaves')).toBeNull();
+  });
 });
 
 describe('projection', () => {
