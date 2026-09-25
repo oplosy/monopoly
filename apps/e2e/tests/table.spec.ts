@@ -1,12 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { attachScreenshot, createRoom, flightsSeen, hand, joinRoom, leaveRoom, newPlayer, watchFlights } from './players';
 
-// The table must work with the OS asking for less motion.
-test.use({ reducedMotion: 'reduce' });
-
+// The table must work with animations switched off.
 test('two players pick characters and meet at the picnic table', async ({ browser, baseURL }, testInfo) => {
-  const ann = await newPlayer(browser, baseURL);
-  const bob = await newPlayer(browser, baseURL);
+  const ann = await newPlayer(browser, baseURL, { motion: 'off' });
+  const bob = await newPlayer(browser, baseURL, { motion: 'off' });
   const link = await createRoom(ann, 'Ann');
   await joinRoom(bob, link, 'Bob');
   await expect(ann.getByRole('heading', { name: 'Players (2/3)' })).toBeVisible();
@@ -35,9 +33,9 @@ test('two players pick characters and meet at the picnic table', async ({ browse
   for (const page of [bob, ann]) await leaveRoom(page);
 });
 
-test('nothing flies when the OS asks for less motion', async ({ browser, baseURL }) => {
-  const ann = await newPlayer(browser, baseURL);
-  const bob = await newPlayer(browser, baseURL);
+test('nothing flies with animations switched off', async ({ browser, baseURL }) => {
+  const ann = await newPlayer(browser, baseURL, { motion: 'off' });
+  const bob = await newPlayer(browser, baseURL, { motion: 'off' });
   const link = await createRoom(ann, 'Ann');
   await joinRoom(bob, link, 'Bob');
   await ann.getByRole('button', { name: 'Start game' }).click();

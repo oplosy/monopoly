@@ -1,8 +1,9 @@
 import { expect, type Browser, type Locator, type Page, type TestInfo } from '@playwright/test';
 
-/** Each player gets their own browser context: separate storage, so a separate seat. */
-export async function newPlayer(browser: Browser, baseURL: string | undefined): Promise<Page> {
+/** Each player gets their own browser context: separate storage, so a separate seat. `motion: 'off'` switches the game's animations off. */
+export async function newPlayer(browser: Browser, baseURL: string | undefined, opts: { motion?: 'on' | 'off' } = {}): Promise<Page> {
   const context = await browser.newContext({ baseURL, ignoreHTTPSErrors: true });
+  if (opts.motion === 'off') await context.addInitScript(() => localStorage.setItem('dealcity.motion', 'off'));
   return context.newPage();
 }
 
