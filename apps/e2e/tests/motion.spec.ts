@@ -35,3 +35,41 @@ test('cards fly across the table, and a card dragged onto the bank is banked', a
 
   for (const page of [cy, bob, ann]) await leaveRoom(page);
 });
+
+test('cards fly even when the OS asks for less motion, and the Animations switch turns them off for good', async ({ browser, baseURL }) => {
+  const calmOs = { baseURL, reducedMotion: 'reduce' as const };
+  const ann = await (await browser.newContext(calmOs)).newPage();
+  const bob = await (await browser.newContext(calmOs)).newPage();
+  const link = await createRoom(ann, 'Ann');
+  await joinRoom(bob, link, 'Bob');
+  await ann.getByRole('button', { name: 'Start game' }).click();
+  for (const page of [ann, bob]) {
+    await expect(hand(page).getByRole('button')).not.toHaveCount(0);
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+    await watchFlights(page);
+  }
+  const [first, second] = (await ann.getByRole('button', { name: 'End turn' }).isVisible()) ? [ann, bob] : [bob, ann];
+  await first.getByRole('button', { name: 'End turn' }).click();
+  await expect.poll(() => flightsSeen(second)).toBeGreaterThan(0);
+
+  // The waiting player switches animations off; it survives a reload.
+  const menu = first.getByRole('navigation', { name: 'Game menu' });
+  await menu.getByRole('button', { name: 'Animations' }).click();
+  await first.reload();
+  await expect(menu.getByRole('button', { name: 'Animations' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(first.locator('html')).toHaveAttribute('data-motion', 'off');
+  await watchFlights(first);
+  await expect(second.getByRole('button', { name: 'End turn' })).not.toHaveAttribute('aria-disabled');
+  await second.getByRole('button', { name: 'End turn' }).click();
+  await expect(first.getByRole('button', { name: 'End turn' })).toBeVisible();
+  expect(await flightsSeen(first)).toBe(0);
+
+  for (const page of [bob, ann]) await leaveRoom(page);
+});
+
+test('every page carries the motion setting from the first paint', async ({ page }) => {
+  for (const path of ['/', '/gallery']) {
+    await page.goto(path);
+    await expect(page.locator('html')).toHaveAttribute('data-motion', 'on');
+  }
+});

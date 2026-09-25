@@ -389,13 +389,22 @@
 .hud button.link { color: #fff8ec; }
 .hud-room { font-size: 0.85rem; }
 .sound-control { display: inline-flex; align-items: center; gap: 0.4rem; }
-.hud .sound-toggle { display: inline-grid; place-items: center; padding: 0.3rem 0.55rem; }
-.sound-toggle svg { display: block; width: 1.05rem; height: 1.05rem; }
-.sound-toggle[aria-pressed='false'] { opacity: 0.75; }
+.hud .sound-toggle,
+.hud .motion-toggle { display: inline-grid; place-items: center; padding: 0.3rem 0.55rem; }
+.sound-toggle svg,
+.motion-toggle svg { display: block; width: 1.05rem; height: 1.05rem; }
+.sound-toggle[aria-pressed='false'],
+.motion-toggle[aria-pressed='false'] { opacity: 0.75; }
 .sound-control input[type='range'] { width: 5.5rem; accent-color: var(--gold); }
 /* Phones keep the speaker button; the HUD has no room for the slider there. */
 @media (max-width: 640px) {
   .sound-control input[type='range'] { display: none; }
+}
+/* Narrow phones: tighter spacing keeps the HUD's four controls on one row. */
+@media (max-width: 480px) {
+  .hud { gap: 0.3rem; padding: 0.3rem 0.35rem 0.3rem 0.5rem; }
+  .hud button { padding-inline: 0.6rem; }
+  .hud button.link { padding-inline: 0.3rem; }
 }
 /* Up to tablet widths, and on short screens, the HUD stays one short row, clear of the seat across the
    table: the room code is still read out, but not shown. */
@@ -582,7 +591,8 @@
   .end-turn,
   .log-close,
   .gameover-actions button { min-height: 44px; }
-  .hud .sound-toggle { min-width: 44px; }
+  .hud .sound-toggle,
+  .hud .motion-toggle { min-width: 44px; }
 }
 
 /* ---------- Short screens (a phone in landscape) ---------- */
@@ -597,7 +607,8 @@
   .tabletop:has(.pay-tray) .scene { --plane: var(--short-plane); --plane-shift: var(--short-shift); }
   /* The HUD stands as a column in the top right corner, clear of the far seats; the slider waits for a
      taller screen. My seat moves left, clear of the hand. */
-  .hud { flex-direction: column; align-items: stretch; border-radius: 22px; padding: 0.4rem; }
+  .hud { display: grid; grid-template-columns: auto auto; align-items: stretch; border-radius: 22px; padding: 0.4rem; }
+  .hud > :not(.sound-control, .motion-toggle) { grid-column: 1 / -1; }
   .sound-control input[type='range'] { display: none; }
   .seat.is-me { translate: -64px 0; }
   /* The narrator speaks at the left, beside the table and below the action in play. */
@@ -612,6 +623,8 @@
   .pending-text, .pending-wait { font-size: 0.8rem; text-align: left; border-radius: 12px; }
   /* A tray anchored beside my Just Say No card keeps its own place and size. */
   .tray:not(.is-anchored) { left: auto; right: 8px; bottom: 8px; transform: none; width: min(var(--side), 24rem); max-width: min(var(--side), 24rem); padding: 0.6rem 0.7rem; }
+  /* Discarding picks cards in my hand: that tray waits above the hand's right end. */
+  .tabletop .discard-tray:not(.is-anchored) { bottom: calc(var(--hand-w) * 1.02); }
   .pay-tray { grid-template-columns: 1fr; }
   .pay-tray > .tray-meter,
   .pay-tray > .tray-actions { grid-row: auto; grid-column: 1; }
