@@ -138,11 +138,13 @@ test('a card dropped while it leans flies from where it leans, with no snap upri
   await ann.getByRole('button', { name: 'Start game' }).click();
   const mover = ann;
   await expect(mover.getByRole('button', { name: 'End turn' })).not.toHaveAttribute('aria-disabled');
-  // Every flight's first frame, and the dragged card's own turn, frame by frame, until it is gone.
+  // Every flight's first frame, and the dragged card's own turn: at the instant it is let go, and in each
+  // frame it is painted while it waits (a loaded machine may paint the settled lean a frame late).
   await mover.evaluate(() => {
-    const w = window as unknown as { starts: number[]; ghostTurn: number | null };
+    const w = window as unknown as { starts: number[]; ghostTurn: number | null; waiting: number[] };
     w.starts = [];
     w.ghostTurn = null;
+    w.waiting = [];
     const turn = (t: string) => {
       const r = /rotate\(([-\d.]+)deg\)/.exec(t);
       if (r) return Number(r[1]);
@@ -151,21 +153,25 @@ test('a card dropped while it leans flies from where it leans, with no snap upri
       const [a, b] = m[1]!.split(',').map(Number);
       return (Math.atan2(b!, a!) * 180) / Math.PI;
     };
-    const watch = () => {
-      const ghost = document.querySelector('.drag-ghost');
-      if (ghost) w.ghostTurn = turn(getComputedStyle(ghost).transform);
-      requestAnimationFrame(watch);
-    };
-    requestAnimationFrame(watch);
+    // Read in the capture phase, before the drop is handled: the card waits at this very turn.
+    window.addEventListener(
+      'pointerup',
+      () => {
+        const ghost = document.querySelector('.drag-ghost');
+        if (!ghost) return;
+        w.ghostTurn = turn(getComputedStyle(ghost).transform);
+        const watch = () => {
+          if (!ghost.isConnected) return;
+          w.waiting.push(turn(getComputedStyle(ghost).transform));
+          requestAnimationFrame(watch);
+        };
+        requestAnimationFrame(watch);
+      },
+      { capture: true },
+    );
     const animate = Element.prototype.animate;
     Element.prototype.animate = function (frames, opts) {
-      if (this.classList.contains('flight') && Array.isArray(frames)) {
-        w.starts.push(turn(String(frames[0]!.transform)));
-        // The ghost's own turn at this very instant, when it is still there: a loaded machine can skip
-        // the frame between the watch's last look and the flight's start, while the lean still settles.
-        const ghost = document.querySelector('.drag-ghost');
-        if (ghost) w.ghostTurn = turn(getComputedStyle(ghost).transform);
-      }
+      if (this.classList.contains('flight') && Array.isArray(frames)) w.starts.push(turn(String(frames[0]!.transform)));
       return animate.call(this, frames, opts);
     };
   });
@@ -185,14 +191,15 @@ test('a card dropped while it leans flies from where it leans, with no snap upri
   }
   await mover.mouse.up();
   await expect(bank).toHaveAccessibleName(/[1-9]\d*M$/);
-  const { starts, ghostTurn } = await mover.evaluate(() => {
-    const w = window as unknown as { starts: number[]; ghostTurn: number | null };
-    return { starts: w.starts, ghostTurn: w.ghostTurn };
+  const { starts, ghostTurn, waiting } = await mover.evaluate(() => {
+    const w = window as unknown as { starts: number[]; ghostTurn: number | null; waiting: number[] };
+    return { starts: w.starts, ghostTurn: w.ghostTurn, waiting: w.waiting };
   });
   // The card was leaning as it was let go, and its flight starts at that same turn.
   expect(Math.abs(ghostTurn!)).toBeGreaterThan(1);
   expect(starts).toHaveLength(1);
-  expect(Math.abs(starts[0]! - ghostTurn!)).toBeLessThanOrEqual(1);
+  const held = [ghostTurn!, ...waiting];
+  expect(Math.min(...held.map((t) => Math.abs(starts[0]! - t))), `flight starts at ${starts[0]}°; the card was let go at ${ghostTurn}°, then painted at ${waiting.join(', ')}°`).toBeLessThanOrEqual(1);
   for (const page of [bob, ann]) await leaveRoom(page);
 });
 
@@ -239,6 +246,8 @@ test('a card dropped nowhere flies home and lands exactly on its place in the ha
   await ann.mouse.move(20, 20, { steps: 10 });
   await ann.mouse.up();
   await expect(ann.locator('.drag-ghost')).toHaveCount(0);
+  // The frame after the ghost's last one is recorded on the next animation frame.
+  await ann.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const frames = await ann.evaluate(() => (window as unknown as { frames: { ghost: number[] | null; card: number[]; shown: boolean }[] }).frames);
   const last = frames.map((f) => !!f.ghost).lastIndexOf(true);
   const [gx, gy, gturn] = frames[last]!.ghost!;
