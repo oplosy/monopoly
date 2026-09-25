@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, fireEvent, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { applyIntent } from '@deal-city/engine';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ghostHome, RETURN_MS } from '../src/tabletop/drag';
@@ -190,11 +190,35 @@ describe('drag and drop', () => {
       fireEvent.pointerDown(card, { ...mouse, button: 0, clientX: 100, clientY: 600 });
       fireEvent.pointerMove(card, { ...mouse, clientX: 140, clientY: 300 });
       release(card);
-      await settle();
-      const ghost = document.querySelector<HTMLElement>('.drag-ghost')!;
-      // Home is the grabbed point on the card's own box: (80 + 0.2 × 100, 560 + 40).
-      expect(ghost.style.transform).toContain('translateX(100px)');
-      expect(ghost.style.transform).toContain('translateY(600px)');
+      // No flight home and no wait: the ghost is gone and the card is back in the hand in the same moment,
+      // so the next drag can start straight away.
+      expect(document.querySelector('.drag-ghost')).toBeNull();
+      expect(card).not.toHaveClass('is-returning');
+      expect(card).not.toHaveClass('is-dragging');
+    } finally {
+      calm.restore();
+    }
+  });
+
+  it('leans with the pointer only while animations are on', async () => {
+    const lean = async () => {
+      renderTabletop({ state: tableWith(['money-2-1']) });
+      under(null);
+      const card = handCard(/^2M money/);
+      vi.spyOn(card, 'getBoundingClientRect').mockReturnValue(box(80, 560, 100, 140));
+      fireEvent.pointerDown(card, { ...mouse, button: 0, clientX: 100, clientY: 600 });
+      for (let i = 1; i <= 8; i++) {
+        fireEvent.pointerMove(card, { ...mouse, clientX: 100 + i * 60, clientY: 300 });
+        await act(() => new Promise((resolve) => setTimeout(resolve, 16)));
+      }
+      const m = /rotate\(([-\d.]+)deg\)/.exec(document.querySelector<HTMLElement>('.drag-ghost')!.style.transform);
+      cleanup();
+      return m ? Math.abs(Number(m[1])) : 0;
+    };
+    expect(await lean()).toBeGreaterThan(1);
+    const calm = reduceMotion();
+    try {
+      expect(await lean()).toBe(0);
     } finally {
       calm.restore();
     }

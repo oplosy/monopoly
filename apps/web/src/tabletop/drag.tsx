@@ -97,7 +97,8 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
   const lean = useSpring(useTransform(useVelocity(x), (v) => Math.max(-8, Math.min(8, v / 120))), { stiffness: 700, damping: 50 });
   const turn = useMotionValue(0);
   useMotionValueEvent(lean, 'change', (v) => {
-    if (live.current?.phase !== 'returning') turn.set(v);
+    // With animations off the ghost stays upright.
+    if (live.current?.phase !== 'returning') turn.set(getMotion() === 'off' ? 0 : v);
   });
 
   const update = (next: DragState | null) => {
@@ -202,11 +203,16 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
           swallow.current = card;
           const outcome = onDrop(card, zoneAt(e.clientX, e.clientY, s.ok), { x: e.clientX, y: e.clientY });
           if (outcome === 'missed') {
+            // With animations off the card is simply back in the hand, and the next drag can start at once.
+            if (getMotion() === 'off') {
+              update(null);
+              return;
+            }
             update({ ...s, phase: 'returning', hot: null });
             if (frame.current) cancelAnimationFrame(frame.current);
             // The card flies back onto its place in the hand and lands exactly on it, turned like it; the card
             // waits hidden under it until then. Its place is measured on every frame: the hand card is still
-            // settling from its hover lift, and the fan may shift. At once with animations off.
+            // settling from its hover lift, and the fan may shift.
             const el = e.currentTarget;
             const from = { x: x.get(), y: y.get(), turn: turn.get() };
             const start = performance.now();
@@ -214,7 +220,7 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
             const home = () => {
               if (live.current?.phase !== 'returning') return;
               const elapsed = performance.now() - start;
-              const k = getMotion() === 'off' ? 1 : ease(Math.min(1, elapsed / RETURN_MS));
+              const k = ease(Math.min(1, elapsed / RETURN_MS));
               const to = ghostHome(poseOf(el), s.grab);
               x.set(from.x + (to.x - from.x) * k);
               y.set(from.y + (to.y - from.y) * k);
