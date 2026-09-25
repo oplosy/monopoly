@@ -94,6 +94,8 @@ const PHONE_HAND_OF_W = 0.267;
 const PHONE_FLOOR = 0.5;
 /** Extra room a tray takes between my table and my hand in portrait (px). */
 const TRAY_ROOM = 56;
+/** A plane that runs out of width may grow taller, down to this aspect, rather than stay flat. */
+const MIN_ASPECT = 1.45;
 /** The fan turns each hand card about a point this many card heights below its top (`.hand-fan > li`'s transform-origin). */
 export const FAN_PIVOT = 1.6;
 /** In landscape the HUD stands as a column in the top right corner, this wide (px): the table keeps clear of it. */
@@ -139,12 +141,12 @@ export function onFelt(layout: Pick<TableLayout, 'plane' | 'radius'>, p: PlanePo
   return Math.hypot(x - cx, y - cy) <= r;
 }
 
-/** The zones on a plane `plane` px big, with the center ring `ring` px across. */
-function zonesFor(mode: LayoutMode, players: number, plane: Size, ring: number, seatHalf: Size): { seats: SeatSlot[]; center: PlaneRect } {
+/** The zones on a plane `plane` px big, with the center piles `piles` px big. */
+function zonesFor(mode: LayoutMode, players: number, plane: Size, piles: Size, seatHalf: Size): { seats: SeatSlot[]; center: PlaneRect } {
   const pctX = (px: number) => round1((px / plane.w) * 100);
   const pctY = (px: number) => round1((px / plane.h) * 100);
-  const ringW = pctX(ring);
-  const ringH = pctY(ring);
+  const ringW = pctX(piles.w);
+  const ringH = pctY(piles.h);
   const center = { x: round1(50 - ringW / 2), y: round1(50 - ringH / 2), w: ringW, h: ringH };
   const farTop = mode === 'portrait' ? 7 : 6;
   const farBottom = round1(center.y - 1);
@@ -168,24 +170,32 @@ function zonesFor(mode: LayoutMode, players: number, plane: Size, ring: number, 
       center,
     };
   }
+  // Where the stadium's round end leaves room at plane height `y` (percent): the felt's left edge there, 6 px in.
+  const r = plane.h / 2;
+  const edge = (y: number) => {
+    const dy = Math.abs((y / 100) * plane.h - r);
+    const inner = r - 6;
+    return round1(pctX(dy < inner ? r - Math.sqrt(inner * inner - dy * dy) : r) + 0.1);
+  };
+  const farEdge = Math.max(edge(farTop), 18);
+  const nearEdge = Math.max(edge(95), mode === 'landscape' ? 22 : 20);
   // In landscape the trays dock at the bottom right: my zone leaves them the plane's lower right corner.
-  const mine: SeatSlot = { angle: 270, zone: { x: mode === 'landscape' ? 22 : 20, y: nearTop, w: mode === 'landscape' ? 46 : 60, h: nearH }, ui: { x: -outX, y: 80 } };
+  const mineRight = mode === 'landscape' ? 68 : 100 - nearEdge;
+  const mine: SeatSlot = { angle: 270, zone: { x: nearEdge, y: nearTop, w: round1(mineRight - nearEdge), h: nearH }, ui: { x: -outX, y: 80 } };
   // In landscape the HUD column takes the right-hand side: the right-hand seat stands on the felt's round
   // right end, level with the center, just clear of the far zone beside it.
   const rightOf = (zone: PlaneRect): PlanePoint =>
     mode === 'landscape' ? { x: round1(zone.x + zone.w + pctX(seatHalf.w + 6)), y: 50 } : { x: round1(100 + outX), y: 22 };
   if (players <= 1) return { seats: [mine], center };
   if (players === 2) {
-    const far = { x: 20, y: farTop, w: 60, h: farH };
+    const far = { x: farEdge, y: farTop, w: round1((mode === 'landscape' ? Math.min(80, 100 - farEdge) : 100 - farEdge) - farEdge), h: farH };
     return { seats: [mine, { angle: 90, zone: far, ui: rightOf(far) }], center };
   }
-  // The small landscape planes keep the far zones a little further in from the round ends.
-  const inset = mode === 'landscape' ? 2 : 0;
-  const right = { x: 51, y: farTop, w: 31 - inset, h: farH };
+  const right = { x: 51, y: farTop, w: round1((mode === 'landscape' ? Math.min(80, 100 - farEdge) : 100 - farEdge) - 51), h: farH };
   return {
     seats: [
       mine,
-      { angle: 150, zone: { x: 18 + inset, y: farTop, w: 31 - inset, h: farH }, ui: { x: -outX, y: mode === 'landscape' ? 36 : 22 } },
+      { angle: 150, zone: { x: farEdge, y: farTop, w: round1(49 - farEdge), h: farH }, ui: { x: -outX, y: mode === 'landscape' ? 36 : 22 } },
       { angle: 30, zone: right, ui: rightOf(right) },
     ],
     center,
@@ -221,36 +231,56 @@ export function tableLayout(viewport: { width: number; height: number }, players
   const below = r.below + (mode === 'portrait' && opts.tray ? TRAY_ROOM : 0);
 
   // 4. The plane: the biggest whose top edge lands at `top` and whose near zone and my seat end above the hand.
-  const ring = Math.round(card.w * 2.4);
-  const fit = (h: number) => {
-    const w = Math.round(mode === 'portrait' ? Math.min(W - 16, h) : h * r.aspect);
+  // The deck and the discard pile side by side, with the turn ring behind them: as low as a card allows.
+  const piles = { w: Math.round(card.w * 2.8), h: Math.round(card.w * 1.62) };
+  const fit = (h: number, aspect: number) => {
+    const w = Math.round(mode === 'portrait' ? Math.min(W - 16, h) : h * aspect);
     const perspective = Math.round(PERSPECTIVE * h);
     const sTop = depthScale(perspective, -h / 2);
     const cy = Math.round(top / sTop + (h / 2) * Math.cos(rad(TILT)));
     const plane = { w, h: Math.round(h), cx: Math.round(W / 2), cy };
     const at = { plane, perspective, tilt: TILT, viewport: { w: W, h: H } };
     // Nothing of mine may reach the resting hand: neither my zone nor my seat beside it.
-    const seats = zonesFor(mode, players, plane, ring, seatHalf).seats;
+    const seats = zonesFor(mode, players, plane, piles, seatHalf).seats;
     const bottom = Math.max(project(at, { x: 50, y: 95 }).y, project(at, seats[0]!.ui).y + seatHalf.h);
     // In landscape the plane and the right-hand seat on it keep clear of the HUD column.
     const right = Math.max(project(at, { x: 100, y: 50 }).x, ...seats.slice(1).map((seat) => project(at, seat.ui).x + seatHalf.w));
     return { plane, perspective, bottom, right };
   };
-  let lo = 100;
-  let hi = 4000;
-  for (let i = 0; i < 40; i++) {
-    const mid = (lo + hi) / 2;
-    const f = fit(mid);
+  const fits = (f: ReturnType<typeof fit>) => {
     // At the sides, the seats beside the plane's near corners stay on screen (the perspective widens the near side).
     const nearS = depthScale(f.perspective, NEAR_DY * f.plane.h);
     const wide = mode === 'portrait' || (f.plane.w / 2 + seatHalf.w * 2 + 8) * nearS <= W / 2 - 8;
     const clearOfHud = mode !== 'landscape' || f.right <= W - 12 - LANDSCAPE_HUD;
-    if (f.bottom <= handTop - below && wide && clearOfHud) lo = mid;
-    else hi = mid;
+    return f.bottom <= handTop - below && wide && clearOfHud;
+  };
+  /** The tallest plane of `aspect` that fits. */
+  const tallest = (aspect: number) => {
+    let lo = 100;
+    let hi = 4000;
+    for (let i = 0; i < 40; i++) {
+      const mid = (lo + hi) / 2;
+      if (fits(fit(mid, aspect))) lo = mid;
+      else hi = mid;
+    }
+    return Math.floor(lo);
+  };
+  // The mode's aspect first; a plane held back by the width, not the height, may then grow taller, less wide.
+  let aspect: number = r.aspect;
+  let lo = tallest(aspect);
+  if (mode !== 'portrait') {
+    for (let a = r.aspect - 0.05; a >= MIN_ASPECT - 1e-9; a -= 0.05) {
+      const h = tallest(a);
+      if (h * a < lo * aspect * 0.97) break; // keep the width within 3 % of the flattest fit
+      if (h > lo) {
+        lo = h;
+        aspect = a;
+      }
+    }
   }
-  const { plane, perspective } = fit(Math.floor(lo));
+  const { plane, perspective } = fit(lo, aspect);
   const radius = Math.round(mode === 'portrait' ? 0.18 * plane.w : Math.min(plane.w, plane.h) / 2);
-  const { seats, center } = zonesFor(mode, players, plane, ring, seatHalf);
+  const { seats, center } = zonesFor(mode, players, plane, piles, seatHalf);
   return { mode, compact, viewport: { w: W, h: H }, hand, handReserve, card, cardFloor, plane, radius, tilt: TILT, perspective, avatar, seats, center };
 }
 

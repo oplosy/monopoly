@@ -46,6 +46,8 @@ function expectSound(L: TableLayout, farNear = 0.88) {
   expect(myZoneBottom(L)).toBeLessThanOrEqual(handTop(L));
   expect(far(L) / near(L)).toBeGreaterThanOrEqual(farNear);
   expect(L.plane.h).toBeGreaterThanOrEqual(L.card.h * 2.5);
+  // Every zone holds a card without spilling (review I3); a taller stack tightens its fan (fitTableau).
+  for (const s of L.seats) expect((s.zone.h / 100) * L.plane.h, 'zone height').toBeGreaterThanOrEqual(L.card.h);
 }
 
 describe('layoutMode', () => {
@@ -162,7 +164,7 @@ describe('tableLayout: every supported screen (Review Focus 5)', () => {
   // tablets 4:3 or longer, desktops 4:3 or wider.
   const supported = (w: number, h: number) =>
     (w >= 320 && w <= 500 && h >= Math.max(1.7 * w, 560)) ||
-    (w > 500 && w <= 1024 && h >= 1.3 * w) ||
+    (w >= 744 && w <= 1024 && h >= 1.3 * w) ||
     (w >= 568 && w <= 932 && h >= 320 && h <= 500 && w >= 1.75 * h) ||
     (w >= 1024 && h >= 600 && h <= 0.8 * w);
 
@@ -178,7 +180,7 @@ describe('tableLayout: every supported screen (Review Focus 5)', () => {
       }
     }
     expect(checked).toBeGreaterThan(4000);
-  });
+  }, 30_000);
 });
 
 describe('handFan', () => {

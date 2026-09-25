@@ -123,8 +123,13 @@
   font-size: calc(var(--card-w) * 0.2);
 }
 .turn-ring {
+  /* A circle as tall as the center, behind the deck and the discard pile. */
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 0;
+  height: 100%;
+  aspect-ratio: 1;
+  translate: -50% 0;
   border-radius: 50%;
   border: calc(var(--card-w) * 0.07) solid rgb(255 255 255 / 0.4);
   rotate: var(--turn, 0deg);
@@ -134,14 +139,14 @@
 .turn-wedge {
   position: absolute;
   left: 50%;
-  top: calc(var(--card-w) * -0.45);
+  top: calc(var(--card-w) * -0.2);
   translate: -50% 0;
   border-left: calc(var(--card-w) * 0.3) solid transparent;
   border-right: calc(var(--card-w) * 0.3) solid transparent;
   border-bottom: calc(var(--card-w) * 0.45) solid var(--gold);
   filter: drop-shadow(0 0 6px rgb(255 216 74 / 0.9));
 }
-.deck { position: relative; width: var(--card-w); }
+.deck { position: relative; flex: none; width: var(--card-w); }
 .deck > .card-svg {
   display: block;
   width: 100%;
@@ -160,7 +165,7 @@
   border-radius: 6px;
   padding: 0 0.35em;
 }
-.discard { position: relative; width: var(--card-w); aspect-ratio: 5 / 7; }
+.discard { position: relative; flex: none; width: var(--card-w); aspect-ratio: 5 / 7; }
 .discard > .table-card { position: absolute; left: 0; top: 0; transform: translate(var(--dx, 0%), var(--dy, 0%)) rotate(var(--rot, 0deg)); }
 
 /* ---------- Seats (flat UI) ---------- */
@@ -560,7 +565,8 @@
 }
 .tabletop[data-layout='portrait'][data-compact] .tray { max-width: calc(100vw - 1rem); }
 /* Above the resting hand, in the room the layout leaves a tray (layout.ts); paying keeps its own place. */
-.tabletop[data-layout='portrait'][data-compact] .tray:not(.pay-tray) { bottom: calc(var(--hand-h) - var(--hand-rest) + 8px); }
+/* An answer tray anchored beside my Just Say No card keeps its own place. */
+.tabletop[data-layout='portrait'][data-compact] .tray:not(.pay-tray, .is-anchored) { bottom: calc(var(--hand-h) - var(--hand-rest) + 8px); }
 .tabletop[data-layout='portrait'][data-compact] .pay-tray { grid-template-columns: 1fr; }
 .tabletop[data-layout='portrait'][data-compact] .pay-tray > .tray-meter,
 .tabletop[data-layout='portrait'][data-compact] .pay-tray > .tray-actions { grid-row: auto; grid-column: 1; }
