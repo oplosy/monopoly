@@ -15,17 +15,18 @@ export function SoundControl() {
   const { volume, muted } = useAudioSettings();
   if (!audio) return null;
   const percent = Math.round(volume * 100);
+  const on = !muted && volume > 0;
   return (
     <span className="sound-control">
       <button
         type="button"
         className="sound-toggle"
         aria-label="Sound"
-        aria-pressed={!muted}
-        title={muted ? 'Sound is off' : 'Sound is on'}
+        aria-pressed={on}
+        title={on ? 'Sound is on' : 'Sound is off'}
         onClick={() => audio.toggleMute()}
       >
-        <Speaker off={muted || volume === 0} />
+        <Speaker off={!on} />
       </button>
       <input
         type="range"

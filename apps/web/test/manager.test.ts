@@ -96,7 +96,7 @@ describe('createAudioManager', () => {
     expect(fake.voices).toHaveLength(2);
   });
 
-  it('keeps and announces mute and volume, sliding up unmutes, and unmuting at 0 brings the sound back', async () => {
+  it('keeps and announces mute and volume, sliding up unmutes, and pressing the speaker at 0 brings the sound back', async () => {
     const { audio, fake, settings } = await unlocked();
     let heard = 0;
     audio.subscribe(() => (heard += 1));
@@ -108,10 +108,9 @@ describe('createAudioManager', () => {
     expect(fake.gains[0]!.gain.value).toBe(0.3);
     audio.setVolume(0);
     audio.toggleMute();
-    audio.toggleMute();
     expect(audio.getSettings()).toEqual({ volume: 0.6, muted: false });
     expect(settings.saved.at(-1)).toEqual({ volume: 0.6, muted: false });
-    expect(heard).toBe(5);
+    expect(heard).toBe(4);
   });
 
   it('is a quiet no-op where the browser has no Web Audio', async () => {

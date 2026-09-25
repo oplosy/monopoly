@@ -83,7 +83,8 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
       change({ volume: v, muted: v > 0 ? false : settings.muted });
     },
     toggleMute() {
-      if (settings.muted && settings.volume === 0) change({ volume: DEFAULT_SETTINGS.volume, muted: false });
+      // At volume 0 sound is off whatever the mute says: pressing the speaker is asking to hear it.
+      if (settings.volume === 0) change({ volume: DEFAULT_SETTINGS.volume, muted: false });
       else change({ ...settings, muted: !settings.muted });
     },
     unlock() {

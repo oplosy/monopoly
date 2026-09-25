@@ -40,6 +40,16 @@ describe('the sound control', () => {
     expect(screen.getByRole('button', { name: 'Sound' })).toHaveAttribute('aria-pressed', 'true');
   });
 
+  it('shows sound as off at volume 0, and one press brings it back', () => {
+    const { settings } = control();
+    fireEvent.change(screen.getByRole('slider', { name: 'Volume' }), { target: { value: '0' } });
+    const toggle = screen.getByRole('button', { name: 'Sound' });
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(toggle);
+    expect(settings.saved.at(-1)).toEqual({ volume: 0.6, muted: false });
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('switches sound on at the first touch or key anywhere on the page, once', () => {
     const { createContext } = control();
     expect(createContext).not.toHaveBeenCalled();
