@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { handFan, layoutMode, onFelt, project, tableLayout, TILT, type PlaneRect, type TableLayout } from '../src/scene/layout';
+import { fanLayout } from '../src/scene/geometry';
+import { FAN_PIVOT, handFan, layoutMode, onFelt, project, tableLayout, TILT, type PlaneRect, type TableLayout } from '../src/scene/layout';
 
 /** Spec §5.3: the viewport, then the hand card width (±10 %) and the near and far table card widths (floors), rendered px. */
 const TARGETS = [
@@ -136,7 +137,7 @@ describe('tableLayout: a tray', () => {
     const tray = tableLayout({ width: 375, height: 812 }, 3, { tray: true });
     expect(tray.card).toEqual(plain.card);
     expect(tray.hand).toEqual(plain.hand);
-    expect(handTop(tray) - myZoneBottom(tray)).toBeGreaterThanOrEqual(104);
+    expect(handTop(tray) - myZoneBottom(tray)).toBeGreaterThanOrEqual(116);
   });
 
   it('changes nothing on a desktop, where trays wait at the side', () => {
@@ -145,9 +146,12 @@ describe('tableLayout: a tray', () => {
 });
 
 describe('tableLayout: every supported screen (Review Focus 5)', () => {
+  // Real shapes: phones are 16:9 or longer (portrait up to 500 px wide, landscape up to 500 px high),
+  // tablets 4:3 or longer, desktops 4:3 or wider.
   const supported = (w: number, h: number) =>
-    (w >= 320 && w <= 1024 && h >= Math.max(1.3 * w, 560)) ||
-    (w >= 568 && w <= 932 && h >= 320 && h <= 500 && w >= 1.6 * h) ||
+    (w >= 320 && w <= 500 && h >= Math.max(1.7 * w, 560)) ||
+    (w > 500 && w <= 1024 && h >= 1.3 * w) ||
+    (w >= 568 && w <= 932 && h >= 320 && h <= 500 && w >= 1.75 * h) ||
     (w >= 1024 && h >= 600 && h <= 0.8 * w);
 
   it('stays sound from 320 px phones to 2560 px desktops', () => {
@@ -161,27 +165,40 @@ describe('tableLayout: every supported screen (Review Focus 5)', () => {
         }
       }
     }
-    expect(checked).toBeGreaterThan(5000);
+    expect(checked).toBeGreaterThan(4000);
   });
 });
 
 describe('handFan', () => {
   it('spreads a desktop hand wide, and never more than 62 % of a card apart', () => {
     const L = tableLayout({ width: 1440, height: 900 }, 3);
-    expect(handFan(L, 7)).toEqual({ step: 102, scroll: false });
+    expect(handFan(L, 7)).toEqual({ step: 101, flat: false, scroll: false });
     expect(handFan(L, 2).step).toBe(Math.round(L.hand.w * 0.62));
   });
 
-  it('closes up as the hand grows, then scrolls once a card would show under 28 % (Review Focus 2)', () => {
+  it('keeps the turned outer cards on screen, counting their swing about the pivot', () => {
+    for (const [width, height] of [[768, 1024], [1440, 900], [812, 375], [375, 812]] as const) {
+      const L = tableLayout({ width, height }, 3);
+      for (let n = 2; n <= 9; n++) {
+        const fan = handFan(L, n);
+        if (fan.flat) continue;
+        const outer = Math.abs(fanLayout(n, 0).rotate);
+        const half = (L.hand.w + (n - 1) * fan.step) / 2 + FAN_PIVOT * L.hand.h * Math.sin((outer * Math.PI) / 180);
+        expect(width / 2 - half, `${width}×${height}, ${n} cards`).toBeGreaterThanOrEqual(L.handReserve - 1);
+      }
+    }
+  });
+
+  it('lays a hand flat when a turned fan would not fit, then scrolls once a card would show under 28 % (Review Focus 2)', () => {
     const L = tableLayout({ width: 375, height: 812 }, 3);
-    expect(handFan(L, 10)).toEqual({ step: 29, scroll: false });
+    expect(handFan(L, 10)).toEqual({ step: 29, flat: true, scroll: false });
     const long = handFan(L, 11);
-    expect(long.scroll).toBe(true);
+    expect(long).toMatchObject({ flat: true, scroll: true });
     expect(long.step).toBe(Math.round(L.hand.w * 0.28));
   });
 
   it('lays a single card flat', () => {
     const L = tableLayout({ width: 375, height: 812 }, 3);
-    expect(handFan(L, 1)).toEqual({ step: L.hand.w, scroll: false });
+    expect(handFan(L, 1)).toEqual({ step: L.hand.w, flat: false, scroll: false });
   });
 });

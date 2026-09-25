@@ -3,7 +3,7 @@
  * from the viewport and the player count. Cards are sized first, then the table is fitted around them.
  * A pure function: `Tabletop` writes its results as CSS custom properties, tests check them as numbers.
  */
-import type { PlanePoint } from './geometry';
+import { fanLayout, type PlanePoint } from './geometry';
 
 /** desktop: a landscape window taller than 500 px; portrait: taller than wide; landscape: a phone on its side. */
 export type LayoutMode = 'desktop' | 'portrait' | 'landscape';
@@ -83,13 +83,17 @@ interface ModeRules {
 
 const RULES: Record<LayoutMode, ModeRules> = {
   desktop: { handOfH: 0.214, handOfW: 0.195, rest: 0.25, table: 0.46, top: 64, below: 14, aspect: 1.8 },
-  portrait: { handOfH: 0.214, handOfW: 0.195, rest: 0.35, table: 0.52, top: 56, below: 60, aspect: 1 },
+  portrait: { handOfH: 0.214, handOfW: 0.195, rest: 0.35, table: 0.52, top: 64, below: 60, aspect: 1 },
   landscape: { handOfH: 0.214, handOfW: 0.195, rest: 0.5, table: 0.58, top: 8, below: 6, aspect: 1.8 },
 };
 /** A phone in portrait has a wider hand (a thumb needs it). */
 const PHONE_HAND_OF_W = 0.267;
 /** Extra room a tray takes between my table and my hand in portrait (px). */
-const TRAY_ROOM = 44;
+const TRAY_ROOM = 56;
+/** The fan turns each hand card about a point this many card heights below its top (`.hand-fan > li`'s transform-origin). */
+export const FAN_PIVOT = 1.6;
+/** In landscape the HUD stands as a column in the top right corner, this wide (px): the table keeps clear of it. */
+const LANDSCAPE_HUD = 118;
 
 const rad = (deg: number) => (deg * Math.PI) / 180;
 const round1 = (n: number) => Math.round(n * 10) / 10;
@@ -147,7 +151,8 @@ function zonesFor(mode: LayoutMode, players: number, plane: Size, ring: number, 
   const outX = pctX(seatHalf.w + 8);
   const aboveY = -pctY(seatHalf.h + 4);
   if (mode === 'portrait') {
-    const mine: SeatSlot = { angle: 270, zone: { x: 26, y: nearTop, w: 66, h: nearH }, ui: { x: 13, y: round1(nearTop + nearH / 2) } };
+    // My seat stands beside my zone, its foot level with the zone's, so it never reaches down to my hand.
+    const mine: SeatSlot = { angle: 270, zone: { x: 26, y: nearTop, w: 66, h: nearH }, ui: { x: 13, y: round1(nearTop + nearH - pctY(seatHalf.h)) } };
     if (players <= 1) return { seats: [mine], center };
     if (players === 2) return { seats: [mine, { angle: 90, zone: { x: 8, y: farTop, w: 84, h: farH }, ui: { x: 50, y: aboveY } }], center };
     return {
@@ -159,16 +164,25 @@ function zonesFor(mode: LayoutMode, players: number, plane: Size, ring: number, 
       center,
     };
   }
-  const mine: SeatSlot = { angle: 270, zone: { x: 20, y: nearTop, w: 60, h: nearH }, ui: { x: -outX, y: 80 } };
-  // In landscape the HUD stands as a column in the top right corner: the right-hand seat sits low, clear of it.
-  const rightY = mode === 'landscape' ? 70 : 22;
+  // In landscape the trays dock at the bottom right: my zone leaves them the plane's lower right corner.
+  const mine: SeatSlot = { angle: 270, zone: { x: mode === 'landscape' ? 22 : 20, y: nearTop, w: mode === 'landscape' ? 46 : 60, h: nearH }, ui: { x: -outX, y: 80 } };
+  // In landscape the HUD column takes the right-hand side: the right-hand seat stands on the felt's round
+  // right end, level with the center, just clear of the far zone beside it.
+  const rightOf = (zone: PlaneRect): PlanePoint =>
+    mode === 'landscape' ? { x: round1(zone.x + zone.w + pctX(seatHalf.w + 6)), y: 50 } : { x: round1(100 + outX), y: 22 };
   if (players <= 1) return { seats: [mine], center };
-  if (players === 2) return { seats: [mine, { angle: 90, zone: { x: 20, y: farTop, w: 60, h: farH }, ui: { x: round1(100 + outX), y: rightY } }], center };
+  if (players === 2) {
+    const far = { x: 20, y: farTop, w: 60, h: farH };
+    return { seats: [mine, { angle: 90, zone: far, ui: rightOf(far) }], center };
+  }
+  // The small landscape planes keep the far zones a little further in from the round ends.
+  const inset = mode === 'landscape' ? 2 : 0;
+  const right = { x: 51, y: farTop, w: 31 - inset, h: farH };
   return {
     seats: [
       mine,
-      { angle: 150, zone: { x: 18, y: farTop, w: 31, h: farH }, ui: { x: -outX, y: mode === 'landscape' ? 36 : 22 } },
-      { angle: 30, zone: { x: 51, y: farTop, w: 31, h: farH }, ui: { x: round1(100 + outX), y: rightY } },
+      { angle: 150, zone: { x: 18 + inset, y: farTop, w: 31 - inset, h: farH }, ui: { x: -outX, y: mode === 'landscape' ? 36 : 22 } },
+      { angle: 30, zone: right, ui: rightOf(right) },
     ],
     center,
   };
@@ -198,18 +212,25 @@ export function tableLayout(viewport: { width: number; height: number }, players
   const avatar = Math.round(clamp(40, card.h * Math.cos(rad(TILT)) * 0.9, 72));
   const seatHalf = { w: Math.round(Math.max(avatar + 20, 80) / 2), h: Math.round((avatar + (compact ? 50 : 62)) / 2) };
   const top = r.top + (mode === 'portrait' ? seatHalf.h * 2 + 4 : 0);
-  const handReserve = mode === 'desktop' ? Math.round(0.22 * W) : mode === 'landscape' ? Math.round(Math.max(130, seatHalf.w * 2 + 24)) : 8;
+  const handReserve = mode === 'desktop' ? Math.round(0.16 * W) : mode === 'landscape' ? Math.round(Math.max(130, seatHalf.w * 2 + 24)) : 8;
   // In portrait a tray waits between my table and my hand: the table leaves it room.
   const below = r.below + (mode === 'portrait' && opts.tray ? TRAY_ROOM : 0);
 
-  // 4. The plane: the biggest whose top edge lands at `top` and whose near zone ends above the hand.
+  // 4. The plane: the biggest whose top edge lands at `top` and whose near zone and my seat end above the hand.
+  const ring = Math.round(card.w * 2.4);
   const fit = (h: number) => {
     const w = Math.round(mode === 'portrait' ? Math.min(W - 16, h) : h * r.aspect);
     const perspective = Math.round(PERSPECTIVE * h);
     const sTop = depthScale(perspective, -h / 2);
     const cy = Math.round(top / sTop + (h / 2) * Math.cos(rad(TILT)));
     const plane = { w, h: Math.round(h), cx: Math.round(W / 2), cy };
-    return { plane, perspective, bottom: project({ plane, perspective, tilt: TILT, viewport: { w: W, h: H } }, { x: 50, y: 95 }).y };
+    const at = { plane, perspective, tilt: TILT, viewport: { w: W, h: H } };
+    // Nothing of mine may reach the resting hand: neither my zone nor my seat beside it.
+    const seats = zonesFor(mode, players, plane, ring, seatHalf).seats;
+    const bottom = Math.max(project(at, { x: 50, y: 95 }).y, project(at, seats[0]!.ui).y + seatHalf.h);
+    // In landscape the plane and the right-hand seat on it keep clear of the HUD column.
+    const right = Math.max(project(at, { x: 100, y: 50 }).x, ...seats.slice(1).map((seat) => project(at, seat.ui).x + seatHalf.w));
+    return { plane, perspective, bottom, right };
   };
   let lo = 100;
   let hi = 4000;
@@ -219,20 +240,30 @@ export function tableLayout(viewport: { width: number; height: number }, players
     // At the sides, the seats beside the plane's near corners stay on screen (the perspective widens the near side).
     const nearS = depthScale(f.perspective, NEAR_DY * f.plane.h);
     const wide = mode === 'portrait' || (f.plane.w / 2 + seatHalf.w * 2 + 8) * nearS <= W / 2 - 8;
-    if (f.bottom <= handTop - below && wide) lo = mid;
+    const clearOfHud = mode !== 'landscape' || f.right <= W - 12 - LANDSCAPE_HUD;
+    if (f.bottom <= handTop - below && wide && clearOfHud) lo = mid;
     else hi = mid;
   }
   const { plane, perspective } = fit(Math.floor(lo));
   const radius = Math.round(mode === 'portrait' ? 0.18 * plane.w : Math.min(plane.w, plane.h) / 2);
-  const ring = Math.round(card.w * 2.4);
   const { seats, center } = zonesFor(mode, players, plane, ring, seatHalf);
   return { mode, compact, viewport: { w: W, h: H }, hand, handReserve, card, cardFloor, plane, radius, tilt: TILT, perspective, avatar, seats, center };
 }
 
-/** The fan's spacing for `count` cards: each card's step from the one before (px), and whether the fan scrolls (spec §5.5). */
-export function handFan(layout: Pick<TableLayout, 'hand' | 'handReserve' | 'viewport'>, count: number): { step: number; scroll: boolean } {
-  const { w } = layout.hand;
-  if (count <= 1) return { step: w, scroll: false };
-  const fit = (layout.viewport.w - 2 * layout.handReserve - w) / (count - 1);
-  return { step: Math.round(clamp(0.28 * w, fit, 0.62 * w)), scroll: fit < 0.28 * w };
+/**
+ * The fan's spacing for `count` cards (spec §5.5): each card's step from the one before (px), whether the cards
+ * lie flat, and whether the hand scrolls. A turned fan swings its outer cards outwards (they turn about a point
+ * `FAN_PIVOT` card heights down), so it must fit with that swing; if it does not, the cards lie flat, and only
+ * a flat hand that still shows less than 28 % of each card scrolls.
+ */
+export function handFan(layout: Pick<TableLayout, 'hand' | 'handReserve' | 'viewport'>, count: number): { step: number; flat: boolean; scroll: boolean } {
+  const { w, h } = layout.hand;
+  if (count <= 1) return { step: w, flat: false, scroll: false };
+  const room = layout.viewport.w - 2 * layout.handReserve;
+  const outer = Math.abs(fanLayout(count, 0).rotate);
+  const swing = FAN_PIVOT * h * Math.sin(rad(outer));
+  const turned = (room - 2 * swing - w) / (count - 1);
+  if (turned >= 0.28 * w) return { step: Math.min(Math.floor(turned), Math.round(0.62 * w)), flat: false, scroll: false };
+  const flat = (room - w) / (count - 1);
+  return { step: Math.round(clamp(0.28 * w, flat, 0.62 * w)), flat: true, scroll: flat < 0.28 * w };
 }

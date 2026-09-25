@@ -26,8 +26,8 @@ export function HandFan({ cards, me }: { cards: readonly string[]; me: string })
       style={{ '--n': cards.length, ...(fan && { '--step': `${fan.step}px` }) } as CSSProperties}
     >
       {cards.map((id, i) => {
-        // A scrolling hand lies flat: a turned card would poke out of the strip.
-        const f = fan?.scroll ? { rotate: 0, drop: 0 } : fanLayout(cards.length, i);
+        // A hand too long to fan with its swing lies flat (and a scrolling one must: a turned card would poke out).
+        const f = fan?.flat ? { rotate: 0, drop: 0 } : fanLayout(cards.length, i);
         return (
           <li key={id} style={{ '--rot': `${f.rotate}deg`, '--drop': `${f.drop}px` } as CSSProperties}>
             <TableCard id={id} zone="hand" owner={me} rotation="parent" />
