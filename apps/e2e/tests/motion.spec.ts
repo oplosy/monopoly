@@ -83,20 +83,34 @@ test('a dragged card stays under the pointer where it was grabbed', async ({ bro
   await expect(hand(ann).getByRole('button')).not.toHaveCount(0);
   const mover = (await ann.getByRole('button', { name: 'End turn' }).isVisible()) ? ann : bob;
   await expect(mover.getByRole('button', { name: 'End turn' })).not.toHaveAttribute('aria-disabled');
+  // The outermost card of the fan, the most turned one, grabbed near its top left corner.
   const card = hand(mover).getByRole('button').first();
-  const rest = (await card.boundingBox())!;
-  const grab = { x: rest.x + rest.width * 0.3, y: rest.y + rest.height * 0.3 };
-  await mover.mouse.move(grab.x, grab.y);
+  const frameOf = () =>
+    card.evaluate((el: HTMLElement) => {
+      const r = el.getBoundingClientRect();
+      const m = /matrix\(([^)]+)\)/.exec(getComputedStyle(el.parentElement!).transform);
+      const [a = 1, b = 0] = m ? m[1]!.split(',').map(Number) : [];
+      return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: el.offsetWidth, h: el.offsetHeight, turn: Math.atan2(b, a) };
+    });
+  /** A point given as fractions of the card itself, on screen. */
+  const onCard = (c: Awaited<ReturnType<typeof frameOf>>, fx: number, fy: number) => {
+    const dx = (fx - 0.5) * c.w;
+    const dy = (fy - 0.5) * c.h;
+    return { x: c.cx + dx * Math.cos(c.turn) - dy * Math.sin(c.turn), y: c.cy + dx * Math.sin(c.turn) + dy * Math.cos(c.turn) };
+  };
+  await mover.mouse.move(...(Object.values(onCard(await frameOf(), 0.3, 0.3)) as [number, number]));
   await mover.waitForTimeout(250); // the hover lift settles
-  const lifted = (await card.boundingBox())!;
-  const f = { x: (grab.x - lifted.x) / lifted.width, y: (grab.y - lifted.y) / lifted.height };
+  const lifted = await frameOf();
+  expect(Math.abs(lifted.turn)).toBeGreaterThan(0.03); // the card really is turned
+  const grab = onCard(lifted, 0.15, 0.12);
+  await mover.mouse.move(grab.x, grab.y);
   await mover.mouse.down();
   const to = { x: grab.x + 160, y: grab.y - 240 };
   await mover.mouse.move(to.x, to.y, { steps: 12 });
   await mover.waitForTimeout(300); // the lean settles back to upright
-  const ghost = (await mover.locator('.drag-ghost').boundingBox())!;
-  expect(Math.abs(ghost.x + f.x * ghost.width - to.x)).toBeLessThanOrEqual(2);
-  expect(Math.abs(ghost.y + f.y * ghost.height - to.y)).toBeLessThanOrEqual(2);
+  const ghost = (await mover.locator('.drag-ghost > div').boundingBox())!;
+  expect(Math.abs(ghost.x + 0.15 * ghost.width - to.x)).toBeLessThanOrEqual(2);
+  expect(Math.abs(ghost.y + 0.12 * ghost.height - to.y)).toBeLessThanOrEqual(2);
   await mover.mouse.up();
   for (const page of [bob, ann]) await leaveRoom(page);
 });

@@ -168,6 +168,24 @@ describe('drag and drop', () => {
     expect(ghost.style.transform).toContain('translateY(350px)');
   });
 
+  it('keeps the grabbed point in the frame of the card itself when the card is turned in the fan', async () => {
+    renderTabletop({ state: tableWith(['money-2-1']) });
+    under(null);
+    const card = handCard(/^2M money/);
+    // A 100 × 140 card centred at (130, 630), turned 30° by its slot: its bounding box is 156.6 × 171.2.
+    const a = Math.PI / 6;
+    card.parentElement!.style.transform = `matrix(${Math.cos(a)}, ${Math.sin(a)}, ${-Math.sin(a)}, ${Math.cos(a)}, 0, 0)`;
+    vi.spyOn(card, 'getBoundingClientRect').mockReturnValue(box(130 - 156.6 / 2, 630 - 171.2 / 2, 156.6, 171.2));
+    // Grabbed 30 px left of and 40 px above its center, in the card's own frame (0.2, 0.2143).
+    const at = { x: 130 + -30 * Math.cos(a) - -40 * Math.sin(a), y: 630 + -30 * Math.sin(a) + -40 * Math.cos(a) };
+    fireEvent.pointerDown(card, { ...mouse, button: 0, clientX: at.x, clientY: at.y });
+    fireEvent.pointerMove(card, { ...mouse, clientX: at.x + 40, clientY: at.y - 300 });
+    await settle();
+    const ghost = document.querySelector<HTMLElement>('.drag-ghost')!;
+    expect(Number(ghost.style.getPropertyValue('--gx'))).toBeCloseTo(0.2, 2);
+    expect(Number(ghost.style.getPropertyValue('--gy'))).toBeCloseTo(0.21, 2);
+  });
+
   it('grabs a card with no layout box by its middle', async () => {
     renderTabletop({ state: tableWith(['money-2-1']) });
     under(null);

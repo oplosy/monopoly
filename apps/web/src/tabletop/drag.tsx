@@ -83,6 +83,24 @@ export function ghostHome(home: Pose, grab: { x: number; y: number }): { x: numb
   return { x: round(home.cx + dx * Math.cos(a) - dy * Math.sin(a)), y: round(home.cy + dx * Math.sin(a) + dy * Math.cos(a)), rotate: home.rotate };
 }
 
+/**
+ * Where a card is grabbed, as fractions of the card itself (0–1): the pointer turned back by the card's own
+ * turn about its center, so a turned fan card is held at the very point under the pointer. A card with no
+ * layout box (not laid out yet) is held by its middle.
+ */
+function grabOf(el: Element, clientX: number, clientY: number): { gx: number; gy: number } {
+  const r = el.getBoundingClientRect();
+  if (!(r.width > 0 && r.height > 0)) return { gx: 0.5, gy: 0.5 };
+  const pose = poseOf(el);
+  const a = (-pose.rotate * Math.PI) / 180;
+  const dx = clientX - pose.cx;
+  const dy = clientY - pose.cy;
+  const gx = (dx * Math.cos(a) - dy * Math.sin(a)) / pose.width + 0.5;
+  const gy = (dx * Math.sin(a) + dy * Math.cos(a)) / pose.height + 0.5;
+  const clamp = (v: number) => Math.min(1, Math.max(0, v));
+  return { gx: clamp(gx), gy: clamp(gy) };
+}
+
 /** Drag and drop for hand cards (spec §5.2): pointer-only sugar over the same legal plays as the popover. */
 export function useDragController({ enabled, zonesFor, onDrop }: Options): DragApi {
   const [state, setState] = useState<DragState | null>(null);
@@ -158,11 +176,7 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
         onPointerDown(e) {
           swallow.current = null;
           if (!enabled || e.button !== 0 || e.pointerType === 'touch' || live.current) return;
-          const r = e.currentTarget.getBoundingClientRect();
-          // A card with no layout box (not laid out yet) is held by its middle.
-          const gx = r.width > 0 ? (e.clientX - r.left) / r.width : 0.5;
-          const gy = r.height > 0 ? (e.clientY - r.top) / r.height : 0.5;
-          press.current = { card, x: e.clientX, y: e.clientY, gx, gy };
+          press.current = { card, x: e.clientX, y: e.clientY, ...grabOf(e.currentTarget, e.clientX, e.clientY) };
         },
         onPointerMove(e) {
           const p = press.current;
