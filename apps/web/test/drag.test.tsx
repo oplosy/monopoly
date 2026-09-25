@@ -253,8 +253,9 @@ describe('drag and drop', () => {
     expect(turned.y).toBeCloseTo(-25, 6);
   });
 
-  it('hides the card in my hand while its ghost flies home, and shows it the moment the ghost lands', () => {
-    vi.useFakeTimers();
+  it('hides the card in my hand while its ghost flies home, and shows it the moment the ghost lands', async () => {
+    // Real time: the return runs in Motion's own frame loop, which fake timers do not drive.
+    const wait = (ms: number) => act(() => new Promise((resolve) => setTimeout(resolve, ms)));
     renderTabletop({ state: tableWith(['money-2-1']) });
     under(null);
     const card = handCard(/^2M money/);
@@ -263,10 +264,10 @@ describe('drag and drop', () => {
     release(card);
     expect(card).toHaveClass('is-returning');
     expect(card).not.toHaveClass('is-dragging');
-    act(() => vi.advanceTimersByTime(RETURN_MS - 20));
+    await wait(RETURN_MS - 100);
     expect(card).toHaveClass('is-returning');
-    // It lands on the first frame at or after RETURN_MS.
-    act(() => vi.advanceTimersByTime(40));
+    // It lands on the first frame at or after RETURN_MS, and gives way to the card one frame later.
+    await wait(300);
     expect(card).not.toHaveClass('is-returning');
     expect(document.querySelector('.drag-ghost')).toBeNull();
   });

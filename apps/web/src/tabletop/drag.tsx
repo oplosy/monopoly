@@ -1,4 +1,4 @@
-import { motion, useMotionValue, useMotionValueEvent, useSpring, useTransform, useVelocity, type MotionStyle, type MotionValue } from 'motion/react';
+import { cancelFrame, frame, motion, useMotionValue, useMotionValueEvent, useSpring, useTransform, useVelocity, type MotionStyle, type MotionValue } from 'motion/react';
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { CardFace } from '../cards/CardFace';
 import { round2 } from '../cards/text';
@@ -108,7 +108,8 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
   const press = useRef<{ card: string; x: number; y: number; gx: number; gy: number } | null>(null);
   const swallow = useRef<string | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const frame = useRef<number | null>(null);
+  /** The running return home, a step of Motion's own frame loop. */
+  const back = useRef<(() => void) | null>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   // The ghost leans with the pointer's horizontal speed, up to 8°, and settles upright in about 150 ms.
@@ -148,7 +149,7 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current);
-      if (frame.current) cancelAnimationFrame(frame.current);
+      if (back.current) cancelFrame(back.current);
     },
     [],
   );
@@ -223,24 +224,32 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
               return;
             }
             update({ ...s, phase: 'returning', hot: null });
-            if (frame.current) cancelAnimationFrame(frame.current);
+            if (back.current) cancelFrame(back.current);
             // The card flies back onto its place in the hand and lands exactly on it, turned like it; the card
             // waits hidden under it until then. Its place is measured on every frame: the hand card is still
-            // settling from its hover lift, and the fan may shift.
+            // settling from its hover lift, and the fan may shift. The steps run in Motion's own frame loop,
+            // so each pose is painted in the frame it is set; the ghost goes one frame after its last pose.
             const el = e.currentTarget;
             const from = { x: x.get(), y: y.get(), turn: turn.get() };
             const start = performance.now();
             const ease = (p: number) => 1 - (1 - p) ** 3;
+            let landed = false;
             const home = () => {
+              back.current = null;
               if (live.current?.phase !== 'returning') return;
+              if (landed) {
+                update(null);
+                return;
+              }
               const elapsed = performance.now() - start;
               const k = ease(Math.min(1, elapsed / RETURN_MS));
               const to = ghostHome(poseOf(el), s.grab);
               x.set(from.x + (to.x - from.x) * k);
               y.set(from.y + (to.y - from.y) * k);
               turn.set(from.turn + (to.rotate - from.turn) * k);
-              if (elapsed >= RETURN_MS) update(null);
-              else frame.current = requestAnimationFrame(home);
+              landed = elapsed >= RETURN_MS;
+              back.current = home;
+              frame.update(home);
             };
             home();
             return;
