@@ -139,6 +139,18 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
     return () => window.removeEventListener('keydown', onKey);
   }, [state?.phase]);
 
+  // Frames stop in a hidden tab: a card on its way home lands at once, so coming back finds it in the hand.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (!document.hidden || live.current?.phase !== 'returning') return;
+      if (back.current) cancelFrame(back.current);
+      back.current = null;
+      update(null);
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+
   // Scenes started, or my turn ended: a card pressed or being dragged goes back.
   useEffect(() => {
     if (enabled) return;
@@ -237,7 +249,8 @@ export function useDragController({ enabled, zonesFor, onDrop }: Options): DragA
             const home = () => {
               back.current = null;
               if (live.current?.phase !== 'returning') return;
-              if (landed) {
+              // Landed, or the card left the hand on the way (a detached card has no place to fly to).
+              if (landed || !el.isConnected) {
                 update(null);
                 return;
               }

@@ -271,4 +271,39 @@ describe('drag and drop', () => {
     expect(card).not.toHaveClass('is-returning');
     expect(document.querySelector('.drag-ghost')).toBeNull();
   });
+
+  it('lands a card on its way home at once when the tab is hidden (frames stop there)', () => {
+    renderTabletop({ state: tableWith(['money-2-1']) });
+    under(null);
+    const card = handCard(/^2M money/);
+    dragAway(card);
+    release(card);
+    expect(card).toHaveClass('is-returning');
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    try {
+      act(() => {
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+      expect(card).not.toHaveClass('is-returning');
+      expect(document.querySelector('.drag-ghost')).toBeNull();
+    } finally {
+      Reflect.deleteProperty(document, 'hidden');
+    }
+  });
+
+  it('ends the flight home, and never flies toward the corner, when the card leaves the hand on the way', async () => {
+    renderTabletop({ state: tableWith(['money-2-1']) });
+    under(null);
+    const card = handCard(/^2M money/);
+    vi.spyOn(card, 'getBoundingClientRect').mockReturnValue(box(80, 560, 100, 140));
+    dragAway(card);
+    release(card);
+    const ghost = document.querySelector<HTMLElement>('.drag-ghost')!;
+    // The card is gone from the page (a detached element measures as an empty box at 0, 0).
+    Object.defineProperty(card, 'isConnected', { configurable: true, get: () => false });
+    vi.spyOn(card, 'getBoundingClientRect').mockReturnValue(box(0, 0, 0, 0));
+    await act(() => new Promise((resolve) => setTimeout(resolve, 60)));
+    expect(document.querySelector('.drag-ghost')).toBeNull();
+    expect(ghost.style.transform).not.toMatch(/translateX\((-?\d(\.\d+)?|-?[1-3]\d(\.\d+)?)px\)/);
+  });
 });
