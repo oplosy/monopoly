@@ -28,15 +28,18 @@ export const SCENARIOS: readonly Scenario[] = [
     title: 'Your turn',
     steps: [
       'Cleo: End turn → you draw 2 (the cards flip into your hand)',
-      'Bank the 5M, play the red properties (the third one completes the set)',
-      'Pass Go (2 more cards), then End turn with too many cards → discard',
+      'Bank the 5M, then play both reds (the second completes the set: shine and stamp)',
+      'End turn with 9 cards → pick 2 in your hand, then Discard',
     ],
     state: {
       turn: 'cleo',
       players: [
         {
           id: 'you',
-          hand: ['money-5-1', 'prop-red-1', 'prop-red-3', 'act-passGo-1', 'wild-pink-orange-1', 'money-2-1', 'act-birthday-1'],
+          hand: [
+            'money-5-1', 'prop-red-1', 'prop-red-3', 'act-passGo-1', 'wild-pink-orange-1',
+            'money-2-1', 'act-birthday-1', 'money-1-4', 'money-1-5', 'money-3-2',
+          ],
           groups: [{ color: 'red', cards: ['prop-red-2'] }],
         },
         { id: 'bob', hand: ['money-1-1', 'money-1-2'], bank: ['money-3-1'], groups: [{ color: 'green', cards: ['prop-green-1'] }] },
@@ -48,6 +51,7 @@ export const SCENARIOS: readonly Scenario[] = [
     id: 'rent',
     title: 'Rent and payments',
     steps: [
+      'Pass Go: the card is read at the center, then you draw 2',
       'Birthday: Bob and Cleo pay you, card by card',
       'Rent on red with Double The Rent: the big-rent peak (wheel, ×2 stamp)',
       'Hotel onto the red set (a building flight)',
@@ -57,7 +61,7 @@ export const SCENARIOS: readonly Scenario[] = [
       players: [
         {
           id: 'you',
-          hand: ['act-birthday-1', 'rent-red-yellow-1', 'act-doubleRent-1', 'act-hotel-1', 'act-debtCollector-1'],
+          hand: ['act-passGo-2', 'act-birthday-1', 'rent-red-yellow-1', 'act-doubleRent-1', 'act-hotel-1', 'act-debtCollector-1'],
           groups: [{ color: 'red', cards: ['prop-red-1', 'prop-red-2', 'prop-red-3'], house: 'act-house-1' }],
         },
         { id: 'bob', bank: ['money-5-1', 'money-3-1', 'money-2-1', 'money-1-1'], groups: [{ color: 'green', cards: ['prop-green-1', 'prop-green-2'] }] },

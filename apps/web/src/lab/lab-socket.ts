@@ -10,7 +10,8 @@ export const LAB_CODE = 'LAB';
 export const BOT_MS = 900;
 const TURN_MS = 60_000;
 const RESPONSE_MS = 20_000;
-const NICKNAMES: Record<string, string> = { you: 'You', bob: 'Bob', cleo: 'Cleo' };
+// Real nicknames, as a room has them: the narrator says "Ann's turn", never "You's turn".
+const NICKNAMES: Record<string, string> = { you: 'Ann', bob: 'Bob', cleo: 'Cleo' };
 
 /** The lab's stand-in for the server: the engine runs here, and the real store listens (Plan 12). */
 export interface LabSocket extends SocketLike {
