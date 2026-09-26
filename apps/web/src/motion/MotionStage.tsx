@@ -5,6 +5,7 @@ import { AnchorProvider } from './anchor-context';
 import { AnchorRegistry } from './anchors';
 import { FlightLayer } from './FlightLayer';
 import { motionMode } from './mode';
+import { getMotion, subscribeMotion } from './setting';
 import { shakeScene } from './shake';
 import { landCard, landingTilt, settleCards } from './settle';
 import { createStage } from './stage';
@@ -49,8 +50,13 @@ export function MotionStage({ children }: { children: ReactNode }) {
       if (document.hidden) stage.snap();
     };
     document.addEventListener('visibilitychange', onVisibility);
+    // Animations switched off: the scenes playing end now, so no shake or tilt comes after the switch.
+    const offMotion = subscribeMotion(() => {
+      if (getMotion() === 'off') stage.snap();
+    });
     return () => {
       unsubscribe();
+      offMotion();
       document.removeEventListener('visibilitychange', onVisibility);
       stage.snap();
     };

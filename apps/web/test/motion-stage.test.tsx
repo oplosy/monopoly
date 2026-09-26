@@ -6,6 +6,7 @@ import { makeState } from '@deal-city/engine/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AudioProvider } from '../src/audio/audio-context';
 import { MotionStage } from '../src/motion/MotionStage';
+import { setMotion } from '../src/motion/setting';
 import { useStage, useStaged } from '../src/motion/stage-context';
 import { STYLE_MS } from '../src/motion/timing';
 import { StoreProvider } from '../src/store/context';
@@ -70,6 +71,20 @@ describe('MotionStage', () => {
       act(() => store.setState({ game: banked() }));
       expect(screen.getByText('v1 busy')).toBeInTheDocument();
     } finally {
+      animations.restore();
+    }
+  });
+
+  it('snaps when animations are switched off mid-scene, so nothing shakes or tilts afterwards', () => {
+    const animations = stubAnimations();
+    try {
+      const store = mount({ game: payload(s0(), 'p1') });
+      act(() => store.setState({ game: banked() }));
+      expect(screen.getByText('v1 busy')).toBeInTheDocument();
+      act(() => setMotion('off'));
+      expect(screen.getByText('v1 idle')).toBeInTheDocument();
+    } finally {
+      setMotion('on');
       animations.restore();
     }
   });
