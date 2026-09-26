@@ -86,3 +86,17 @@ test('in portrait the narrator stays off the deck and my table', async ({ page }
     expect(overlaps(narrator, b), 'narrator over my table').toBe(false);
   }
 });
+
+test('in portrait the narrator never covers the answer I must give', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/lab?s=their-turn');
+  await labButton(page, 'Bob: Birthday');
+  const tray = page.locator('.tray');
+  await expect(tray).toBeVisible();
+  await page.waitForTimeout(300);
+  const narrator = page.locator('.narrator');
+  const shown = (await narrator.count()) > 0 && (await narrator.evaluate((el) => Number(getComputedStyle(el).opacity) > 0));
+  if (!shown) return;
+  const text = await box(page, '.narrator-text');
+  for (const b of await boxes(page, '.tray button')) expect(overlaps(text, b), 'narrator over an answer button').toBe(false);
+});

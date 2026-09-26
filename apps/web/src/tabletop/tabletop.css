@@ -516,6 +516,9 @@
   max-width: calc(100vw - 2 * (104px + 32px));
 }
 .tabletop[data-layout='portrait'][data-compact] .narrator { max-width: calc(100vw - 2 * (76px + 32px)); }
+/* A tray asking me to answer, pay or discard stands in that same strip, and says what happened itself: the narrator
+   keeps quiet while it is open, so it never lies over my answer's buttons. */
+.tabletop[data-layout='portrait']:has(.tray) .narrator { opacity: 0; }
 /* A portrait table has no room beside the piles, so the action in play stands over them (it is going there):
    its words go above its card, into the gap below the far tables. */
 .tabletop[data-layout='portrait'] .pending-cards { order: 2; }
