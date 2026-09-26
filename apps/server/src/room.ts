@@ -4,7 +4,7 @@ import {
 } from '@deal-city/engine';
 import {
   AVATAR_COUNT, CHAT_HISTORY, CHAT_MAX_LENGTH, MAX_SEATS, MIN_PLAYERS,
-  type Ack, type ChatMessage, type Deadlines, type GameStatePayload, type RoomState, type RoomStatus,
+  type Ack, type ChatMessage, type SignalData, type VoiceState, type Deadlines, type GameStatePayload, type RoomState, type RoomStatus,
 } from '@deal-city/protocol';
 import { defaultAvatar } from './avatar';
 import type { Config } from './config';
@@ -22,6 +22,8 @@ export interface Connection {
   chatMessage(message: ChatMessage): void;
   /** The room's recent chat, when this connection takes its seat. */
   chatHistory(messages: ChatMessage[]): void;
+  /** A WebRTC signal from another player in voice. */
+  voiceSignal(payload: { from: string; data: SignalData }): void;
 }
 
 export interface RoomDeps {
@@ -44,6 +46,7 @@ interface Seat {
   token: string;
   conn: Connection | null;
   graceTimer: Timer | null;
+  voice: VoiceState;
 }
 
 interface ResponseClock {
@@ -90,7 +93,7 @@ export class Room {
     if (this.seats.length >= MAX_SEATS) return { ok: false, error: 'roomFull' };
     const playerId = `p${this.nextSeat++}`;
     const avatar = defaultAvatar(playerId, new Set(this.seats.map((s) => s.avatar)));
-    const seat: Seat = { playerId, nickname, avatar, token: sessionToken(), conn: null, graceTimer: null };
+    const seat: Seat = { playerId, nickname, avatar, token: sessionToken(), conn: null, graceTimer: null, voice: 'off' };
     seat.graceTimer = setTimeout(() => this.safely(() => this.dropSeat(seat.playerId)), this.config.graceMs);
     this.seats.push(seat);
     this.hostId ??= seat.playerId;
@@ -103,7 +106,11 @@ export class Room {
     if (!seat) return false;
     if (seat.graceTimer) clearTimeout(seat.graceTimer);
     seat.graceTimer = null;
-    if (seat.conn && seat.conn !== conn) seat.conn.replaced();
+    if (seat.conn && seat.conn !== conn) {
+      seat.conn.replaced();
+      // The old tab's call ended with it.
+      seat.voice = 'off';
+    }
     seat.conn = conn;
     this.idleSince = null;
     this.broadcastRoom();
@@ -116,6 +123,7 @@ export class Room {
     const seat = this.seat(playerId);
     if (!seat || seat.conn !== conn) return;
     seat.conn = null;
+    seat.voice = 'off';
     seat.graceTimer = setTimeout(() => this.safely(() => this.dropSeat(playerId)), this.config.graceMs);
     if (this.seats.every((s) => !s.conn)) this.idleSince = Date.now();
     this.broadcastRoom();
@@ -186,6 +194,43 @@ export class Room {
     return { ok: true };
   }
 
+  hasSeat(playerId: string): boolean {
+    return this.seat(playerId) !== undefined;
+  }
+
+  /** Enters voice chat with the mic closed; `voiceMic` opens it. */
+  voiceJoin(playerId: string): Ack {
+    const seat = this.seat(playerId);
+    if (!seat) return { ok: false, error: 'noSession' };
+    if (seat.voice === 'off') this.setVoice(seat, 'listening');
+    return { ok: true };
+  }
+
+  voiceLeave(playerId: string): Ack {
+    const seat = this.seat(playerId);
+    if (!seat) return { ok: false, error: 'noSession' };
+    this.setVoice(seat, 'off');
+    return { ok: true };
+  }
+
+  voiceMic(playerId: string, on: boolean): Ack {
+    const seat = this.seat(playerId);
+    if (!seat) return { ok: false, error: 'noSession' };
+    if (seat.voice === 'off') return { ok: false, error: 'badRequest' };
+    this.setVoice(seat, on ? 'talking' : 'listening');
+    return { ok: true };
+  }
+
+  /** Passes a WebRTC signal on, untouched, between two players who are both in voice. */
+  voiceSignal(from: string, to: string, data: SignalData): Ack {
+    const sender = this.seat(from);
+    if (!sender) return { ok: false, error: 'noSession' };
+    const target = this.seat(to);
+    if (from === to || sender.voice === 'off' || !target || target.voice === 'off' || !target.conn) return { ok: false, error: 'badRequest' };
+    target.conn.voiceSignal({ from, data });
+    return { ok: true };
+  }
+
   seatByToken(token: string): string | null {
     return this.seats.find((s) => s.token === token)?.playerId ?? null;
   }
@@ -199,7 +244,7 @@ export class Room {
       code: this.code,
       status: this.status,
       hostId: this.hostId,
-      seats: this.seats.map((s) => ({ playerId: s.playerId, nickname: s.nickname, connected: s.conn !== null, avatar: s.avatar })),
+      seats: this.seats.map((s) => ({ playerId: s.playerId, nickname: s.nickname, connected: s.conn !== null, avatar: s.avatar, voice: s.voice })),
     };
   }
 
@@ -215,6 +260,12 @@ export class Room {
   dispose(): void {
     this.stopClocks();
     for (const s of this.seats) if (s.graceTimer) clearTimeout(s.graceTimer);
+  }
+
+  private setVoice(seat: Seat, voice: VoiceState): void {
+    if (seat.voice === voice) return;
+    seat.voice = voice;
+    this.broadcastRoom();
   }
 
   private seat(playerId: string): Seat | undefined {

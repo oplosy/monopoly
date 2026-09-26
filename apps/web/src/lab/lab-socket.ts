@@ -52,7 +52,7 @@ export function createLabSocket(scenario: Scenario, now: () => number = Date.now
     code: LAB_CODE,
     status: 'playing',
     hostId: LAB_ME,
-    seats: seated.map((id, i) => ({ playerId: id, nickname: NICKNAMES[id] ?? id, connected: true, avatar: i })),
+    seats: seated.map((id, i) => ({ playerId: id, nickname: NICKNAMES[id] ?? id, connected: true, avatar: i, voice: 'off' })),
   });
   const payload = (events: GameEvent[]): GameStatePayload => ({
     view: viewFor(state, LAB_ME),

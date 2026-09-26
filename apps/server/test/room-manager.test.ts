@@ -10,6 +10,7 @@ const noop: Connection = {
   replaced: () => undefined,
   chatMessage: () => undefined,
   chatHistory: () => undefined,
+  voiceSignal: () => undefined,
 };
 
 beforeEach(() => vi.useFakeTimers());

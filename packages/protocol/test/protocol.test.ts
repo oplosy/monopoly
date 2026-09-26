@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVATAR_COUNT, AvatarSchema, CHAT_HISTORY, CHAT_MAX_LENGTH, ChatSendSchema, CreateRoomSchema, IntentPayloadSchema, IntentSchema, JoinRoomSchema, ResumeSchema, StartSchema } from '../src/index';
+import { AVATAR_COUNT, AvatarSchema, CHAT_HISTORY, CHAT_MAX_LENGTH, ChatSendSchema, CreateRoomSchema, IntentPayloadSchema, IntentSchema, JoinRoomSchema, ResumeSchema, StartSchema, VoiceMicSchema, VoiceSignalSchema } from '../src/index';
 
 describe('IntentSchema', () => {
   it('accepts engine intent shapes', () => {
@@ -78,5 +78,23 @@ describe('ChatSendSchema', () => {
 
   it('keeps 50 messages of up to 200 characters', () => {
     expect([CHAT_MAX_LENGTH, CHAT_HISTORY]).toEqual([200, 50]);
+  });
+});
+
+describe('voice schemas', () => {
+  it('takes a mic switch', () => {
+    expect(VoiceMicSchema.safeParse({ on: true }).success).toBe(true);
+    expect(VoiceMicSchema.safeParse({ on: 'yes' }).success).toBe(false);
+  });
+
+  it('takes a description or a candidate for another player, and nothing else', () => {
+    const offer = { to: 'p2', data: { description: { type: 'offer', sdp: 'v=0' } } };
+    const ice = { to: 'p2', data: { candidate: { candidate: 'candidate:1 1 udp 1 1.2.3.4 5 typ host', sdpMid: '0', sdpMLineIndex: 0 } } };
+    const end = { to: 'p2', data: { candidate: null } };
+    for (const ok of [offer, ice, end]) expect(VoiceSignalSchema.safeParse(ok).success).toBe(true);
+    expect(VoiceSignalSchema.safeParse({ to: 'p2', data: { description: { type: 'hello' } } }).success).toBe(false);
+    expect(VoiceSignalSchema.safeParse({ to: 'p2', data: {} }).success).toBe(false);
+    expect(VoiceSignalSchema.safeParse({ to: 'x'.repeat(40), data: { candidate: null } }).success).toBe(false);
+    expect(VoiceSignalSchema.safeParse({ to: 'p2', data: { description: { type: 'offer', sdp: 'x'.repeat(15_001) } } }).success).toBe(false);
   });
 });

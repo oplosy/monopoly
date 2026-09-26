@@ -29,6 +29,7 @@ function handleConnection(socket: IoSocket, rooms: RoomManager, config: Config):
     roomState: (state) => socket.emit('room:state', state),
     chatMessage: (message) => socket.emit('chat:message', message),
     chatHistory: (messages) => socket.emit('chat:history', messages),
+    voiceSignal: (payload) => socket.emit('voice:signal', payload),
     gameState: (payload) => socket.emit('game:state', payload),
     replaced: () => {
       session = null;
