@@ -63,6 +63,15 @@ The user's words: "we are playing a card game; the cards must never be the small
 
 ---
 
+### 3.1 The table, as built (2026-09-26)
+
+At the user's request the plain table became a table with real depth, still drawn in CSS and without image files:
+- **Felt:** navy (`--felt-1: #2d4a7a`, `--felt-2: #182c4f`), with a soft light on its middle, a fine cloth grain (an inline SVG noise), an inner shadow where it sinks into the rail, and a stitched line along its edge.
+- **Rail:** a padded walnut rail, lit along its top edge. Its width is `clamp(8px, 2.6 % of the plane, 34px)`.
+- **Body:** ten walnut slices sink below the top (`translateZ`, up to `clamp(8px, 5 % of the plane's height, 30px)`), so at 22° the table shows its thickness at the near edge and casts its shadow.
+- **Layout:** the rail and the body lie outside the plane, so the layout's zones and card sizes are unchanged.
+- **Background:** it stays plain until it can have real depth (the Blender phase, L8). Code-drawn skylines were tried and rejected.
+
 ## 4. The camera (Plan 10)
 
 - The table plane tilts **22°** (`rotateX(22deg)`), with the perspective origin near the top.
