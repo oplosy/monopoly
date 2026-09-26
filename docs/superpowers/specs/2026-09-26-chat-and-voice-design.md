@@ -28,9 +28,10 @@ Deal City is played by two or three friends who are not in the same place. For a
 ### 3.2 Protocol
 
 - **Client → server:** `chat:send { text }`, acked with `Ack`.
-- **Server → client:** `chat:message ChatMessage`, where `ChatMessage` is `{ id: number; from: string; text: string; at: number }`. Its fields:
+- **Server → client:** `chat:message ChatMessage`, where `ChatMessage` is `{ id: number; from: string; name: string; text: string; at: number }`. Its fields:
   - `id` counts up within the room;
   - `from` is a player id;
+  - `name` is the sender's nickname when they sent it, so history lines keep a name after their sender leaves;
   - `at` is epoch ms.
 - **History:** `RoomState` gains nothing. On attach (join or resume) the server sends the room's history as `chat:history ChatMessage[]`, and the client replaces its list with it.
 
@@ -41,7 +42,7 @@ Deal City is played by two or three friends who are not in the same place. For a
   - The text is trimmed, empty is refused (`badRequest`), and more than 200 characters is refused (`tooLong`).
   - The sender must hold a seat in the room (`noSession`).
 - **Rate limit:** a chat limiter per connection, separate from the game's (at most 1 message per second and 5 per 10 s), answers `rateLimited`.
-- **Seatless messages:** a message from a player who has since left keeps its `from`. The client names them from `names`, which already keeps every nickname seen in the room.
+- **Seatless messages:** a message from a player who has since left keeps its `from` and its `name`, so a player who joined after they left still sees who wrote it.
 
 ### 3.4 Client
 
