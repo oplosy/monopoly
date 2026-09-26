@@ -19,7 +19,11 @@ export function Lab() {
     const store = createGameStore(socket, memoryStorage({ code: LAB_CODE, playerId: LAB_ME, token: 'lab' }));
     return { socket, store, run };
   }, [scenario, run]);
-  useEffect(() => () => lab.socket.close(), [lab]);
+  // Connects on mount and stops on unmount: StrictMode's extra unmount and mount must end connected.
+  useEffect(() => {
+    lab.socket.open();
+    return () => lab.socket.close();
+  }, [lab]);
   return (
     <StoreProvider store={lab.store}>
       {/* A new store needs a new table: the choreographer follows the store it started with. */}
