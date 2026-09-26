@@ -273,7 +273,8 @@
   max-width: calc(100vw - 2 * var(--hand-reserve));
   overflow-x: auto;
   overflow-y: hidden;
-  padding-top: calc(var(--hand-rest) + var(--hand-h) * 0.15);
+  /* Room for the selected card: it rises by the rest and 8 px, and grows from below by 8 %. */
+  padding-top: calc(var(--hand-rest) + 12px + var(--hand-h) * 0.15);
   pointer-events: none;
   scrollbar-width: thin;
 }
