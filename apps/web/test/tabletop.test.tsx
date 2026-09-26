@@ -49,13 +49,12 @@ describe('the table', () => {
     expect(document.querySelector('.tabletop')).toHaveClass('players-2');
   });
 
-  it('lays the table out from the viewport: sizes on the table, zones for each tableau, seats at their anchors', () => {
+  it('lays the table out on the stage: sizes on the table, zones for each tableau, seats at their anchors', () => {
     renderTabletop({ state: atTable(base(), 'p1') });
-    const L = tableLayout({ width: window.innerWidth, height: window.innerHeight }, 2);
-    const table = document.querySelector<HTMLElement>('.tabletop')!;
-    expect(table.dataset.layout).toBe(L.mode);
-    expect(table.style.getPropertyValue('--hand-w')).toBe(`${L.hand.w}px`);
-    expect(table.style.getPropertyValue('--plane-h')).toBe(`${L.plane.h}px`);
+    const L = tableLayout(2);
+    const stage = document.querySelector<HTMLElement>('.stage')!;
+    expect(stage.style.getPropertyValue('--hand-w')).toBe(`${L.hand.w}px`);
+    expect(stage.style.getPropertyValue('--card-w')).toBe(`${L.card.w}px`);
     const mine = screen.getByRole('region', { name: 'Your area' });
     const zone = L.seats[0]!.zone;
     expect([mine.style.left, mine.style.top, mine.style.width, mine.style.height]).toEqual([`${zone.x}%`, `${zone.y}%`, `${zone.w}%`, `${zone.h}%`]);
@@ -68,7 +67,7 @@ describe('the table', () => {
 
   it("fits each tableau's cards into its zone", () => {
     renderTabletop({ state: atTable(base(), 'p1') });
-    const L = tableLayout({ width: window.innerWidth, height: window.innerHeight }, 2);
+    const L = tableLayout(2);
     const zone = L.seats[0]!.zone;
     const fit = fitTableau({ w: (zone.w / 100) * L.plane.w, h: (zone.h / 100) * L.plane.h }, [2], 1, L.card.w, L.cardFloor);
     const mine = screen.getByRole('region', { name: 'Your area' });
@@ -78,25 +77,15 @@ describe('the table', () => {
     expect(mine.dataset.rows).toBe('1');
   });
 
-  it('spaces my hand by the layout, and scrolls a long hand on a phone instead of shrinking it (Review Focus 2)', () => {
+  it('spaces my hand by the layout', () => {
     const long = [1, 2, 3, 4, 5, 6].map((i) => `money-1-${i}`).concat([1, 2, 3, 4, 5].map((i) => `money-2-${i}`), ['money-3-1']);
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 375 });
-    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 812 });
-    try {
-      renderTabletop({ state: atTable(play({ players: [{ id: 'p1', hand: long }, { id: 'p2' }] }), 'p1') });
-      const fan = screen.getByRole('list', { name: 'Your hand, 12 cards' });
-      const L = tableLayout({ width: 375, height: 812 }, 2);
-      expect(fan).toHaveClass('is-scrolling');
-      expect(fan.style.getPropertyValue('--step')).toBe(`${handFan(L, 12).step}px`);
-      for (const li of within(fan).getAllByRole('listitem')) expect(li.style.getPropertyValue('--rot')).toBe('0deg');
-    } finally {
-      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
-      Object.defineProperty(window, 'innerHeight', { configurable: true, value: 768 });
-    }
+    renderTabletop({ state: atTable(play({ players: [{ id: 'p1', hand: long }, { id: 'p2' }] }), 'p1') });
+    const fan = screen.getByRole('list', { name: 'Your hand, 12 cards' });
+    expect(fan.style.getPropertyValue('--step')).toBe(`${handFan(tableLayout(2), 12).step}px`);
   });
 
-  it('re-lays the table when the window turns (Review Focus 1)', () => {
-    const turn = (width: number, height: number) =>
+  it('scales the stage whole to the window, centered, and lays the UI layers over its box unscaled', () => {
+    const size = (width: number, height: number) =>
       act(() => {
         Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
         Object.defineProperty(window, 'innerHeight', { configurable: true, value: height });
@@ -104,24 +93,60 @@ describe('the table', () => {
       });
     renderTabletop({ state: atTable(base(), 'p1') });
     try {
-      turn(375, 812);
-      const table = document.querySelector<HTMLElement>('.tabletop')!;
-      expect(table.dataset.layout).toBe('portrait');
-      expect(table).toHaveAttribute('data-compact');
-      expect(table.style.getPropertyValue('--hand-w')).toBe(`${tableLayout({ width: 375, height: 812 }, 2).hand.w}px`);
+      // A wide window: letterboxed left and right.
+      size(1152, 540);
+      const stage = document.querySelector<HTMLElement>('.stage')!;
+      expect(stage.style.transform).toBe('translate(96px, 0px) scale(0.5)');
+      const layers = document.querySelectorAll<HTMLElement>('.stage-ui');
+      expect(layers).toHaveLength(2);
+      for (const ui of layers) {
+        expect([ui.style.left, ui.style.top, ui.style.width, ui.style.height]).toEqual(['96px', '0px', '960px', '540px']);
+        expect(ui.style.getPropertyValue('--hand-w')).toBe(`${tableLayout(2).hand.w / 2}px`);
+      }
+      expect(screen.queryByText('Turn your phone sideways for bigger cards.')).not.toBeInTheDocument();
+      // A portrait window: the stage in the middle, the UI layers over the whole window (the words go in the
+      // letterbox), and a word on turning it.
+      size(960, 1000);
+      expect(stage.style.transform).toBe('translate(0px, 230px) scale(0.5)');
+      for (const ui of document.querySelectorAll<HTMLElement>('.stage-ui')) expect([ui.style.left, ui.style.top, ui.style.width, ui.style.height]).toEqual(['0px', '0px', '960px', '1000px']);
+      expect(document.querySelector('.tabletop')).toHaveAttribute('data-portrait');
+      expect(screen.getByText('Turn your phone sideways for bigger cards.')).toBeInTheDocument();
     } finally {
-      turn(1024, 768);
+      size(1024, 768);
     }
   });
 
   it('seats three players at 270°, 150° and 30°, each in its own zone', () => {
     renderTabletop({ state: atTable(three(), 'p1') });
-    const L = tableLayout({ width: window.innerWidth, height: window.innerHeight }, 3);
+    const L = tableLayout(3);
     expect(screen.getByRole('region', { name: "Bob's area" }).style.left).toBe(`${L.seats[1]!.zone.x}%`);
     expect(screen.getByRole('region', { name: "Cy's area" }).style.left).toBe(`${L.seats[2]!.zone.x}%`);
   });
 
-  it('keeps a seat on screen when its rim point falls outside it (phones)', () => {
+  it('draws the felt and lets the keyboard move it with ?calib=1, and everything on it moves along', async () => {
+    window.history.replaceState(null, '', '/?calib=1');
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    try {
+      renderTabletop({ state: atTable(base(), 'p1') });
+      const panel = screen.getByRole('complementary', { name: 'Felt calibration' });
+      expect(panel).toHaveTextContent('cx950');
+      expect(document.querySelector('.felt-outline path')).not.toBeNull();
+      // The zones are percent of the plane over the felt: the plane moves, and every zone with it.
+      const plane = () => document.querySelector<HTMLElement>('.stage .plane')!.style.left;
+      const before = plane();
+      fireEvent.keyDown(window, { key: 'ArrowRight', shiftKey: true });
+      expect(panel).toHaveTextContent('cx960');
+      expect(parseFloat(plane()) - parseFloat(before)).toBeCloseTo((10 / 1920) * 100, 1);
+      fireEvent.keyDown(window, { key: 'ArrowUp', altKey: true });
+      expect(panel).toHaveTextContent('ry356');
+      expect(info).toHaveBeenLastCalledWith(expect.stringContaining('cx: 960, cy: 466, rx: 598, ry: 356'));
+    } finally {
+      window.history.replaceState(null, '', '/');
+      info.mockRestore();
+    }
+  });
+
+  it('keeps a seat on the stage when its point falls off it', () => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       const [x, y] = this.dataset.anchor === 'seat:p1' ? [-30, 500] : [0, 0];
       return { left: x, right: x, top: y, bottom: y, width: 0, height: 0, x, y, toJSON: () => ({}) } as DOMRect;

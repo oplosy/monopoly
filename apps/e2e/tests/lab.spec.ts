@@ -58,14 +58,16 @@ for (const size of SIZES) {
   test(`the action in play hides no one's table or seat at ${size.width}×${size.height}`, async ({ page }) => {
     await page.setViewportSize(size);
     await page.goto('/lab?s=rent');
+    // Nothing here needs the lab's panel: folded away, it keeps off the popover on a small screen.
+    await page.getByRole('button', { name: 'Lab', exact: true }).click();
     await page.getByRole('list', { name: /^Your hand/ }).getByRole('button', { name: /Birthday/ }).evaluate((el) => (el as HTMLElement).click());
     await page.getByRole('dialog', { name: /^Play / }).getByRole('button', { name: /birthday/i }).click();
     await expect(page.locator('.pending-stage')).toBeVisible();
     await page.waitForTimeout(300);
     const stage = await box(page, '.pending-stage');
-    // On the smallest landscape phone the far tables touch the piles: no place is clear there, and the
-    // action would rather lie over the edge of a table card than over a seat.
-    const tiny = size.width < 600;
+    // On a phone on its side the 16:9 stage is small and the action's words keep their size: no place beside the
+    // piles is clear, and the action would rather lie over the edge of a table card than over a seat.
+    const tiny = size.width > size.height && Math.min(size.width / 1920, size.height / 1080) < 0.5;
     for (const [what, selector] of [
       ...(tiny ? [] : ([['a table card', '.tableau .table-card']] as const)),
       ['a seat', '.seat'],

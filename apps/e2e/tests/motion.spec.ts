@@ -102,8 +102,9 @@ test('a dragged card stays under the pointer where it was grabbed', async ({ bro
       const r = el.getBoundingClientRect();
       const m = /matrix\(([^)]+)\)/.exec(getComputedStyle(el.parentElement!).transform);
       const [a = 1, b = 0] = m ? m[1]!.split(',').map(Number) : [];
-      // A hovered card is lifted and scaled (spec §5.5): its frame is the scaled card.
-      const scale = Math.hypot(a, b);
+      // A hovered card is lifted and scaled (spec §5.5), on a stage scaled to the window: its frame is the scaled card.
+      const stage = el.closest<HTMLElement>('.stage')!;
+      const scale = Math.hypot(a, b) * (stage.getBoundingClientRect().width / stage.offsetWidth);
       return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: el.offsetWidth * scale, h: el.offsetHeight * scale, turn: Math.atan2(b, a) };
     });
   /** A point given as fractions of the card itself, on screen. */

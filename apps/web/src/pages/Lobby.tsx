@@ -5,7 +5,8 @@ import { useNavigate, useSearchParams } from 'react-router';
 import { Avatar } from '../avatars/Avatar';
 import { AvatarPicker } from '../avatars/AvatarPicker';
 import { TableScene } from '../scene/TableScene';
-import { seatLayout, seatPlan } from '../scene/geometry';
+import { seatPlan } from '../scene/geometry';
+import { tableLayout } from '../scene/layout';
 import { PlaneAnchor, ProjectionProvider, useProjected } from '../scene/projection';
 import { useGameStore } from '../store/context';
 import './pages.css';
@@ -33,7 +34,8 @@ export function Lobby({ room }: { room: RoomState }) {
   const me = session?.playerId ?? '';
   const isHost = room.hostId === me;
   const enough = room.seats.length >= MIN_PLAYERS;
-  const spots = seatLayout(MAX_SEATS);
+  // The chairs stand where the seats will at the table: on the floor left and right of it.
+  const spots = tableLayout(MAX_SEATS).seats.map(({ angle, ui }) => ({ angle, ui }));
   const places = seatPlan(room.seats.map((s) => s.playerId), me, MAX_SEATS);
   const chairOf = new Map(places.map((p) => [p.playerId, chairId(p.spot.angle)]));
 

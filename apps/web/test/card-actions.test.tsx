@@ -198,7 +198,7 @@ describe('targeting on the table', () => {
     await user.click(handCard(/^Debt Collector/));
     expect(screen.queryByRole('button', { name: 'Pick Bob' })).not.toBeInTheDocument();
     await aim();
-    await user.click(document.querySelector('.scene-ground')!);
+    await user.click(document.querySelector('.stage-video')!);
     expect(screen.queryByRole('button', { name: 'Pick Bob' })).not.toBeInTheDocument();
   });
 

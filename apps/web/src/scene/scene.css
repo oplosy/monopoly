@@ -1,90 +1,76 @@
-@property --p {
-  syntax: '<number>';
-  inherits: false;
-  initial-value: 1;
-}
-
+/* The table lives in a picture (the backdrop video on the stage, its poster in the lobby). The scene lays a
+   flat plane over the picture's felt (TableScene); everything on the table is placed in percent of it. */
 .scene {
   position: absolute;
   inset: 0;
-  overflow: hidden;
-  --tilt: 22deg;
-  /* The table: a walnut rail and body; the rail's width and the body's thickness follow the plane. */
-  --wood-1: #7b4c2b;
-  --wood-2: #3f2414;
-  --wood-edge: #24150b;
-  --rail: clamp(8px, calc(var(--plane-w) * 0.026), 34px);
-  --thick: clamp(8px, calc(var(--plane-h) * 0.05), 30px);
-  --radius: var(--felt-radius, calc(var(--plane-h) / 2));
+  /* Its own layer: the stage's vignette lies over the table, under the seats and my hand. */
+  z-index: 0;
 }
+.plane { position: absolute; }
+.plane-anchor { position: absolute; width: 0; height: 0; }
 
-.scene-ground { position: absolute; inset: 0; background: var(--bg); }
-
-/* The layout model (layout.ts) sets the plane's size, its center on the screen and the perspective; the
-   lobby sets its own. The perspective looks down from the top center of the screen. */
-.scene-perspective {
+/* ---------- The stage (spec 2026-09-26-video-stage) ---------- */
+/* One 1920×1080 box, scaled whole to the window (felt.ts stageFit) and centered; the window around it is
+   letterbox. Everything on it is placed in stage px, never in viewport units. */
+.stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: 0 0;
+  /* clip, unlike hidden, cannot be scrolled by focus(): focusing a card never shifts the table. */
+  overflow: clip;
+  /* The poster shows until the video plays, and stays if it never does. */
+  background: #0b1320 url('/bg_poster.jpg') center / cover no-repeat;
+}
+.stage-video {
   position: absolute;
   inset: 0;
-  perspective: var(--perspective, calc(var(--plane-h) * 2));
-  perspective-origin: 50% 0%;
-}
-
-.plane {
-  position: absolute;
-  left: var(--plane-cx, 50%);
-  top: var(--plane-cy, 50%);
-  width: var(--plane-w);
-  height: var(--plane-h);
-  margin: calc(var(--plane-h) / -2) 0 0 calc(var(--plane-w) / -2);
-  transform: rotateX(var(--tilt));
-  transform-style: preserve-3d;
-}
-
-/* The table: a felt top in a padded wooden rail, on a wooden body thick enough to show its edge at 22°. All of
-   it is a stadium (round ends, straight sides); the rail and the body lie outside the plane, so the layout's
-   zones keep the whole felt. */
-.table-body { position: absolute; inset: 0; transform-style: preserve-3d; }
-.table-edge,
-.table-rail {
-  position: absolute;
-  inset: calc(var(--rail) * -1);
-  border-radius: calc(var(--radius) + var(--rail));
-}
-/* The body's slices sink below the top; the deepest casts the table's shadow on the ground. */
-.table-edge {
-  background: linear-gradient(var(--wood-edge), color-mix(in srgb, var(--wood-edge) 70%, black));
-  transform: translateZ(calc(var(--thick) * var(--k) / -10));
-}
-.table-edge:nth-child(10) { box-shadow: 0 0 calc(var(--thick) * 2) calc(var(--thick) * 0.6) rgb(0 0 0 / 0.55); }
-/* The rail: lit from above, a highlight along its top edge, rounded down into the felt. */
-.table-rail {
-  background:
-    radial-gradient(ellipse at 50% 0%, rgb(255 255 255 / 0.16), transparent 60%),
-    linear-gradient(var(--wood-1), var(--wood-2));
-  box-shadow:
-    inset 0 2px 0 rgb(255 255 255 / 0.22),
-    inset 0 -2px 3px rgb(0 0 0 / 0.5),
-    0 1px 0 rgb(255 255 255 / 0.06);
-}
-/* The felt: sunk into the rail (its inner shadow), a soft light on its middle, a fine cloth grain, and a
-   stitched line along its edge. */
-.table-felt {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius);
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
-    radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--felt-1) 88%, white), var(--felt-1) 35%, var(--felt-2) 78%);
-  box-shadow:
-    inset 0 0 0 2px rgb(0 0 0 / 0.35),
-    inset 0 calc(var(--plane-h) * 0.02) calc(var(--plane-h) * 0.05) rgb(0 0 0 / 0.45);
-}
-.table-felt::after {
-  content: '';
-  position: absolute;
-  inset: calc(var(--rail) * 0.7);
-  border-radius: calc(var(--radius) - var(--rail) * 0.7);
-  border: 2px dashed rgb(255 255 255 / 0.1);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   pointer-events: none;
 }
-.plane-anchor { position: absolute; width: 0; height: 0; }
+.stage-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 55%, rgb(0 0 0 / 0.35));
+}
+
+/* ---------- Calibration (?calib=1) ---------- */
+.felt-outline {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.calib-panel {
+  /* Beside the gear, in the top right corner: two short rows, clear of the seats below. */
+  position: absolute;
+  top: 12px;
+  right: calc(12px + 52px + 10px);
+  z-index: 60;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 0.35rem 0.8rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 12px;
+  background: rgb(11 19 32 / 0.92);
+  color: #fff;
+  font: 600 0.85rem var(--font-num);
+  box-shadow: 0 8px 20px rgb(0 0 0 / 0.4);
+  pointer-events: auto;
+}
+.calib-panel h2 { margin: 0; font-size: 0.85rem; color: #ff6b6b; }
+.calib-panel dl { display: flex; gap: 0.7rem; margin: 0; }
+.calib-panel dl > div { display: flex; gap: 0.3rem; }
+.calib-panel dt { opacity: 0.65; }
+.calib-panel dd { margin: 0; }
+.calib-panel p { margin: 0; font-size: 0.72rem; font-weight: 500; opacity: 0.8; }
+.calib-panel button { justify-self: end; font-size: 0.78rem; padding: 0.15rem 0.6rem; border-radius: 999px; }

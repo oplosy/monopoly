@@ -66,7 +66,7 @@ const WEDGE = { w: 0.5, h: 0.45 };
 const WEDGE_REST = 0.72;
 /** The piles' outer edge left and right of the middle (card, gap, card: 2.6 card widths). */
 const PILES_EDGE = 1.3;
-/** Room the wedge keeps from the piles beside them (the table's tilt blurs an exact fit). */
+/** Room the wedge keeps from the piles beside them. */
 export const WEDGE_CLEAR = 0.1;
 
 /**

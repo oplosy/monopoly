@@ -16,15 +16,18 @@ const boxOf = (el: Element): Box => {
 };
 
 /** Places the stage around the piles, clear of AVOID (anchored.ts placeStage); measured after every render. */
-function useStagePlace(ref: RefObject<HTMLElement | null>): CSSProperties | undefined {
+function useStagePlace(ref: RefObject<HTMLElement | null>, docked: boolean): CSSProperties | undefined {
   const [place, setPlace] = useState<{ left: number; top: number } | null>(null);
   useLayoutEffect(() => {
     const el = ref.current;
     const table = el?.closest('.tabletop');
     const piles = table?.querySelector('.center-piles');
-    if (!el || !table || !piles) return;
+    // It stands in the UI layer, over the stage's box on the screen: everything is measured from that box.
+    // It stands in the UI layer, whose box is the stage's on the screen: it may reach into the letterbox.
+    const layer = el?.offsetParent ?? table;
+    if (docked || !el || !table || !piles || !layer) return;
     const measure = () => {
-      const origin = table.getBoundingClientRect();
+      const origin = layer.getBoundingClientRect();
       const all = (selector: string) => [...table.querySelectorAll(selector)].map(boxOf);
       setPlace((p) => {
         const next = placeStage(
@@ -36,7 +39,6 @@ function useStagePlace(ref: RefObject<HTMLElement | null>): CSSProperties | unde
           // Where it stands now, on the screen: it keeps its side while the action lasts.
           p ? { left: p.left + origin.left, top: p.top + origin.top } : undefined,
         );
-        // The stage is placed inside the table, which starts at the top left of the screen.
         const at = { left: Math.round(next.left - origin.left), top: Math.round(next.top - origin.top) };
         return p && p.left === at.left && p.top === at.top ? p : at;
       });
@@ -46,7 +48,7 @@ function useStagePlace(ref: RefObject<HTMLElement | null>): CSSProperties | unde
     return () => window.removeEventListener('resize', measure);
   });
   // Measured before the first paint (a layout effect), so the stage never shows at its fallback place.
-  return place ? { left: place.left, top: place.top } : undefined;
+  return place && !docked ? { left: place.left, top: place.top } : undefined;
 }
 
 function colorOn(view: GameView, cardId: string): Color | undefined {
@@ -58,9 +60,10 @@ function colorOn(view: GameView, cardId: string): Color | undefined {
  * shakes it (spec §6.3); one that ends the action keeps it on stage, shuddering, while its effect lasts: the
  * effect carries the action as it stood, so the stage shows it even when it never drew it.
  */
-export function PendingStage({ view, name, waiting }: { view: GameView; name: Names; waiting: readonly string[] }) {
+export function PendingStage({ view, name, waiting, docked = false }: { view: GameView; name: Names; waiting: readonly string[]; docked?: boolean }) {
   const ref = useRef<HTMLElement>(null);
-  const style = useStagePlace(ref);
+  // Docked (a portrait window): it stands in the letterbox above the table, placed by CSS.
+  const style = useStagePlace(ref, docked);
   const jsn = useStageEffect('jsn');
   const rent = useStageEffect('rent');
   const live = !!view.pending && view.turn.phase === 'awaitingResponses' && !view.winner;
@@ -75,7 +78,7 @@ export function PendingStage({ view, name, waiting }: { view: GameView; name: Na
   return (
     <section
       ref={ref}
-      className={['pending-stage', jsn && 'is-shaken', stamp && 'is-big-rent'].filter(Boolean).join(' ')}
+      className={['pending-stage', docked && 'is-docked', jsn && 'is-shaken', stamp && 'is-big-rent'].filter(Boolean).join(' ')}
       style={style}
       aria-label="Action in play"
     >

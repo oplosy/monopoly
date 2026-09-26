@@ -1,6 +1,6 @@
 import { autoPayment, legalIntentsForView, waitingOnView, type Intent, type IntentOf } from '@deal-city/engine';
 import type { GameStatePayload } from '@deal-city/protocol';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
 import { MotionStage } from '../motion/MotionStage';
 import { useStage, useStaged, useStageEffect } from '../motion/stage-context';
 import { moveOptions, playBlocker, playOptions, type PlayKind, type PlayOption } from '../game/choices';
@@ -8,6 +8,9 @@ import { meAsPlayer, myRole, namesFrom } from '../game/derive';
 import { cardName } from '../game/log';
 import { PaperPage } from '../pages/PaperPage';
 import { seatPlan } from '../scene/geometry';
+import { BackdropVideo } from '../scene/BackdropVideo';
+import { calibrating, CalibrationPanel, FeltOutline, useFeltCalibration } from '../scene/Calibration';
+import { FELT, STAGE, stageFit } from '../scene/felt';
 import { tableLayout } from '../scene/layout';
 import { LayoutProvider } from '../scene/layout-context';
 import { layoutStyle } from '../scene/layout-style';
@@ -84,6 +87,7 @@ function GameTable({ game }: { game: GameStatePayload }) {
   // The stage starts a payload's scenes once the table shows it.
   useLayoutEffect(() => stage.committed(game));
   const rootRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const { view, deadlines } = game;
   const legal = useMemo(() => legalIntentsForView(view), [view]);
   const [logOpen, setLogOpen] = useState(false);
@@ -94,12 +98,12 @@ function GameTable({ game }: { game: GameStatePayload }) {
   const line = useNarration(log, names);
   const role = myRole(view);
   const viewport = useViewport();
+  const fit = stageFit(viewport);
   const playerCount = view.players.length;
-  // A tray leaves room above the hand in portrait (layout.ts); the cards keep their size. An answer tray stands
-  // beside my Just Say No instead when I hold one, so it needs no room there.
-  const answersBesideCard = (role?.kind === 'respond' || role?.kind === 'counter') && legal.some((i) => i.type === 'respondJustSayNo');
-  const trayShown = role !== null && !answersBesideCard;
-  const layout = useMemo(() => tableLayout(viewport, playerCount, { tray: trayShown }), [viewport, playerCount, trayShown]);
+  // The felt in the backdrop video; `?calib=1` lets the keyboard move it, and everything on it moves along.
+  const [calib] = useState(() => calibrating());
+  const felt = useFeltCalibration(FELT, calib);
+  const layout = useMemo(() => tableLayout(playerCount, felt), [playerCount, felt]);
   // Keyed by the action, not the version: another payer finishing must not reset this player's picks.
   const payKey = role?.kind === 'pay' ? `${role.pending.actorId}:${role.pending.cardIds.join(',')}` : '';
   const [payPicked, setPayPicked] = useKeyedSelection(payKey, () => (role?.kind === 'pay' ? autoPayment(meAsPlayer(view), role.amount) : []));
@@ -259,6 +263,13 @@ function GameTable({ game }: { game: GameStatePayload }) {
   const popoverOpen = popover !== null;
   useEffect(() => inspect.quiet(popoverOpen), [inspect, popoverOpen]);
 
+  // A portrait window letterboxes the stage above and below: the UI layers take the whole window, so the words
+  // stand in the letterbox (the action in play above the table, the narrator and the trays below it).
+  const portrait = viewport.height > viewport.width;
+  const stageBox = { left: fit.x, top: fit.y, width: STAGE.w * fit.scale, height: STAGE.h * fit.scale };
+  const uiStyle = { ...layoutStyle(layout, fit.scale), ...(portrait ? { left: 0, top: 0, width: viewport.width, height: viewport.height } : stageBox) };
+  const rootStyle = { '--stage-top': `${stageBox.top}px`, '--stage-bottom': `${stageBox.top + stageBox.height}px` } as CSSProperties;
+
   const onBackground = (e: MouseEvent<HTMLDivElement>) => {
     if (e.target instanceof Element && e.target.closest(INTERACTIVE)) return;
     cancel();
@@ -269,95 +280,107 @@ function GameTable({ game }: { game: GameStatePayload }) {
     <TableInteractionProvider value={interaction}>
       <DragProvider value={drag}>
         <LayoutProvider value={layout}>
-        <ProjectionProvider rootRef={rootRef}>
-          <div
-            ref={rootRef}
-            className={`tabletop players-${places.length}`}
-            data-layout={layout.mode}
-            data-compact={layout.compact || undefined}
-            style={layoutStyle(layout)}
-            onClick={onBackground}
-          >
+        <ProjectionProvider rootRef={stageRef}>
+          <div ref={rootRef} className={`tabletop players-${places.length}`} data-portrait={portrait || undefined} style={rootStyle} onClick={onBackground}>
             <h1 className="sr-only">{heading}</h1>
-            <Narrator line={line} prompt={aim?.prompt ?? null} onCancel={cancel} />
-            {turnPulse && (
-              <p className="turn-pulse" aria-hidden="true">
-                Your turn
-              </p>
-            )}
-            <PendingStage view={view} name={name} waiting={waitingOnView(view)} />
-            <HandFan cards={view.hand} me={view.me} />
-            {legal.some((i) => i.type === 'endTurn') && (
-              <EndTurn
-                deadline={deadlines.turnEndsAt}
-                total={deadlines.turnMs}
-                drainKey={`t:${view.me}`}
-                due={view.turn.playsLeft <= 0}
-                busy={busy}
-                onEnd={() => send({ type: 'endTurn' })}
-              />
-            )}
-            {role?.kind === 'pay' && (
-              <PayTray
-                view={view}
-                amount={role.amount}
-                picked={payPicked}
-                name={name}
-                deadline={responseDeadline}
-                onAuto={() => setPayPicked(() => autoPayment(meAsPlayer(view), role.amount))}
-                onPay={() => send({ type: 'pay', cards: [...payPicked] })}
-                busy={busy}
-              />
-            )}
-            {role?.kind === 'discard' && (
-              <DiscardTray count={role.count} picked={discardPicked} deadline={deadlines.turnEndsAt} onDiscard={() => send({ type: 'discard', cards: [...discardPicked] })} busy={busy} />
-            )}
-            {role?.kind === 'respond' && (
-              <RespondTray view={view} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} avoid={answerAvoid} onSend={send} busy={busy} />
-            )}
-            {role?.kind === 'counter' && (
-              <CounterTray pending={role.pending} targets={role.targets} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} avoid={answerAvoid} onSend={send} busy={busy} />
-            )}
-            <TableScene>
-              {places.map(({ playerId }, k) => (
-                <Tableau key={playerId} player={players.get(playerId)!} name={name(playerId)} isMe={playerId === view.me} zone={slotOf(k).zone} />
-              ))}
-              <CenterPiles view={view} at={layout.center} activeAngle={activeSeat < 0 ? null : slotOf(activeSeat).angle} />
-              {places.map(({ playerId }, k) => (
-                <PlaneAnchor key={playerId} id={`seat:${playerId}`} at={slotOf(k).ui} />
-              ))}
-            </TableScene>
-            {places.map(({ playerId }) => {
-              const handCount = playerId === view.me ? view.hand.length : players.get(playerId)!.handCount;
-              return (
-                <Seat
-                  key={playerId}
-                  playerId={playerId}
-                  name={name(playerId)}
-                  avatar={seats.get(playerId)?.avatar ?? 0}
-                  anchor={`seat:${playerId}`}
-                  isMe={playerId === view.me}
-                  active={playerId === active}
-                  connected={seats.get(playerId)?.connected ?? false}
-                  handCount={handCount}
-                    playsLeft={playerId === view.me && myTurn && view.turn.phase === 'play' ? view.turn.playsLeft : null}
-                  clock={clockFor(playerId)}
+            {/* The UI layers: over the stage's box on the screen but not scaled, so words and buttons keep their size, and
+                everything placed by screen coordinates (popovers, drags, trays beside a card) lands where it is measured.
+                This one comes before the stage, as the trays read first (then my hand and my table); the other after. */}
+            <div className="stage-ui" style={uiStyle}>
+              <Narrator line={line} prompt={aim?.prompt ?? null} onCancel={cancel} />
+              <PendingStage view={view} name={name} waiting={waitingOnView(view)} docked={portrait} />
+              {role?.kind === 'pay' && (
+                <PayTray
+                  view={view}
+                  amount={role.amount}
+                  picked={payPicked}
+                  name={name}
+                  deadline={responseDeadline}
+                  onAuto={() => setPayPicked(() => autoPayment(meAsPlayer(view), role.amount))}
+                  onPay={() => send({ type: 'pay', cards: [...payPicked] })}
+                  busy={busy}
                 />
-              );
-            })}
-            {popover}
-            {drag.state && <DragGhost key={drag.state.card} drag={drag} />}
-            <Hud code={room?.code ?? ''} logOpen={logOpen} onToggleLog={() => setLogOpen((open) => !open)} />
-            {logOpen && <LogDrawer entries={log} names={names} onClose={() => setLogOpen(false)} />}
-            {view.winner && (
-              <GameOverStage
-                view={view}
-                winner={view.winner}
-                name={name}
-                avatarOf={(id) => seats.get(id)?.avatar ?? 0}
-                isHost={room?.hostId === view.me}
-              />
-            )}
+              )}
+              {role?.kind === 'discard' && (
+                <DiscardTray count={role.count} picked={discardPicked} deadline={deadlines.turnEndsAt} onDiscard={() => send({ type: 'discard', cards: [...discardPicked] })} busy={busy} />
+              )}
+              {role?.kind === 'respond' && (
+                <RespondTray view={view} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} avoid={answerAvoid} onSend={send} busy={busy} />
+              )}
+              {role?.kind === 'counter' && (
+                <CounterTray pending={role.pending} targets={role.targets} legal={legal} name={name} deadline={responseDeadline} anchor={jsnAnchor} avoid={answerAvoid} onSend={send} busy={busy} />
+              )}
+            </div>
+            {/* The stage: the table and everything that belongs to it, in 1920×1080 px, scaled to the window whole. */}
+            <div
+              ref={stageRef}
+              className="stage"
+              style={{ ...layoutStyle(layout), transform: `translate(${fit.x}px, ${fit.y}px) scale(${fit.scale})` }}
+            >
+              <BackdropVideo />
+              {turnPulse && (
+                <p className="turn-pulse" aria-hidden="true">
+                  Your turn
+                </p>
+              )}
+              <HandFan cards={view.hand} me={view.me} />
+              {legal.some((i) => i.type === 'endTurn') && (
+                <EndTurn
+                  deadline={deadlines.turnEndsAt}
+                  total={deadlines.turnMs}
+                  drainKey={`t:${view.me}`}
+                  due={view.turn.playsLeft <= 0}
+                  busy={busy}
+                  onEnd={() => send({ type: 'endTurn' })}
+                />
+              )}
+              <TableScene felt={felt}>
+                {places.map(({ playerId }, k) => (
+                  <Tableau key={playerId} player={players.get(playerId)!} name={name(playerId)} isMe={playerId === view.me} zone={slotOf(k).zone} />
+                ))}
+                <CenterPiles view={view} at={layout.center} activeAngle={activeSeat < 0 ? null : slotOf(activeSeat).angle} />
+                {places.map(({ playerId }, k) => (
+                  <PlaneAnchor key={playerId} id={`seat:${playerId}`} at={slotOf(k).ui} />
+                ))}
+              </TableScene>
+              <div className="stage-vignette" aria-hidden="true" />
+              {places.map(({ playerId }) => {
+                const handCount = playerId === view.me ? view.hand.length : players.get(playerId)!.handCount;
+                return (
+                  <Seat
+                    key={playerId}
+                    playerId={playerId}
+                    name={name(playerId)}
+                    avatar={seats.get(playerId)?.avatar ?? 0}
+                    anchor={`seat:${playerId}`}
+                    isMe={playerId === view.me}
+                    active={playerId === active}
+                    connected={seats.get(playerId)?.connected ?? false}
+                    handCount={handCount}
+                    playsLeft={playerId === view.me && myTurn && view.turn.phase === 'play' ? view.turn.playsLeft : null}
+                    clock={clockFor(playerId)}
+                  />
+                );
+              })}
+              {calib && <FeltOutline layout={layout} />}
+            </div>
+            <div className="stage-ui" style={uiStyle}>
+              {popover}
+              {drag.state && <DragGhost key={drag.state.card} drag={drag} />}
+              <Hud code={room?.code ?? ''} logOpen={logOpen} onToggleLog={() => setLogOpen((open) => !open)} />
+              {calib && <CalibrationPanel felt={felt} />}
+              {logOpen && <LogDrawer entries={log} names={names} onClose={() => setLogOpen(false)} />}
+              {view.winner && (
+                <GameOverStage
+                  view={view}
+                  winner={view.winner}
+                  name={name}
+                  avatarOf={(id) => seats.get(id)?.avatar ?? 0}
+                  isHost={room?.hostId === view.me}
+                />
+              )}
+            </div>
+            {portrait && <p className="stage-hint">Turn your phone sideways for bigger cards.</p>}
           </div>
         </ProjectionProvider>
         </LayoutProvider>

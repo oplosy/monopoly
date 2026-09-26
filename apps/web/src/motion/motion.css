@@ -49,7 +49,7 @@
   border-radius: 999px;
   background: var(--gold);
   color: #3b2a10;
-  font: 800 clamp(1.2rem, 2.2vw, 1.9rem) var(--font-display);
+  font: 800 40px var(--font-display);
   box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
   pointer-events: none;
 }
