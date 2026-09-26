@@ -1,6 +1,7 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type { GameEvent, Intent } from '@deal-city/engine';
-import type { Ack, ClientToServerEvents, GameStatePayload, JoinedRoom, RoomState } from '@deal-city/protocol';
+import type { Ack, ChatMessage, ClientToServerEvents, GameStatePayload, JoinedRoom, RoomState } from '@deal-city/protocol';
+import { CHAT_HISTORY } from '@deal-city/protocol/constants';
 import type { SocketLike } from '../net/socket';
 import type { SavedSession, SessionStore } from './storage';
 
@@ -28,6 +29,10 @@ export interface AppState {
   names: Record<string, string>;
   game: GameStatePayload | null;
   log: LogEntry[];
+  /** The room's recent chat, oldest first (at most CHAT_HISTORY). */
+  chat: ChatMessage[];
+  /** Other players' lines since the chat was last read. */
+  chatUnread: number;
   /** Last error code from a lobby or game action, shown as a toast. */
   error: string | null;
   /** An intent is waiting for its ack. */
@@ -41,6 +46,8 @@ export interface AppState {
   rematch(): Promise<Ack>;
   setAvatar(avatar: number): Promise<Ack>;
   sendIntent(intent: Intent): Promise<Ack>;
+  sendChat(text: string): Promise<Ack>;
+  markChatRead(): void;
   clearError(): void;
 }
 
@@ -88,7 +95,7 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
 
     function reset(): void {
       storage.clear();
-      set({ session: null, savedCode: null, room: null, names: {}, game: null, log: [] });
+      set({ session: null, savedCode: null, room: null, names: {}, game: null, log: [], chat: [], chatUnread: 0 });
     }
 
     /** After joining, asks once for the remembered character if nobody at the table has it. Failures stay silent. */
@@ -112,6 +119,8 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
       names: {},
       game: null,
       log: [],
+      chat: [],
+      chatUnread: 0,
       error: null,
       sending: false,
 
@@ -177,6 +186,12 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
         set({ sending: false });
         return toast(res);
       },
+      async sendChat(text) {
+        return offline() ?? toast(await call('chat:send', { text }));
+      },
+      markChatRead() {
+        if (get().chatUnread !== 0) set({ chatUnread: 0 });
+      },
       clearError() {
         set({ error: null });
       },
@@ -194,6 +209,13 @@ export function createGameStore(socket: SocketLike, storage: SessionStore): Game
     store.setState((s) => ({
       game,
       log: [...s.log, ...game.events.map((event) => ({ id: nextLogId++, event }))].slice(-LOG_LIMIT),
+    })),
+  );
+  socket.on('chat:history', (chat: ChatMessage[]) => store.setState({ chat: chat.slice(-CHAT_HISTORY), chatUnread: 0 }));
+  socket.on('chat:message', (message: ChatMessage) =>
+    store.setState((s) => ({
+      chat: [...s.chat, message].slice(-CHAT_HISTORY),
+      chatUnread: message.from === s.session?.playerId ? s.chatUnread : s.chatUnread + 1,
     })),
   );
   socket.on('room:replaced', () => store.setState({ replaced: true, session: null }));

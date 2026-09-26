@@ -7,6 +7,7 @@ import type { Config } from './config';
 import { defaultRoomDeps, type RoomDeps } from './room';
 import { RoomManager } from './room-manager';
 import { registerSockets, type IoServer } from './socket';
+import { createIceServers } from './turn';
 
 /** Largest client message; the biggest legal one (a 106-card payment) is about 5 KB. */
 export const MAX_MESSAGE_BYTES = 16 * 1024;
@@ -34,7 +35,7 @@ export async function buildServer(
 
   const rooms = new RoomManager(config, deps);
   const io: IoServer = new Server(app.server, { serveClient: false, maxHttpBufferSize: MAX_MESSAGE_BYTES });
-  registerSockets(io, rooms, config);
+  registerSockets(io, rooms, config, createIceServers({ keyId: config.turnKeyId, token: config.turnApiToken }));
 
   const sweeper = setInterval(() => rooms.sweep(Date.now()), 60_000);
   sweeper.unref();

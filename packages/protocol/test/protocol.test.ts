@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVATAR_COUNT, AvatarSchema, CreateRoomSchema, IntentPayloadSchema, IntentSchema, JoinRoomSchema, ResumeSchema, StartSchema } from '../src/index';
+import { AVATAR_COUNT, AvatarSchema, CHAT_HISTORY, CHAT_MAX_LENGTH, ChatSendSchema, CreateRoomSchema, IntentPayloadSchema, IntentSchema, JoinRoomSchema, ResumeSchema, StartSchema, VoiceMicSchema, VoiceSignalSchema } from '../src/index';
 
 describe('IntentSchema', () => {
   it('accepts engine intent shapes', () => {
@@ -60,5 +60,43 @@ describe('AvatarSchema', () => {
     expect(AvatarSchema.safeParse({ avatar: 11 }).success).toBe(true);
     for (const avatar of [-1, 12, 1.5, '3', null]) expect(AvatarSchema.safeParse({ avatar }).success, String(avatar)).toBe(false);
     expect(AvatarSchema.safeParse({}).success).toBe(false);
+  });
+});
+
+describe('ChatSendSchema', () => {
+  it('takes one text field and strips the rest', () => {
+    const r = ChatSendSchema.safeParse({ text: 'hello', evil: 1 });
+    expect(r.success && r.data).toEqual({ text: 'hello' });
+  });
+
+  it('refuses a missing or non-string text, and anything far past the limit before the server trims it', () => {
+    expect(ChatSendSchema.safeParse({}).success).toBe(false);
+    expect(ChatSendSchema.safeParse({ text: 5 }).success).toBe(false);
+    expect(ChatSendSchema.safeParse({ text: 'x'.repeat(4 * CHAT_MAX_LENGTH + 1) }).success).toBe(false);
+    expect(ChatSendSchema.safeParse({ text: ' '.repeat(CHAT_MAX_LENGTH) + 'x' }).success).toBe(true);
+  });
+
+  it('keeps 50 messages of up to 200 characters', () => {
+    expect([CHAT_MAX_LENGTH, CHAT_HISTORY]).toEqual([200, 50]);
+  });
+});
+
+describe('voice schemas', () => {
+  it('takes a mic switch', () => {
+    expect(VoiceMicSchema.safeParse({ on: true }).success).toBe(true);
+    expect(VoiceMicSchema.safeParse({ on: 'yes' }).success).toBe(false);
+  });
+
+  it('takes a description or a candidate for another player, and nothing else', () => {
+    const offer = { to: 'p2', data: { description: { type: 'offer', sdp: 'v=0' } } };
+    const ice = { to: 'p2', data: { candidate: { candidate: 'candidate:1 1 udp 1 1.2.3.4 5 typ host', sdpMid: '0', sdpMLineIndex: 0 } } };
+    const end = { to: 'p2', data: { candidate: null } };
+    const reset = { to: 'p2', data: { reset: true } };
+    for (const ok of [offer, ice, end, reset]) expect(VoiceSignalSchema.safeParse(ok).success).toBe(true);
+    expect(VoiceSignalSchema.safeParse({ to: 'p2', data: { description: { type: 'hello' } } }).success).toBe(false);
+    expect(VoiceSignalSchema.safeParse({ to: 'p2', data: {} }).success).toBe(false);
+    expect(VoiceSignalSchema.safeParse({ to: 'p2', data: { reset: false } }).success).toBe(false);
+    expect(VoiceSignalSchema.safeParse({ to: 'x'.repeat(40), data: { candidate: null } }).success).toBe(false);
+    expect(VoiceSignalSchema.safeParse({ to: 'p2', data: { description: { type: 'offer', sdp: 'x'.repeat(15_001) } } }).success).toBe(false);
   });
 });

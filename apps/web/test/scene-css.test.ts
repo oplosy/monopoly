@@ -106,3 +106,16 @@ describe('the table pieces', () => {
     expect(empty).toMatch(/aspect-ratio:\s*5 \/ 7/);
   });
 });
+
+describe('the chat', () => {
+  it('wraps a long word or link instead of widening the sheet or the bubble', () => {
+    const chat = readCss(new URL('../src/chat/chat.css', import.meta.url));
+    expect(rule(chat, '.chat-lines li')).toMatch(/overflow-wrap:\s*anywhere/);
+    expect(rule(chat, '.chat-bubble')).toMatch(/overflow-wrap:\s*anywhere/);
+  });
+
+  it('keeps a long line short at the seat, where the stage top and the corner buttons would clip it', () => {
+    const chat = readCss(new URL('../src/chat/chat.css', import.meta.url));
+    expect(rule(chat, '.chat-bubble')).toMatch(/-webkit-line-clamp:\s*3/);
+  });
+});

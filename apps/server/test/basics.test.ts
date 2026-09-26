@@ -2,9 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { loadConfig } from '../src/config';
 import { ROOM_CODE_ALPHABET, gameSeed, roomCode, sessionToken } from '../src/ids';
 import { sanitizeNickname } from '../src/nickname';
-import { createRateLimiter } from '../src/rate-limit';
+import { createChatLimiter, createRateLimiter } from '../src/rate-limit';
 
 describe('loadConfig', () => {
+  it('reads the Cloudflare TURN keys, and leaves them unset by default', () => {
+    expect(loadConfig({})).toMatchObject({ turnKeyId: null, turnApiToken: null });
+    expect(loadConfig({ CF_TURN_KEY_ID: 'k', CF_TURN_API_TOKEN: 't' })).toMatchObject({ turnKeyId: 'k', turnApiToken: 't' });
+  });
+
   it('uses defaults and reads overrides', () => {
     expect(loadConfig({})).toMatchObject({
       port: 3000, turnMs: 60_000, responseMs: 20_000, graceMs: 120_000,
@@ -76,5 +81,22 @@ describe('createRateLimiter', () => {
     expect([allow(), allow(), allow()]).toEqual([true, true, false]);
     t = 1000;
     expect([allow(), allow()]).toEqual([true, false]);
+  });
+});
+
+describe('createChatLimiter', () => {
+  it('allows one line a second and five in ten seconds', () => {
+    let t = 0;
+    const allow = createChatLimiter(() => t);
+    expect(allow()).toBe(true);
+    expect(allow()).toBe(false); // the same second
+    for (let i = 0; i < 4; i++) {
+      t += 1000;
+      expect(allow()).toBe(true);
+    }
+    t += 1000;
+    expect(allow()).toBe(false); // a sixth within ten seconds
+    t = 10_000;
+    expect(allow()).toBe(true);
   });
 });

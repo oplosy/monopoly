@@ -12,7 +12,7 @@ export function roomOf(ids: readonly string[], status: RoomStatus = 'playing'): 
     status,
     hostId: ids[0] ?? null,
     // Seat i plays character i: p1 Fox, p2 Bear, p3 Cat.
-    seats: ids.map((id, i) => ({ playerId: id, nickname: NAMES[id] ?? id, connected: true, avatar: i })),
+    seats: ids.map((id, i) => ({ playerId: id, nickname: NAMES[id] ?? id, connected: true, avatar: i, voice: 'off' })),
   };
 }
 

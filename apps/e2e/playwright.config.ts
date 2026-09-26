@@ -13,6 +13,10 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${PORT}`,
     channel: 'chrome',
     trace: 'retain-on-failure',
+    // Voice chat: a fake microphone (a beeping tone), the permission prompt answered yes, and audio allowed to play.
+    launchOptions: {
+      args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream', '--autoplay-policy=no-user-gesture-required'],
+    },
   },
   webServer: {
     command: 'node serve-test.mjs',

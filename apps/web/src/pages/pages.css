@@ -114,3 +114,5 @@
 @media (max-width: 640px) {
   .lobby-panel { margin-top: -1rem; }
 }
+.lobby-chat { display: grid; gap: 0.4rem; }
+.lobby-chat .chat-lines { max-height: 11rem; background: #fffdf7; border: 2px solid var(--ink); border-radius: 12px; padding: 0.5rem 0.7rem; }

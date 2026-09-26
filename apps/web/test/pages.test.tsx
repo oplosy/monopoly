@@ -117,6 +117,27 @@ describe('Lobby', () => {
   const lobby = (seats: string[], me = 'p1') =>
     renderApp('/room/ABCDEF', { state: { session: savedSeat(me), savedCode: 'ABCDEF', room: roomOf(seats, 'lobby') } });
 
+  it('chats in the lobby, the thread always open and read', async () => {
+    const user = userEvent.setup();
+    const { socket, store } = lobby(['p1', 'p2']);
+    act(() => store.setState({ connected: true }));
+    act(() => socket.push('chat:message', { id: 1, from: 'p2', name: 'Bob', text: 'ready?', at: 1 }));
+    const lobbyChat = screen.getByRole('region', { name: 'Chat' });
+    expect(within(lobbyChat).getByRole('list', { name: 'Messages' })).toHaveTextContent('Bob: ready?');
+    expect(store.getState().chatUnread).toBe(0);
+    await user.type(within(lobbyChat).getByRole('textbox', { name: 'Message' }), 'yes{Enter}');
+    expect(socket.sentOf('chat:send')).toEqual([{ text: 'yes' }]);
+  });
+
+  it('keeps the lobby chat read once it is full at 50 lines', () => {
+    const { socket, store } = lobby(['p1', 'p2']);
+    act(() => {
+      for (let id = 1; id <= 51; id++) socket.push('chat:message', { id, from: 'p2', name: 'Bob', text: `line ${id}`, at: id });
+    });
+    act(() => socket.push('chat:message', { id: 52, from: 'p2', name: 'Bob', text: 'one more', at: 52 }));
+    expect(store.getState().chatUnread).toBe(0);
+  });
+
   it('lets the host start once two players are seated', async () => {
     const user = userEvent.setup();
     const { socket, store } = lobby(['p1']);

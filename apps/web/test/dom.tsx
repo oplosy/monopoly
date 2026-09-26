@@ -9,6 +9,8 @@ import { StoreProvider } from '../src/store/context';
 import { createGameStore, type AppState } from '../src/store/game-store';
 import { memoryStorage, type SavedSession } from '../src/store/storage';
 import { Tabletop } from '../src/tabletop/Tabletop';
+import { VoiceProvider } from '../src/voice/context';
+import type { VoiceStore } from '../src/voice/voice-store';
 import { recordingAudio } from './audio';
 import { FakeSocket } from './fake-socket';
 
@@ -35,6 +37,8 @@ export interface RenderOptions {
   avatar?: number | null;
   /** The table's sound; a recording one by default (renderTabletop only). */
   audio?: AudioManager;
+  /** Voice chat; without it the app has none, as in the lab. */
+  voice?: VoiceStore;
 }
 
 function mount(appRoutes: RouteObject[], path: string, opts: RenderOptions) {
@@ -43,11 +47,8 @@ function mount(appRoutes: RouteObject[], path: string, opts: RenderOptions) {
   const store = createGameStore(socket, memoryStorage(opts.saved ?? null, opts.nickname ?? '', opts.avatar ?? null));
   if (opts.state) store.setState(opts.state);
   const router = createMemoryRouter(appRoutes, { initialEntries: [path] });
-  const view = render(
-    <StoreProvider store={store}>
-      <RouterProvider router={router} />
-    </StoreProvider>,
-  );
+  const app = <RouterProvider router={router} />;
+  const view = render(<StoreProvider store={store}>{opts.voice ? <VoiceProvider store={opts.voice}>{app}</VoiceProvider> : app}</StoreProvider>);
   return { ...view, socket, store, router };
 }
 

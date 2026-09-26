@@ -280,3 +280,53 @@ describe('game store: characters', () => {
     expect(socket.sentOf('room:avatar')).toEqual([]);
   });
 });
+
+describe('game store: chat', () => {
+  const line = (id: number, from: string, text = `line ${id}`) => ({ id, from, name: from === 'p1' ? 'Ann' : 'Bob', text, at: id });
+
+  async function seated() {
+    const ctx = online();
+    ctx.socket.reply('room:join', () => joined);
+    await ctx.store.getState().joinRoom('ABCDEF', 'Ann');
+    return ctx;
+  }
+
+  it('replaces the list with the history on (re)joining, then appends, counting others’ lines as unread', async () => {
+    const { store, socket } = await seated();
+    socket.push('chat:history', [line(1, 'p2'), line(2, 'p1')]);
+    expect(store.getState().chat.map((m) => m.id)).toEqual([1, 2]);
+    expect(store.getState().chatUnread).toBe(0);
+    socket.push('chat:message', line(3, 'p2'));
+    socket.push('chat:message', line(4, 'p1'));
+    expect(store.getState().chatUnread).toBe(1);
+    store.getState().markChatRead();
+    expect(store.getState().chatUnread).toBe(0);
+    // A reconnect sends the history again: no line twice.
+    socket.push('chat:history', [line(1, 'p2'), line(2, 'p1'), line(3, 'p2'), line(4, 'p1')]);
+    expect(store.getState().chat.map((m) => m.id)).toEqual([1, 2, 3, 4]);
+  });
+
+  it('keeps only the last 50 lines', async () => {
+    const { store, socket } = await seated();
+    for (let i = 1; i <= 55; i++) socket.push('chat:message', line(i, 'p2'));
+    expect(store.getState().chat).toHaveLength(50);
+    expect(store.getState().chat[0]!.id).toBe(6);
+  });
+
+  it('sends a line, and refuses it while offline', async () => {
+    const { store, socket } = await seated();
+    expect(await store.getState().sendChat('hi')).toEqual({ ok: true });
+    expect(socket.sentOf('chat:send')).toEqual([{ text: 'hi' }]);
+    socket.disconnect();
+    expect(await store.getState().sendChat('hi')).toEqual({ ok: false, error: 'offline' });
+    expect(socket.sentOf('chat:send')).toHaveLength(1);
+  });
+
+  it('forgets the chat when leaving the room', async () => {
+    const { store, socket } = await seated();
+    socket.push('chat:message', line(1, 'p2'));
+    await store.getState().leave();
+    expect(store.getState().chat).toEqual([]);
+    expect(store.getState().chatUnread).toBe(0);
+  });
+});

@@ -119,6 +119,72 @@ describe('server', () => {
     expect(await d.emitWithAck('game:intent', { intent: { type: 'endTurn' }, expectedVersion: 0 })).toEqual({ ok: false, error: 'noSession' });
   });
 
+  it('relays chat to the room, with its history on resume', async () => {
+    const a = await client();
+    const created = await a.emitWithAck('room:create', { nickname: 'Ann' });
+    if (!created.ok) throw new Error(created.error);
+    const b = await client();
+    await b.emitWithAck('room:join', { code: created.code, nickname: 'Bob' });
+    const heard = new Promise((resolve) => b.once('chat:message', resolve));
+    expect(await a.emitWithAck('chat:send', { text: ' hello ' })).toEqual({ ok: true });
+    expect(await heard).toMatchObject({ from: 'p1', name: 'Ann', text: 'hello' });
+    expect(await a.emitWithAck('chat:send', { text: 'again' })).toEqual({ ok: false, error: 'rateLimited' });
+    const c = await client();
+    const history = new Promise((resolve) => c.once('chat:history', resolve));
+    await c.emitWithAck('room:resume', { token: created.token });
+    expect(await history).toEqual([expect.objectContaining({ text: 'hello' })]);
+  });
+
+  it('refuses chat without a seat', async () => {
+    const d = await client();
+    expect(await d.emitWithAck('chat:send', { text: 'hi' })).toEqual({ ok: false, error: 'noSession' });
+  });
+
+  it('joins voice with ICE servers, then relays signals between players in voice', async () => {
+    const a = await client();
+    const created = await a.emitWithAck('room:create', { nickname: 'Ann' });
+    if (!created.ok) throw new Error(created.error);
+    const b = await client();
+    await b.emitWithAck('room:join', { code: created.code, nickname: 'Bob' });
+    const annIn = waitRoom(b, (s) => s.seats[0]!.voice === 'listening');
+    const joinedVoice = await a.emitWithAck('voice:join', {});
+    expect(joinedVoice).toEqual({ ok: true, iceServers: [{ urls: 'stun:stun.cloudflare.com:3478' }] });
+    await annIn;
+    await b.emitWithAck('voice:join', {});
+    const heard = new Promise((resolve) => b.once('voice:signal', resolve));
+    const offer = { description: { type: 'offer' as const, sdp: 'v=0' } };
+    expect(await a.emitWithAck('voice:signal', { to: 'p2', data: offer })).toEqual({ ok: true });
+    expect(await heard).toEqual({ from: 'p1', data: offer });
+    const talking = waitRoom(b, (s) => s.seats[0]!.voice === 'talking');
+    expect(await a.emitWithAck('voice:mic', { on: true })).toEqual({ ok: true });
+    await talking;
+    const out = waitRoom(b, (s) => s.seats[0]!.voice === 'off');
+    expect(await a.emitWithAck('voice:leave', {})).toEqual({ ok: true });
+    await out;
+    expect(await a.emitWithAck('voice:signal', { to: 'p2', data: offer })).toEqual({ ok: false, error: 'badRequest' });
+  });
+
+  it('keeps voice apart from the game limiter: a burst of candidates goes through', async () => {
+    const a = await client();
+    const created = await a.emitWithAck('room:create', { nickname: 'Ann' });
+    if (!created.ok) throw new Error(created.error);
+    const b = await client();
+    await b.emitWithAck('room:join', { code: created.code, nickname: 'Bob' });
+    await a.emitWithAck('voice:join', {});
+    await b.emitWithAck('voice:join', {});
+    const candidate = { candidate: { candidate: 'candidate:1 1 udp 1 1.2.3.4 5 typ host', sdpMid: '0', sdpMLineIndex: 0 } };
+    const acks = await Promise.all(Array.from({ length: 25 }, () => a.emitWithAck('voice:signal', { to: 'p2', data: candidate })));
+    expect(acks.every((r) => r.ok)).toBe(true);
+    // The game's own limiter was not spent by them.
+    expect(await a.emitWithAck('room:avatar', { avatar: 5 })).toEqual({ ok: true });
+  });
+
+  it('refuses voice without a seat', async () => {
+    const d = await client();
+    expect(await d.emitWithAck('voice:join', {})).toEqual({ ok: false, error: 'noSession' });
+    expect(await d.emitWithAck('voice:mic', { on: true })).toEqual({ ok: false, error: 'noSession' });
+  });
+
   it('starts a game and sends each player only their own hand', async () => {
     const { a, b, c } = await threePlayerRoom();
     expect(await b.emitWithAck('room:start', {})).toEqual({ ok: false, error: 'notHost' });
