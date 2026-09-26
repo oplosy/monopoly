@@ -22,8 +22,11 @@ export function createPeer({ pc, polite, send, onTrack, onState, onFailed }: Pee
   let makingOffer = false;
   let ignoreOffer = false;
   let restarted = false;
-  // One two-way audio line from the start: a listener without a mic still receives, and a mic is added without renegotiating.
-  const { sender } = pc.addTransceiver('audio', { direction: 'sendrecv' });
+  let track: MediaStreamTrack | null = null;
+  // One two-way audio line, opened by the impolite side only: a listener without a mic still receives, and a mic is added
+  // without renegotiating. The polite side takes the line the first offer brings. If both sides opened their own, a
+  // collision would leave each with two half-used lines (browsers never reuse a line added with addTransceiver).
+  let sender: RTCRtpSender | null = polite ? null : pc.addTransceiver('audio', { direction: 'sendrecv' }).sender;
 
   pc.onnegotiationneeded = async () => {
     try {
@@ -59,6 +62,14 @@ export function createPeer({ pc, polite, send, onTrack, onState, onFailed }: Pee
         ignoreOffer = !polite && collision;
         if (ignoreOffer) return;
         await pc.setRemoteDescription(description);
+        if (description.type === 'offer' && !sender) {
+          const line = pc.getTransceivers().find((t) => t.receiver.track.kind === 'audio');
+          if (line) {
+            line.direction = 'sendrecv';
+            sender = line.sender;
+            await sender.replaceTrack(track);
+          }
+        }
         if (description.type === 'offer') {
           await pc.setLocalDescription();
           const d = pc.localDescription;
@@ -72,8 +83,9 @@ export function createPeer({ pc, polite, send, onTrack, onState, onFailed }: Pee
         }
       }
     },
-    async setTrack(track) {
-      await sender.replaceTrack(track);
+    async setTrack(next) {
+      track = next;
+      if (sender) await sender.replaceTrack(next);
     },
     close() {
       pc.onnegotiationneeded = null;

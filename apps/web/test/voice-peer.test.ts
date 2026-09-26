@@ -34,10 +34,30 @@ describe('createPeer', () => {
     expect(pcB.candidates).toEqual([{ candidate: 'c1', sdpMid: '0', sdpMLineIndex: 0 }, undefined]);
   });
 
+  it('opens one audio line only, from the impolite side, so a collision never leaves two', async () => {
+    const { pcA, pcB } = pair();
+    await flush(30);
+    expect(pcA.transceivers).toHaveLength(1);
+    expect(pcB.transceivers).toHaveLength(1);
+    // The polite side sends on the line the offer brought.
+    expect(pcA.transceivers[0]!.direction).toBe('sendrecv');
+  });
+
+  it('on the polite side, sends my mic on the line the offer brings, even when the mic came first', async () => {
+    const pc = new FakePc();
+    const peer = createPeer({ pc: pc as unknown as RTCPeerConnection, polite: true, send: vi.fn(), onTrack: vi.fn(), onState: vi.fn(), onFailed: vi.fn() });
+    const track = fakeTrack();
+    await peer.setTrack(track);
+    expect(pc.transceivers).toHaveLength(0);
+    await peer.handle({ description: { type: 'offer', sdp: 'o' } });
+    expect(pc.sender.replaceTrack).toHaveBeenCalledWith(track);
+    expect(pc.localDescription?.type).toBe('answer');
+  });
+
   it('sends my mic on its one audio sender, and hands the remote track over', async () => {
     const onTrack = vi.fn();
     const pc = new FakePc();
-    const peer = createPeer({ pc: pc as unknown as RTCPeerConnection, polite: true, send: vi.fn(), onTrack, onState: vi.fn(), onFailed: vi.fn() });
+    const peer = createPeer({ pc: pc as unknown as RTCPeerConnection, polite: false, send: vi.fn(), onTrack, onState: vi.fn(), onFailed: vi.fn() });
     const track = fakeTrack();
     await peer.setTrack(track);
     expect(pc.sender.replaceTrack).toHaveBeenCalledWith(track);

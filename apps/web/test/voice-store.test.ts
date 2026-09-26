@@ -54,7 +54,7 @@ afterEach(() => vi.useRealTimers());
 
 describe('voice store', () => {
   it('joins with the mic open, then connects to each other player in voice', async () => {
-    const { store, channel, micTrack } = setup();
+    const { store, channel, micTrack, signal } = setup();
     store.getState().sync('ABCDEF', 'p1', [seat('p1', 'off'), seat('p2', 'listening'), seat('p3', 'off')]);
     await store.getState().join();
     expect(store.getState()).toMatchObject({ status: 'on', hasMic: true, micOn: true });
@@ -62,6 +62,8 @@ describe('voice store', () => {
     // Only Bob is in voice: one connection, polite because p1 sorts first, with the ICE servers from the join.
     expect(FakePc.all).toHaveLength(1);
     expect(FakePc.all[0]!.config).toEqual({ iceServers: ICE });
+    // Polite: it waits for Bob's offer, then sends my mic on the line the offer brings.
+    signal('p2', { description: { type: 'offer', sdp: 'x' } });
     await flush();
     expect(FakePc.all[0]!.sender.replaceTrack).toHaveBeenCalledWith(micTrack);
     store.getState().sync('ABCDEF', 'p1', [seat('p1', 'talking'), seat('p2', 'listening'), seat('p3', 'listening')]);
