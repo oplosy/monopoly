@@ -1,11 +1,11 @@
 import type { Server, Socket } from 'socket.io';
 import {
-  AvatarSchema, CreateRoomSchema, EmptySchema, IntentPayloadSchema, JoinRoomSchema, ResumeSchema, StartSchema,
+  AvatarSchema, ChatSendSchema, CreateRoomSchema, EmptySchema, IntentPayloadSchema, JoinRoomSchema, ResumeSchema, StartSchema,
   type Ack, type ClientToServerEvents, type JoinedRoom, type ServerToClientEvents,
 } from '@deal-city/protocol';
 import type { Config } from './config';
 import { sanitizeNickname } from './nickname';
-import { createRateLimiter } from './rate-limit';
+import { createChatLimiter, createRateLimiter } from './rate-limit';
 import type { Connection, Room } from './room';
 import type { RoomManager } from './room-manager';
 
@@ -23,6 +23,7 @@ export function registerSockets(io: IoServer, rooms: RoomManager, config: Config
 
 function handleConnection(socket: IoSocket, rooms: RoomManager, config: Config): void {
   const allow = createRateLimiter(config.rateLimitPerSec);
+  const allowChat = createChatLimiter();
   let session: Session | null = null;
   const conn: Connection = {
     roomState: (state) => socket.emit('room:state', state),
@@ -112,6 +113,10 @@ function handleConnection(socket: IoSocket, rooms: RoomManager, config: Config):
 
   socket.on('room:rematch', withSession(EmptySchema, (s) => s.room.rematch(s.playerId)));
   socket.on('room:avatar', withSession(AvatarSchema, (s, { avatar }) => s.room.setAvatar(s.playerId, avatar)));
+  socket.on(
+    'chat:send',
+    withSession(ChatSendSchema, (s, { text }) => (allowChat() ? s.room.chat(s.playerId, text) : { ok: false, error: 'rateLimited' })),
+  );
 
   socket.on(
     'game:intent',

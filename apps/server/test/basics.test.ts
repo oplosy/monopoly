@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { loadConfig } from '../src/config';
 import { ROOM_CODE_ALPHABET, gameSeed, roomCode, sessionToken } from '../src/ids';
 import { sanitizeNickname } from '../src/nickname';
-import { createRateLimiter } from '../src/rate-limit';
+import { createChatLimiter, createRateLimiter } from '../src/rate-limit';
 
 describe('loadConfig', () => {
   it('uses defaults and reads overrides', () => {
@@ -76,5 +76,22 @@ describe('createRateLimiter', () => {
     expect([allow(), allow(), allow()]).toEqual([true, true, false]);
     t = 1000;
     expect([allow(), allow()]).toEqual([true, false]);
+  });
+});
+
+describe('createChatLimiter', () => {
+  it('allows one line a second and five in ten seconds', () => {
+    let t = 0;
+    const allow = createChatLimiter(() => t);
+    expect(allow()).toBe(true);
+    expect(allow()).toBe(false); // the same second
+    for (let i = 0; i < 4; i++) {
+      t += 1000;
+      expect(allow()).toBe(true);
+    }
+    t += 1000;
+    expect(allow()).toBe(false); // a sixth within ten seconds
+    t = 10_000;
+    expect(allow()).toBe(true);
   });
 });

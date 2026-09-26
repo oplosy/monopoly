@@ -119,6 +119,27 @@ describe('server', () => {
     expect(await d.emitWithAck('game:intent', { intent: { type: 'endTurn' }, expectedVersion: 0 })).toEqual({ ok: false, error: 'noSession' });
   });
 
+  it('relays chat to the room, with its history on resume', async () => {
+    const a = await client();
+    const created = await a.emitWithAck('room:create', { nickname: 'Ann' });
+    if (!created.ok) throw new Error(created.error);
+    const b = await client();
+    await b.emitWithAck('room:join', { code: created.code, nickname: 'Bob' });
+    const heard = new Promise((resolve) => b.once('chat:message', resolve));
+    expect(await a.emitWithAck('chat:send', { text: ' hello ' })).toEqual({ ok: true });
+    expect(await heard).toMatchObject({ from: 'p1', name: 'Ann', text: 'hello' });
+    expect(await a.emitWithAck('chat:send', { text: 'again' })).toEqual({ ok: false, error: 'rateLimited' });
+    const c = await client();
+    const history = new Promise((resolve) => c.once('chat:history', resolve));
+    await c.emitWithAck('room:resume', { token: created.token });
+    expect(await history).toEqual([expect.objectContaining({ text: 'hello' })]);
+  });
+
+  it('refuses chat without a seat', async () => {
+    const d = await client();
+    expect(await d.emitWithAck('chat:send', { text: 'hi' })).toEqual({ ok: false, error: 'noSession' });
+  });
+
   it('starts a game and sends each player only their own hand', async () => {
     const { a, b, c } = await threePlayerRoom();
     expect(await b.emitWithAck('room:start', {})).toEqual({ ok: false, error: 'notHost' });

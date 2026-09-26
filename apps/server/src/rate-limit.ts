@@ -12,3 +12,10 @@ export function createRateLimiter(limit: number, windowMs = 1000, now: () => num
     return true;
   };
 }
+
+/** Chat's own limit, apart from the game's: one line a second and five in ten seconds, per connection. */
+export function createChatLimiter(now: () => number = Date.now): () => boolean {
+  const perSecond = createRateLimiter(1, 1000, now);
+  const perTen = createRateLimiter(5, 10_000, now);
+  return () => perSecond() && perTen();
+}
