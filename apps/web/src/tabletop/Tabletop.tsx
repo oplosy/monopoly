@@ -1,6 +1,7 @@
 import { autoPayment, legalIntentsForView, waitingOnView, type Intent, type IntentOf } from '@deal-city/engine';
 import type { GameStatePayload } from '@deal-city/protocol';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
+import { useAmbience } from '../audio/audio-context';
 import { MotionStage } from '../motion/MotionStage';
 import { useStage, useStaged, useStageEffect } from '../motion/stage-context';
 import { moveOptions, playBlocker, playOptions, type PlayKind, type PlayOption } from '../game/choices';
@@ -84,6 +85,8 @@ function GameTable({ game }: { game: GameStatePayload }) {
   const stage = useStage();
   const busy = useStaged((s) => s.busy);
   const turnPulse = useStageEffect('turn');
+  // The terrace in the video can be heard too: wind, leaves and crickets.
+  useAmbience();
   // The stage starts a payload's scenes once the table shows it.
   useLayoutEffect(() => stage.committed(game));
   const rootRef = useRef<HTMLDivElement>(null);

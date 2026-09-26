@@ -120,4 +120,27 @@ describe('createAudioManager', () => {
     audio.toggleMute();
     expect(audio.getSettings().muted).toBe(true);
   });
+
+  it('plays the outdoor ambience while the table asks for it: looping wind, leaves and crickets, through the master volume', async () => {
+    const { audio, fake } = await unlocked();
+    audio.ambience(true);
+    const beds = fake.voices.filter((v) => v.kind === 'buffer');
+    expect(beds).toHaveLength(3);
+    for (const bed of beds) expect((bed.node as unknown as { loop: boolean }).loop).toBe(true);
+    // Asking twice starts nothing more.
+    audio.ambience(true);
+    expect(fake.voices.filter((v) => v.kind === 'buffer')).toHaveLength(3);
+    audio.ambience(false);
+    for (const bed of beds) expect((bed.node as unknown as { stopped: boolean }).stopped).toBe(true);
+  });
+
+  it('starts the ambience asked for before the first gesture once sound unlocks', async () => {
+    const f = fakeAudioDeps();
+    const audio = createAudioManager(f.deps);
+    audio.ambience(true);
+    expect(f.createContext).not.toHaveBeenCalled();
+    audio.unlock();
+    await flushAudio();
+    expect(f.fake.voices.filter((v) => v.kind === 'buffer')).toHaveLength(3);
+  });
 });

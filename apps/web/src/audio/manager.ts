@@ -1,3 +1,4 @@
+import { startAmbience } from './ambience';
 import { GAIN, MIN_GAP_MS, SAMPLES, SYNTHS, type Cue } from './cues';
 import { browserSettings, DEFAULT_SETTINGS, type AudioSettings, type SettingsStore } from './settings';
 import { synthesize, type SynthContext, type SynthCue } from './synth';
@@ -29,7 +30,12 @@ export interface AudioManager {
   /** Starts (or resumes) sound: call it from a user gesture, as browsers require. */
   unlock(): void;
   play(cue: Cue): void;
+  /** Plays the outdoor ambience under everything while `on` (the table asks for it; it waits for the unlock). */
+  ambience(on: boolean): void;
 }
+
+/** The ambience's level under the master volume. */
+export const AMBIENCE_GAIN = 0.5;
 
 /** After the unlocking gesture, cues play for this long even before the context reports it runs. */
 export const UNLOCK_GRACE_MS = 1000;
@@ -50,6 +56,8 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
   let master: GainNode | null = null;
   let tried = false;
   let unlockedAt = -Infinity;
+  let ambienceWanted = false;
+  let ambience: { stop(): void } | null = null;
 
   const level = () => (settings.muted ? 0 : settings.volume);
 
@@ -58,6 +66,18 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
     deps.settings.save(next);
     if (master) master.gain.value = level();
     for (const listener of [...listeners]) listener();
+  };
+
+  const syncAmbience = () => {
+    if (ambienceWanted && !ambience && ctx && master) {
+      const out = ctx.createGain();
+      out.gain.value = AMBIENCE_GAIN;
+      out.connect(master);
+      ambience = startAmbience(ctx, out);
+    } else if (!ambienceWanted && ambience) {
+      ambience.stop();
+      ambience = null;
+    }
   };
 
   const load = (context: AudioContextLike, stem: string) => {
@@ -98,9 +118,14 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
           master.gain.value = level();
           master.connect(context.destination);
           for (const stems of Object.values(SAMPLES)) for (const stem of stems ?? []) load(context, stem);
+          syncAmbience();
         }
       }
       if (ctx && ctx.state !== 'running') void ctx.resume().catch(() => undefined);
+    },
+    ambience(on) {
+      ambienceWanted = on;
+      syncAmbience();
     },
     play(cue) {
       if (!ctx || !master || level() === 0) return;
