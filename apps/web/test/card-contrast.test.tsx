@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ACTIONS, CARDS, COLOR_KEYS, COLORS, rentRuleText, type ActionKind, type Color } from '@deal-city/engine';
 import { CardFace } from '../src/cards/CardFace';
 import { RULE_WRAP, TITLE_WRAP, wrapLines } from '../src/cards/text';
-import { ACTION_FAMILY, contrast, FAMILY_COLORS, mixHex, PAPER } from '../src/cards/theme';
+import { ACTION_FAMILY, contrast, FAMILY_COLORS, mixHex, PAPER, RENT_COLOR } from '../src/cards/theme';
 
 interface Text {
   content: string;
@@ -52,12 +52,14 @@ describe('card text contrast (WCAG AA)', () => {
     expect(readable(label, mix(COLORS[color].hex, PAPER, 0.2))).toBeGreaterThanOrEqual(needed(label));
   });
 
-  /** One card of each action kind, with the color its face is painted in. */
+  /** One card of each action kind, plus both kinds of rent card, with the color their face is painted in. */
   const playCards: [string, string, string, string][] = [
     ...(Object.keys(ACTIONS) as ActionKind[]).map((kind) => {
       const id = firstCard((c) => c.type === 'action' && c.action === kind);
       return [kind, id, FAMILY_COLORS[ACTION_FAMILY[kind]], ACTIONS[kind].name] as [string, string, string, string];
     }),
+    ['two-color rent', firstCard((c) => c.type === 'rent' && !c.any), RENT_COLOR, 'Rent'],
+    ['any-color rent', firstCard((c) => c.type === 'rent' && c.any), RENT_COLOR, 'Rent'],
   ];
   /** Paper text is measured on the lightest stop of the gradient, the worst case. */
   const lightest = (color: string) => mixHex(color, '#FFFFFF', 0.18);

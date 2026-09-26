@@ -141,6 +141,16 @@ describe('RentFace', () => {
     expect(render({ id: 'rent-any-1' })).toContain('One player of your choice');
   });
 
+  it('keeps every slice in the spinning wheel and the hub still, on a graphite card', () => {
+    const html = render({ id: 'rent-any-1' });
+    const wheel = /<g class="rent-wheel">(.*?)<\/g>/.exec(html)?.[1] ?? '';
+    expect(wheel.match(/data-slice=/g)).toHaveLength(10);
+    expect(wheel).not.toContain('>M<');
+    expect(html).toContain('>M<');
+    expect(html).toContain('>RENT<');
+    expect(html).toContain('stop-color="#505058"');
+  });
+
   it('builds pie slices with the right arc flags', () => {
     expect(slicePath(0, 0, 10, 0, Math.PI / 2)).toBe('M0 0 L10 0 A10 10 0 0 1 0 10 Z');
     expect(slicePath(0, 0, 10, 0, (3 * Math.PI) / 2)).toContain('A10 10 0 1 1');

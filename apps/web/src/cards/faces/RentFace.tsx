@@ -1,7 +1,7 @@
 import { COLORS, rentRuleText } from '@deal-city/engine';
-import { CardSvg, Lines, ValueBadge, W, type FaceProps } from '../parts';
-import { RULE_WRAP, round2, wrapLines } from '../text';
-import { FONT_DISPLAY, FONT_NUM, INK, PAPER } from '../theme';
+import { MEDALLION, PlayCard, type FaceProps } from '../parts';
+import { round2 } from '../text';
+import { FONT_NUM, INK, PAPER, RENT_COLOR } from '../theme';
 
 /** SVG path for a pie slice from angle a0 to a1 (radians, clockwise from +x). */
 export function slicePath(cx: number, cy: number, r: number, a0: number, a1: number): string {
@@ -10,28 +10,24 @@ export function slicePath(cx: number, cy: number, r: number, a0: number, a1: num
   return `M${cx} ${cy} L${point(a0)} A${r} ${r} 0 ${large} 1 ${point(a1)} Z`;
 }
 
+const WHEEL_R = 56;
+
+/** Rent: a graphite play card with the color wheel in its medallion (spec 2026-09-26-card-type-legibility D4). */
 export function RentFace({ card, label, className }: FaceProps<'rent'>) {
-  const cy = 162;
+  const { cx, cy } = MEDALLION;
   const step = (2 * Math.PI) / card.colors.length;
   const start = -Math.PI / 2;
   return (
-    <CardSvg label={label} className={className}>
-      <rect width={W} height={64} fill={INK} />
-      <text x={W / 2} y={43} textAnchor="middle" fontFamily={FONT_DISPLAY} fontWeight={800} fontSize={28} letterSpacing={6} fill={PAPER}>
-        RENT
-      </text>
-      <ValueBadge value={card.value} />
+    <PlayCard label={label} className={className} color={RENT_COLOR} value={card.value} name="Rent" rule={rentRuleText(card)}>
       <g className="rent-wheel">
         {card.colors.map((c, i) => (
-          <path key={c} data-slice={c} d={slicePath(W / 2, cy, 68, start + i * step, start + (i + 1) * step)} fill={COLORS[c].hex} stroke={PAPER} strokeWidth={2} />
+          <path key={c} data-slice={c} d={slicePath(cx, cy, WHEEL_R, start + i * step, start + (i + 1) * step)} fill={COLORS[c].hex} stroke={PAPER} strokeWidth={2} />
         ))}
-        <circle cx={W / 2} cy={cy} r={68} fill="none" stroke={INK} strokeWidth={2} />
       </g>
-      <circle cx={W / 2} cy={cy} r={26} fill={PAPER} stroke={INK} strokeWidth={2} />
-      <text x={W / 2} y={cy} textAnchor="middle" dominantBaseline="central" fontFamily={FONT_NUM} fontWeight={700} fontSize={22} fill={INK}>
+      <circle cx={cx} cy={cy} r={22} fill={PAPER} />
+      <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="central" fontFamily={FONT_NUM} fontWeight={700} fontSize={20} fill={INK}>
         M
       </text>
-      <Lines lines={wrapLines(rentRuleText(card), RULE_WRAP)} x={W / 2} y={262} lineHeight={17} textAnchor="middle" fontFamily={FONT_DISPLAY} fontSize={13} fill={INK} />
-    </CardSvg>
+    </PlayCard>
   );
 }
