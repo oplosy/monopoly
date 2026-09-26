@@ -145,3 +145,12 @@ Tests change only where behavior changes (no padding):
 - Illustrated, "game-like" icons. Three styles were tried and turned down (D6). A render-quality 3D look would need
   raster art, which is a separate decision about new assets.
 - Any change to deeds, wildcards, money, the card back, or the table layout.
+
+## As built
+
+- Built as specified. The two rule budgets merged into one `RULE_WRAP = 30`, the same value as before.
+- `ICON_SCALE`: birthday 1.15, hotel 1.15, all others 1.
+- Gradient stops, as the tests pin them:
+  - steal runs from `#C14D47` to `#8C1E17`;
+  - rent's lightest stop is `#505058`.
+- Notes and rulings: `docs/superpowers/handoff/2026-09-26-card-type-legibility-notes.md`.
