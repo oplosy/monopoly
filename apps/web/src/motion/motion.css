@@ -156,6 +156,8 @@
 @keyframes breathe { 50% { scale: 1.035; } }
 /* My plays are spent: End turn breathes, so the turn plainly waits on it (spec 2026-09-25-table-controls D3). */
 :root[data-motion='on'] .end-turn.is-due { animation: due-breathe 1.8s ease-in-out infinite; }
+:root[data-motion='on'] .end-turn-button:hover:not([aria-disabled='true']) { transform: scale(1.06); }
+:root[data-motion='on'] .end-turn-button:hover:not([aria-disabled='true']):active { transform: scale(1.02) translateY(3px); }
 @keyframes due-breathe { 50% { scale: 1.06; } }
 @keyframes tick { from { scale: 0.9; } }
 @keyframes pop-in { from { opacity: 0; scale: 0.85; } }

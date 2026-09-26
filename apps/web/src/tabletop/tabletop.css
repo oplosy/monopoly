@@ -397,6 +397,11 @@
   box-shadow: 0 6px 0 #3b2410, 0 12px 22px rgb(0 0 0 / 0.4);
   transition: transform 0.1s ease;
 }
+/* Under the mouse it wakes up: a little brighter, with a gold glow (it grows too, with animations on). */
+.end-turn-button:hover:not([aria-disabled='true']) {
+  filter: brightness(1.15);
+  box-shadow: 0 6px 0 #3b2410, 0 12px 22px rgb(0 0 0 / 0.4), 0 0 0 4px rgb(255 216 74 / 0.55), 0 0 26px 6px rgb(255 216 74 / 0.45);
+}
 .end-turn-button:active { transform: translateY(3px); box-shadow: 0 3px 0 #3b2410, 0 6px 12px rgb(0 0 0 / 0.35); }
 .end-turn-button:focus-visible { outline: 3px solid var(--gold); outline-offset: 12px; }
 /* The seconds sit in the lower half of the button; a tap there still reaches the button. */
