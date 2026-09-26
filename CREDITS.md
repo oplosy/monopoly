@@ -10,6 +10,8 @@ The sound samples in `apps/web/public/sounds/` come from three packs by Kenney (
 | Interface Sounds | https://kenney.nl/assets/interface-sounds | tick_001, tick_002 |
 | Impact Sounds | https://kenney.nl/assets/impact-sounds | impactSoft_heavy_000 and 001, impactMetal_heavy_000 and 001, impactSoft_medium_000 |
 
+The terrace ambience in `apps/web/public/ambience/` (`terrace.ogg`, `terrace.mp3`) is a 30 s loop cut from "Park ambiences" (the river recording, birdsong by the water) by Thimras (https://opengameart.org/content/park-ambiences), released under Creative Commons Zero (CC0 1.0 Universal). It was trimmed, made mono, cross-faded into a seamless loop, raised to a steady level and encoded as Ogg and MP3.
+
 The tunes are synthesized in code (`apps/web/src/audio/synth.ts`) and are original to Deal City: the turn and set chimes, the win fanfare, the lose "aww" and the whooshes.
 
 ## Art

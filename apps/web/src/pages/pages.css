@@ -55,14 +55,16 @@
   grid-template-rows: auto 1fr;
   background: var(--bg);
 }
-/* The same stadium as the game table (1.8:1), with the far chairs above it and mine below its near rim. */
+/* The game table's own picture (the backdrop video's poster) at the stage's 16:9, with the chairs around its felt:
+   the far ones beside its top, mine below its near rim. */
 .lobby-table {
   position: relative;
   overflow: hidden;
-  --plane-w: min(78vw, 90vh);
-  --plane-h: calc(var(--plane-w) / 1.8);
-  --plane-cy: calc(var(--plane-h) * 0.46 + 64px);
-  height: calc(var(--plane-h) + 170px);
+  width: min(100%, 64rem, calc((100dvh - 13rem) * 16 / 9));
+  aspect-ratio: 16 / 9;
+  margin: 0 auto;
+  border-radius: 0 0 18px 18px;
+  background: #0b1320 url('/bg_poster.jpg') center / cover no-repeat;
 }
 .chairs { list-style: none; margin: 0; padding: 0; }
 .chair {
@@ -110,6 +112,5 @@
 .share { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; }
 
 @media (max-width: 640px) {
-  .lobby-table { --plane-w: 90vw; }
   .lobby-panel { margin-top: -1rem; }
 }

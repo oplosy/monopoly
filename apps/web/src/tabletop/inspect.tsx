@@ -54,7 +54,7 @@ function boxOf(el: Element | null): Box {
   return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : { left: 0, top: 0, right: 0, bottom: 0 };
 }
 
-/** A large flat copy of any card, so small far-side cards stay readable in perspective. */
+/** A large flat copy of any card, so small table cards stay readable. */
 export function InspectProvider({ children }: { children: ReactNode }) {
   const [shown, setShown] = useState<Shown | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);

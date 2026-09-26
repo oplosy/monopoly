@@ -18,6 +18,18 @@ afterEach(() => {
 });
 
 describe('interface sounds', () => {
+  it('plays the outdoor ambience at the table, hushes it while the tab is hidden, and ends it on leaving', () => {
+    const audio = recordingAudio();
+    const { unmount } = renderTabletop({ audio, state: atTable(play({ players: [{ id: 'p1' }, { id: 'p2' }] }), 'p1') });
+    expect(audio.ambient).toEqual([true]);
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    act(() => void document.dispatchEvent(new Event('visibilitychange')));
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+    act(() => void document.dispatchEvent(new Event('visibilitychange')));
+    unmount();
+    expect(audio.ambient).toEqual([true, false, true, false]);
+  });
+
   it('ticks softly when the mouse moves over one of my hand cards, and nowhere else', () => {
     const audio = recordingAudio();
     renderTabletop({ audio, state: atTable(play({ players: [{ id: 'p1', hand: ['money-2-1'], bank: ['money-1-1'] }, { id: 'p2' }] }), 'p1') });

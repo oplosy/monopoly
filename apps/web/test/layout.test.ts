@@ -1,218 +1,129 @@
 import { describe, expect, it } from 'vitest';
 import { fanLayout } from '../src/scene/geometry';
-import { FAN_PIVOT, handFan, layoutMode, onFelt, project, tableLayout, TILT, type PlaneRect, type TableLayout } from '../src/scene/layout';
+import { FELT, onFelt, STAGE, type Felt } from '../src/scene/felt';
+import { FAN_PIVOT, handFan, tableLayout, toStage, type PlaneRect, type TableLayout } from '../src/scene/layout';
 
-/** Spec §5.3: the viewport, then the hand card width (±10 %) and the near and far table card widths (floors), rendered px. */
-const TARGETS = [
-  { width: 1920, height: 1080, hand: 230, near: 100, far: 88 },
-  { width: 1440, height: 900, hand: 190, near: 84, far: 74 },
-  { width: 1280, height: 720, hand: 150, near: 70, far: 62 },
-  { width: 768, height: 1024, hand: 150, near: 66, far: 58 },
-  { width: 812, height: 375, hand: 86, near: 46, far: 40 },
-  { width: 375, height: 812, hand: 100, near: 50, far: 44 },
-] as const;
-
-/** A table card's rendered width with its top edge at plane y `top` (percent): its near (bottom) edge is its widest. */
-const renderedAt = (L: TableLayout, top: number) => L.card.w * project(L, { x: 50, y: top + (L.card.h / L.plane.h) * 100 }).s;
-const near = (L: TableLayout) => renderedAt(L, L.seats[0]!.zone.y);
-const far = (L: TableLayout) => Math.min(...L.seats.slice(1).map((s) => renderedAt(L, s.zone.y)));
-const corners = (r: PlaneRect) => [
-  { x: r.x, y: r.y },
-  { x: r.x + r.w, y: r.y },
-  { x: r.x, y: r.y + r.h },
-  { x: r.x + r.w, y: r.y + r.h },
-];
+/** A zone's corners on the stage (px). */
+const corners = (L: TableLayout, r: PlaneRect) =>
+  [
+    { x: r.x, y: r.y },
+    { x: r.x + r.w, y: r.y },
+    { x: r.x, y: r.y + r.h },
+    { x: r.x + r.w, y: r.y + r.h },
+  ].map((p) => toStage(L, p));
 const touch = (a: PlaneRect, b: PlaneRect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-/** The resting hand's top edge, in screen px. */
-const handTop = (L: TableLayout) => L.viewport.h - (L.hand.h - L.hand.rest);
-const myZoneBottom = (L: TableLayout) => project(L, { x: 50, y: L.seats[0]!.zone.y + L.seats[0]!.zone.h }).y;
 
-/** Every sound layout keeps these, whatever the viewport. */
-function expectSound(L: TableLayout, farNear = 0.88) {
-  const rects = [...L.seats.map((s) => s.zone), L.center];
-  for (const r of rects) {
-    expect(r.w).toBeGreaterThan(0);
-    expect(r.h).toBeGreaterThan(0);
-  }
-  for (const s of L.seats) for (const c of corners(s.zone)) expect(onFelt(L, c, 4), `zone corner ${c.x},${c.y} off the felt`).toBe(true);
-  rects.forEach((a, i) => rects.forEach((b, j) => i < j && expect(touch(a, b), `zones ${i} and ${j} overlap`).toBe(false)));
-  for (const s of L.seats) {
-    const p = project(L, s.ui);
-    expect(p.x).toBeGreaterThanOrEqual(30);
-    expect(p.x).toBeLessThanOrEqual(L.viewport.w - 30);
-    expect(p.y).toBeGreaterThanOrEqual(20);
-    expect(p.y).toBeLessThanOrEqual(L.viewport.h - 20);
-  }
-  expect(myZoneBottom(L)).toBeLessThanOrEqual(handTop(L));
-  expect(far(L) / near(L)).toBeGreaterThanOrEqual(farNear);
-  expect(L.plane.h).toBeGreaterThanOrEqual(L.card.h * 2.5);
-  // Every zone holds a card without spilling (review I3); a taller stack tightens its fan (fitTableau).
-  for (const s of L.seats) expect((s.zone.h / 100) * L.plane.h, 'zone height').toBeGreaterThanOrEqual(L.card.h);
-}
+/** Felts a calibration may land on: the measured one, moved, and resized. */
+const FELTS: Felt[] = [
+  FELT,
+  { ...FELT, cx: FELT.cx + 40, cy: FELT.cy - 20 },
+  { ...FELT, rx: FELT.rx - 60, ry: FELT.ry - 30 },
+  { ...FELT, rx: FELT.rx + 40, ry: FELT.ry + 20, n: 2 },
+  { ...FELT, n: 3.5 },
+];
 
-describe('layoutMode', () => {
-  it('tells desktops, portrait screens and phones on their side apart', () => {
-    expect(layoutMode({ width: 1440, height: 900 })).toBe('desktop');
-    expect(layoutMode({ width: 1024, height: 768 })).toBe('desktop');
-    expect(layoutMode({ width: 768, height: 1024 })).toBe('portrait');
-    expect(layoutMode({ width: 375, height: 812 })).toBe('portrait');
-    expect(layoutMode({ width: 812, height: 375 })).toBe('landscape');
-    expect(layoutMode({ width: 568, height: 320 })).toBe('landscape');
-  });
-
-  it('calls phones compact, and desktops and tablets not', () => {
-    expect(tableLayout({ width: 375, height: 812 }, 3).compact).toBe(true);
-    expect(tableLayout({ width: 812, height: 375 }, 3).compact).toBe(true);
-    expect(tableLayout({ width: 768, height: 1024 }, 3).compact).toBe(false);
-    expect(tableLayout({ width: 1440, height: 900 }, 3).compact).toBe(false);
-  });
-});
-
-describe('project', () => {
-  it('leaves the plane center where the plane is centered, unscaled', () => {
-    const L = tableLayout({ width: 1440, height: 900 }, 3);
-    expect(project(L, { x: 50, y: 50 })).toEqual({ x: L.plane.cx, y: L.plane.cy, s: 1 });
-  });
-
-  it('draws the far edge smaller and the near edge larger', () => {
-    const L = tableLayout({ width: 1440, height: 900 }, 3);
-    expect(project(L, { x: 50, y: 0 }).s).toBeLessThan(1);
-    expect(project(L, { x: 50, y: 100 }).s).toBeGreaterThan(1);
-    expect(L.tilt).toBe(TILT);
-    expect(TILT).toBe(22);
-  });
-});
-
-describe('tableLayout: the spec §5.3 targets', () => {
-  for (const t of TARGETS) {
-    for (const players of [2, 3]) {
-      it(`${t.width}×${t.height}, ${players} players: hand ≈${t.hand}, near ≥${t.near}, far ≥${t.far}`, () => {
-        const L = tableLayout({ width: t.width, height: t.height }, players);
-        expect(Math.abs(L.hand.w - t.hand) / t.hand).toBeLessThanOrEqual(0.1);
-        expect(L.hand.h).toBe(Math.round(L.hand.w * 1.4));
-        expect(near(L)).toBeGreaterThanOrEqual(t.near);
-        expect(far(L)).toBeGreaterThanOrEqual(t.far);
-        expectSound(L);
+describe('tableLayout', () => {
+  for (const felt of FELTS)
+    for (const players of [1, 2, 3])
+      it(`keeps every zone on the felt and clear of the others (${players} players, felt ${JSON.stringify(felt)})`, () => {
+        const L = tableLayout(players, felt);
+        const rects = [...L.seats.map((s) => s.zone), L.center];
+        for (const r of rects) {
+          expect(r.w).toBeGreaterThan(0);
+          expect(r.h).toBeGreaterThan(0);
+          for (const c of corners(L, r)) expect(onFelt(felt, c.x, c.y), `corner ${c.x},${c.y} off the felt`).toBe(true);
+        }
+        rects.forEach((a, i) => rects.forEach((b, j) => i < j && expect(touch(a, b), `zones ${i} and ${j} overlap`).toBe(false)));
+        // Every zone holds at least one card without spilling; a taller stack tightens its fan (fitTableau).
+        for (const s of L.seats) expect((s.zone.h / 100) * L.plane.h).toBeGreaterThanOrEqual(L.card.h);
       });
-    }
-  }
 
-  it('never lets a crowded tableau shrink its cards below the targets (the floor)', () => {
-    for (const t of TARGETS) {
-      for (const players of [2, 3]) {
-        const L = tableLayout({ width: t.width, height: t.height }, players);
-        const atFloor = { ...L, card: { w: L.cardFloor, h: Math.round(L.cardFloor * 1.4) } };
-        expect(near(atFloor), `${t.width}×${t.height} near at the floor`).toBeGreaterThanOrEqual(t.near);
-        expect(far(atFloor), `${t.width}×${t.height} far at the floor`).toBeGreaterThanOrEqual(t.far);
-        expect(L.cardFloor).toBeLessThanOrEqual(L.card.w);
-      }
-    }
+  it('lays the plane over the felt: its box is the felt’s bounding box on the stage', () => {
+    const L = tableLayout(3, FELT);
+    expect(L.plane).toEqual({ x: FELT.cx - FELT.rx, y: FELT.cy - FELT.ry, w: 2 * FELT.rx, h: 2 * FELT.ry });
+    expect(toStage(L, { x: 50, y: 50 })).toEqual({ x: FELT.cx, y: FELT.cy });
   });
 
-  it('pins the 1440×900 table (update with a ruling when a rule changes)', () => {
-    const L = tableLayout({ width: 1440, height: 900 }, 3);
-    expect(L.hand).toEqual({ w: 193, h: 270, rest: 68 });
-    expect(L.card).toEqual({ w: 84, h: 118 });
-    expect(L.avatar).toBe(72);
+  it('moves every zone and seat with the felt', () => {
+    const a = tableLayout(3, FELT);
+    const b = tableLayout(3, { ...FELT, cx: FELT.cx + 40, cy: FELT.cy + 10 });
+    a.seats.forEach((s, k) => {
+      const [p, q] = [toStage(a, { x: s.zone.x, y: s.zone.y }), toStage(b, { x: b.seats[k]!.zone.x, y: b.seats[k]!.zone.y })];
+      expect(q.x - p.x).toBeCloseTo(40, 0);
+      expect(q.y - p.y).toBeCloseTo(10, 0);
+    });
+  });
+
+  it('puts my zone below the piles and every opponent above them', () => {
+    const L = tableLayout(3, FELT);
+    const [mine, ...others] = L.seats;
+    expect(mine!.angle).toBe(270);
+    expect(mine!.zone.y).toBeGreaterThanOrEqual(L.center.y + L.center.h);
+    for (const s of others) expect(s.zone.y + s.zone.h).toBeLessThanOrEqual(L.center.y);
+    expect(tableLayout(2, FELT).seats.map((s) => s.angle)).toEqual([270, 90]);
     expect(L.seats.map((s) => s.angle)).toEqual([270, 150, 30]);
   });
-});
 
-describe('tableLayout: proportions', () => {
-  it('keeps every avatar no taller than a far table card on screen', () => {
-    for (const t of TARGETS) {
-      const L = tableLayout({ width: t.width, height: t.height }, 3);
-      expect(L.avatar).toBeLessThanOrEqual(far(L) * 1.4 * Math.cos((TILT * Math.PI) / 180));
-    }
-  });
-
-  it('rests about a quarter of a desktop hand card below the screen edge', () => {
-    const L = tableLayout({ width: 1440, height: 900 }, 3);
-    expect(L.hand.rest / L.hand.h).toBeCloseTo(0.25, 2);
-  });
-
-  it('seats 2 players face to face and 3 at 120°, mine first', () => {
-    expect(tableLayout({ width: 1440, height: 900 }, 2).seats.map((s) => s.angle)).toEqual([270, 90]);
-    expect(tableLayout({ width: 375, height: 812 }, 3).seats.map((s) => s.angle)).toEqual([270, 150, 30]);
-  });
-
-  it('puts every opponent on the far half and my zone on the near half', () => {
-    for (const t of TARGETS) {
-      const L = tableLayout({ width: t.width, height: t.height }, 3);
-      expect(L.seats[0]!.zone.y).toBeGreaterThan(50);
-      for (const s of L.seats.slice(1)) expect(s.zone.y + s.zone.h).toBeLessThan(50);
-    }
-  });
-});
-
-describe('tableLayout: a tray', () => {
-  it('leaves a tray room above the hand in portrait, and keeps the cards their size', () => {
-    const plain = tableLayout({ width: 375, height: 812 }, 3);
-    const tray = tableLayout({ width: 375, height: 812 }, 3, { tray: true });
-    expect(tray.card).toEqual(plain.card);
-    expect(tray.hand).toEqual(plain.hand);
-    expect(handTop(tray) - myZoneBottom(tray)).toBeGreaterThanOrEqual(116);
-  });
-
-  it('changes nothing on a desktop, where trays wait at the side', () => {
-    expect(tableLayout({ width: 1440, height: 900 }, 3, { tray: true })).toEqual(tableLayout({ width: 1440, height: 900 }, 3));
-  });
-});
-
-describe('tableLayout: every supported screen (Review Focus 5)', () => {
-  // Real shapes: phones are 16:9 or longer (portrait up to 500 px wide, landscape up to 500 px high),
-  // tablets 4:3 or longer, desktops 4:3 or wider.
-  const supported = (w: number, h: number) =>
-    (w >= 320 && w <= 500 && h >= Math.max(1.7 * w, 560)) ||
-    (w >= 744 && w <= 1024 && h >= 1.3 * w) ||
-    (w >= 568 && w <= 932 && h >= 320 && h <= 500 && w >= 1.75 * h) ||
-    (w >= 1024 && h >= 600 && h <= 0.8 * w);
-
-  it('stays sound from 320 px phones to 2560 px desktops', () => {
-    let checked = 0;
-    for (let w = 320; w <= 2560; w += 20) {
-      for (let h = 320; h <= 1600; h += 20) {
-        if (!supported(w, h)) continue;
-        for (const players of [2, 3]) {
-          expectSound(tableLayout({ width: w, height: h }, players), 0.85);
-          checked++;
-        }
+  it('stands the seats off the felt, on the floor left and right of the table, inside the stage', () => {
+    for (const players of [2, 3]) {
+      const L = tableLayout(players, FELT);
+      for (const s of L.seats) {
+        const p = toStage(L, s.ui);
+        expect(Math.abs(p.x - FELT.cx), 'beside the table').toBeGreaterThan(FELT.rx + L.avatar / 2);
+        expect(p.x).toBeGreaterThan(L.avatar);
+        expect(p.x).toBeLessThan(STAGE.w - L.avatar);
       }
+      const me = toStage(L, L.seats[0]!.ui);
+      expect(me.x).toBeLessThan(FELT.cx);
+      for (const s of L.seats.slice(1)) expect(toStage(L, s.ui).y).toBeLessThan(me.y);
+      // My seat ends above my resting hand.
+      expect(me.y + L.avatar).toBeLessThan(STAGE.h - (L.hand.h - L.hand.rest));
     }
-    expect(checked).toBeGreaterThan(4000);
-  }, 30_000);
+  });
+
+  it('sizes the cards: a hand card over 220 px and a table card a touch under 100 px on the 1920×1080 stage', () => {
+    const L = tableLayout(3, FELT);
+    expect(L.hand.w).toBeGreaterThanOrEqual(220);
+    expect(L.hand.h).toBe(Math.round(L.hand.w * 1.4));
+    expect(L.card.w).toBeGreaterThanOrEqual(92);
+    expect(L.card.w).toBeLessThanOrEqual(96);
+    expect(L.card.h).toBe(Math.round(L.card.w * 1.4));
+    expect(L.cardFloor).toBeLessThanOrEqual(L.card.w);
+    expect(L.cardFloor).toBeGreaterThanOrEqual(Math.round(L.card.w * 0.75));
+    // The resting hand lies below the felt, never over my table.
+    expect(STAGE.h - (L.hand.h - L.hand.rest)).toBeGreaterThanOrEqual(FELT.cy + FELT.ry);
+  });
 });
 
 describe('handFan', () => {
-  it('spreads a desktop hand wide, and never more than 62 % of a card apart', () => {
-    const L = tableLayout({ width: 1440, height: 900 }, 3);
-    expect(handFan(L, 7)).toEqual({ step: 101, flat: false, scroll: false });
+  it('spreads a hand wide, and never more than 62 % of a card apart', () => {
+    const L = tableLayout(3, FELT);
     expect(handFan(L, 2).step).toBe(Math.round(L.hand.w * 0.62));
+    expect(handFan(L, 7)).toMatchObject({ flat: false, scroll: false });
   });
 
-  it('keeps the turned outer cards on screen, counting their swing about the pivot', () => {
-    for (const [width, height] of [[768, 1024], [1440, 900], [812, 375], [375, 812]] as const) {
-      const L = tableLayout({ width, height }, 3);
-      for (let n = 2; n <= 9; n++) {
-        const fan = handFan(L, n);
-        if (fan.flat) continue;
-        const outer = Math.abs(fanLayout(n, 0).rotate);
-        const half = (L.hand.w + (n - 1) * fan.step) / 2 + FAN_PIVOT * L.hand.h * Math.sin((outer * Math.PI) / 180);
-        expect(width / 2 - half, `${width}×${height}, ${n} cards`).toBeGreaterThanOrEqual(L.handReserve - 1);
-      }
+  it('keeps the turned outer cards clear of the reserves at the sides, counting their swing about the pivot', () => {
+    const L = tableLayout(3, FELT);
+    for (let n = 2; n <= 12; n++) {
+      const fan = handFan(L, n);
+      if (fan.flat) continue;
+      const outer = Math.abs(fanLayout(n, 0).rotate);
+      const half = (L.hand.w + (n - 1) * fan.step) / 2 + FAN_PIVOT * L.hand.h * Math.sin((outer * Math.PI) / 180);
+      expect(STAGE.w / 2 - half, `${n} cards`).toBeGreaterThanOrEqual(L.handReserve - 1);
     }
   });
 
-  it('lays a hand flat when a turned fan would not fit, then scrolls once a card would show under 28 % (Review Focus 2)', () => {
-    const L = tableLayout({ width: 375, height: 812 }, 3);
-    expect(handFan(L, 10)).toEqual({ step: 29, flat: true, scroll: false });
-    const long = handFan(L, 11);
+  it('lays a long hand flat, then scrolls once a card would show under 28 %', () => {
+    const L = tableLayout(3, FELT);
+    const flat = Array.from({ length: 30 }, (_, i) => i + 2).find((n) => handFan(L, n).flat)!;
+    expect(handFan(L, flat)).toMatchObject({ flat: true, scroll: false });
+    const long = handFan(L, 40);
     expect(long).toMatchObject({ flat: true, scroll: true });
     expect(long.step).toBe(Math.round(L.hand.w * 0.28));
   });
 
   it('lays a single card flat', () => {
-    const L = tableLayout({ width: 375, height: 812 }, 3);
+    const L = tableLayout(3, FELT);
     expect(handFan(L, 1)).toEqual({ step: L.hand.w, flat: false, scroll: false });
   });
 });

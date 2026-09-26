@@ -21,6 +21,13 @@ function param(value: number) {
       p.value = v;
       return p;
     },
+    setTargetAtTime(v: number) {
+      p.value = v;
+      return p;
+    },
+    cancelScheduledValues() {
+      return p;
+    },
   };
   return p;
 }
@@ -93,10 +100,14 @@ export function fakeAudioContext(opts: { resumes?: boolean } = {}) {
       const s = {
         ...node(),
         buffer: null as unknown,
+        loop: false,
+        stopped: false,
         start(at = 0) {
           voices.push({ kind: 'buffer', at, freq: null, buffer: s.buffer, node: s });
         },
-        stop() {},
+        stop() {
+          s.stopped = true;
+        },
       };
       return s;
     },
@@ -146,16 +157,18 @@ export async function flushAudio(): Promise<void> {
 export const urlOf = (buffer: unknown): string => (buffer as { decoded: string }).decoded;
 
 /** An audio manager that only records what it was asked to play. */
-export function recordingAudio(initial: Partial<AudioSettings> = {}): AudioManager & { played: Cue[] } {
+export function recordingAudio(initial: Partial<AudioSettings> = {}): AudioManager & { played: Cue[]; ambient: boolean[] } {
   let current: AudioSettings = { ...DEFAULT_SETTINGS, ...initial };
   const listeners = new Set<() => void>();
   const played: Cue[] = [];
+  const ambient: boolean[] = [];
   const change = (next: AudioSettings) => {
     current = next;
     for (const listener of [...listeners]) listener();
   };
   return {
     played,
+    ambient,
     getSettings: () => current,
     subscribe(listener) {
       listeners.add(listener);
@@ -168,6 +181,9 @@ export function recordingAudio(initial: Partial<AudioSettings> = {}): AudioManag
     unlock: vi.fn(),
     play(cue) {
       played.push(cue);
+    },
+    ambience(on) {
+      ambient.push(on);
     },
   };
 }

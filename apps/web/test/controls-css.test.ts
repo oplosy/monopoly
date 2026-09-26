@@ -18,12 +18,13 @@ describe('a spent hand and a due End turn (spec 2026-09-25-table-controls D2, D3
 });
 
 describe('a round End turn with its clock (D5)', () => {
-  it('is a round button, larger on wide screens than on phones', () => {
+  it('is a big round button in stage px, beside the right end of my hand', () => {
     const end = rule(table, '.end-turn');
-    expect(end).toMatch(/--end:\s*112px/);
+    expect(end).toMatch(/--end:\s*136px/);
     expect(end).toMatch(/width:\s*var\(--end\)/);
+    // Beside my hand's right end, inside the edges the window shows.
+    expect(end).toMatch(/right:\s*calc\(var\(--crop-x, 0px\) \+ var\(--hand-reserve\) \/ 2 - var\(--end\) \/ 2\)/);
     expect(rule(table, '.end-turn-button')).toMatch(/border-radius:\s*50%/);
-    expect(rule(table, ".tabletop[data-layout='portrait'][data-compact] .end-turn")).toMatch(/--end:\s*76px/);
   });
 
   it('rings itself with my clock, red in the last seconds', () => {

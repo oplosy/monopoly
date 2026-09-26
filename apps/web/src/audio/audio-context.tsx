@@ -41,6 +41,21 @@ export function useSound(): (cue: Cue) => void {
   );
 }
 
+/** Plays the outdoor ambience while the caller is on screen, hushed while the tab is hidden. */
+export function useAmbience(): void {
+  const audio = useContext(AudioManagerContext);
+  useEffect(() => {
+    if (!audio) return;
+    const sync = () => audio.ambience(!document.hidden);
+    sync();
+    document.addEventListener('visibilitychange', sync);
+    return () => {
+      document.removeEventListener('visibilitychange', sync);
+      audio.ambience(false);
+    };
+  }, [audio]);
+}
+
 const noSubscribe = () => () => undefined;
 
 export function useAudioSettings(): AudioSettings {

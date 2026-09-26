@@ -1,34 +1,32 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { FELT, STAGE, type Felt } from './felt';
 import './scene.css';
 
 interface Props {
   /** Everything that lies on the table: tableaus, piles, anchors. Positioned in percent of the plane. */
   children?: ReactNode;
+  /** The felt the plane lies over; the box this scene fills is a 16:9 picture of the table (the stage, the lobby). */
+  felt?: Felt;
   className?: string;
 }
 
-/** Slices of the table's wooden body under the top: seen at 22°, they show the table's thickness. */
-const EDGE = Array.from({ length: 10 }, (_, i) => i + 1);
+const pct = (n: number) => `${Math.round(n * 10000) / 100}%`;
 
 /**
- * A plain ground and the table tilted 22° (spec 2026-09-25-table-layout §3–4): a felt top in a wooden rail,
- * on a body thick enough to show its edge. Children lie on the felt.
+ * The table is a picture now (the backdrop video, or its poster in the lobby): this lays a flat plane over the
+ * picture's felt, and the children on it. The box it fills must show the picture at 16:9, the stage's shape.
  */
-export function TableScene({ children, className }: Props) {
+export function TableScene({ children, felt = FELT, className }: Props) {
+  const plane = {
+    left: pct((felt.cx - felt.rx) / STAGE.w),
+    top: pct((felt.cy - felt.ry) / STAGE.h),
+    width: pct((2 * felt.rx) / STAGE.w),
+    height: pct((2 * felt.ry) / STAGE.h),
+  };
   return (
     <div className={['scene', className].filter(Boolean).join(' ')}>
-      <div className="scene-ground" aria-hidden="true" />
-      <div className="scene-perspective">
-        <div className="plane">
-          <div className="table-body" aria-hidden="true">
-            {EDGE.map((k) => (
-              <div key={k} className="table-edge" style={{ '--k': k } as CSSProperties} />
-            ))}
-            <div className="table-rail" />
-            <div className="table-felt" />
-          </div>
-          {children}
-        </div>
+      <div className="plane" style={plane}>
+        {children}
       </div>
     </div>
   );

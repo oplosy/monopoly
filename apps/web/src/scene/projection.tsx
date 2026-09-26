@@ -26,7 +26,7 @@ function samePoints(a: ReadonlyMap<string, ScreenPoint>, b: ReadonlyMap<string, 
 }
 
 /**
- * Flat UI must sit next to points of the tilted table. Anchors inside the plane are measured
+ * Flat UI must sit next to points of the table plane. Anchors inside the plane are measured
  * (the browser projects them for us) and their centers are shared, relative to `rootRef`.
  */
 export function ProjectionProvider({ rootRef, children }: { rootRef: RefObject<HTMLElement | null>; children: ReactNode }) {
@@ -37,10 +37,12 @@ export function ProjectionProvider({ rootRef, children }: { rootRef: RefObject<H
     const root = rootRef.current;
     if (!root) return;
     const base = root.getBoundingClientRect();
+    // A scaled root (the stage) measures in screen px: its own px are these divided by its scale.
+    const scale = root.offsetWidth > 0 && base.width > 0 ? base.width / root.offsetWidth : 1;
     const next = new Map<string, ScreenPoint>();
     for (const [id, el] of anchors.current) {
       const r = el.getBoundingClientRect();
-      next.set(id, { x: Math.round(r.left + r.width / 2 - base.left), y: Math.round(r.top + r.height / 2 - base.top) });
+      next.set(id, { x: Math.round((r.left + r.width / 2 - base.left) / scale), y: Math.round((r.top + r.height / 2 - base.top) / scale) });
     }
     setPoints((prev) => (samePoints(prev, next) ? prev : next));
   }, [rootRef]);
