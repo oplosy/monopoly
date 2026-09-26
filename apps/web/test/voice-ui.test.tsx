@@ -63,6 +63,23 @@ describe('voice at the table', () => {
     expect(talk).toHaveBeenLastCalledWith(false);
   });
 
+  it('never opens the menu while holding to talk, and a right click never opens the mic', async () => {
+    const voice = voiceStore();
+    const talk = vi.fn();
+    voice.setState({ status: 'on', hasMic: true, pushToTalk: true, talk });
+    renderTabletop({ state: table(), voice });
+    const hold = screen.getByRole('button', { name: 'Hold to talk' });
+    const user = userEvent.setup();
+    await user.pointer({ keys: '[MouseLeft>]', target: hold });
+    await new Promise((r) => setTimeout(r, 650));
+    expect(screen.queryByRole('group', { name: 'Voice options' })).toBeNull();
+    await user.pointer({ keys: '[/MouseLeft]', target: hold });
+    talk.mockClear();
+    await user.pointer({ keys: '[MouseRight]', target: hold });
+    expect(talk).not.toHaveBeenCalledWith(true);
+    expect(screen.getByRole('group', { name: 'Voice options' })).toBeInTheDocument();
+  });
+
   it('marks each seat in voice, rings whoever talks, and mutes a player for me only', async () => {
     const user = userEvent.setup();
     const voice = voiceStore();

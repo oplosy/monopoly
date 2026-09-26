@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { usePushToTalk, useVoice, useVoiceApi } from './context';
 import './voice.css';
 
@@ -32,6 +32,7 @@ export function VoiceButton({ className = '' }: { className?: string }) {
   const pushToTalk = useVoice((s) => s.pushToTalk);
   const [menu, setMenu] = useState(false);
   const press = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holding = useRef(false);
   const root = useRef<HTMLDivElement>(null);
   usePushToTalk();
 
@@ -66,14 +67,23 @@ export function VoiceButton({ className = '' }: { className?: string }) {
     );
   }
 
-  const startPress = () => {
-    press.current = setTimeout(() => setMenu(true), LONG_PRESS_MS);
-    if (pushToTalk) voice.getState().talk(true);
+  // Under push-to-talk a hold means talk, so the long press does not open the menu (the caret and a right click still do).
+  const startPress = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return;
+    if (pushToTalk) {
+      holding.current = true;
+      voice.getState().talk(true);
+    } else {
+      press.current = setTimeout(() => setMenu(true), LONG_PRESS_MS);
+    }
   };
   const endPress = () => {
     if (press.current) clearTimeout(press.current);
     press.current = null;
-    if (pushToTalk) voice.getState().talk(false);
+    if (holding.current) {
+      holding.current = false;
+      voice.getState().talk(false);
+    }
   };
 
   return (
@@ -90,7 +100,8 @@ export function VoiceButton({ className = '' }: { className?: string }) {
         onPointerCancel={endPress}
         onContextMenu={(e) => {
           e.preventDefault();
-          setMenu(true);
+          // A touch screen's long press while holding to talk is talking, not a request for the menu.
+          if (!holding.current) setMenu(true);
         }}
         onClick={() => {
           if (!pushToTalk && !menu) void voice.getState().setMic(!micOn);
