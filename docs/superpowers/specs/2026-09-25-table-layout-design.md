@@ -308,7 +308,8 @@ For each animation, a CDP screencast is recorded and a strip of frames is shown 
 - **Found in the review and fixed** (asked by the user):
   - **"Your turn" sat over the deck** just as my draws left it. It now stands above the piles. The layout gives the piles' box on the screen (`centerOnScreen`, `--center-*`).
   - **The action in play covered the far players' table cards.** It is now placed by measuring (`placeStage`): right of the piles, level with their foot; else left of them; else above them; else over them. It avoids the seats first, then the table cards, my hand, the menu and End turn. On the smallest landscape phone (568×320, 3 players) no place is clear, and it covers the edge of a table card rather than a seat.
-  - **The portrait narrator covered the deck.** It now speaks from the strip between my table and my hand.
+  - **The portrait narrator covered the deck.** It now speaks from the strip between my table and my hand. It keeps quiet while a tray (answer, pay, discard) is open in that strip.
+  - **The action in play keeps its side while the action lasts:** answers coming in shrink or grow it, and it must not jump across the piles (found in the final review).
   - **A growing hand jumped from a fan to a flat row.** The step between cards now glides (0.25 s).
   - **An answer tray hopped between two places** every half second on phones: a breathing seat and a breathing card made two near-equal places swap. `placeBeside` now keeps its place (within 8 px) unless another covers clearly less (more than a tenth of its area).
   - **Leave game** is now the same menu item as Game log, in red.
