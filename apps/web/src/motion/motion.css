@@ -3,7 +3,9 @@
 
 /* ---------- Effects layer: cards in flight ---------- */
 /* The screen shake moves this wrapper (motion/shake.ts). It holds the table and the flight layer, so
-   clones shake with the cards they land on. */
+   clones shake with the cards they land on. While it shakes, its translate makes it the containing block of
+   every position: fixed child (flights, trays, popovers); it covers the viewport from its top left, so they
+   stay put. Keep it that way: nothing may sit above the table inside it. */
 .stage-shake { position: relative; }
 .flight-layer {
   position: fixed;
