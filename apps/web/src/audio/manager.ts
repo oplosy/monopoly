@@ -20,6 +20,8 @@ export interface AudioDeps {
   now(): number;
   /** Where the sound files are served; defaults to /sounds/. */
   baseUrl?: string;
+  /** Where the ambience recording is served; defaults to /ambience/. */
+  ambienceUrl?: string;
 }
 
 export interface AudioManager {
@@ -36,6 +38,8 @@ export interface AudioManager {
 
 /** The ambience's level under the master volume. */
 export const AMBIENCE_GAIN = 0.5;
+/** The ambience recording's file name, without its format. */
+const AMBIENCE_STEM = 'terrace';
 
 /** After the unlocking gesture, cues play for this long even before the context reports it runs. */
 export const UNLOCK_GRACE_MS = 1000;
@@ -58,6 +62,7 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
   let unlockedAt = -Infinity;
   let ambienceWanted = false;
   let ambience: { stop(): void } | null = null;
+  let recording: AudioBuffer | null = null;
 
   const level = () => (settings.muted ? 0 : settings.volume);
 
@@ -69,11 +74,11 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
   };
 
   const syncAmbience = () => {
-    if (ambienceWanted && !ambience && ctx && master) {
+    if (ambienceWanted && !ambience && ctx && master && recording) {
       const out = ctx.createGain();
       out.gain.value = AMBIENCE_GAIN;
       out.connect(master);
-      ambience = startAmbience(ctx, out);
+      ambience = startAmbience(ctx, out, recording);
     } else if (!ambienceWanted && ambience) {
       ambience.stop();
       ambience = null;
@@ -118,7 +123,15 @@ export function createAudioManager(deps: AudioDeps): AudioManager {
           master.gain.value = level();
           master.connect(context.destination);
           for (const stems of Object.values(SAMPLES)) for (const stem of stems ?? []) load(context, stem);
-          syncAmbience();
+          // The ambience starts once its recording is in, if the table still asks for it.
+          deps
+            .fetchSound(`${deps.ambienceUrl ?? '/ambience/'}${AMBIENCE_STEM}.${deps.format}`)
+            .then((data) => context.decodeAudioData(data))
+            .then((buffer) => {
+              recording = buffer;
+              syncAmbience();
+            })
+            .catch(() => undefined);
         }
       }
       if (ctx && ctx.state !== 'running') void ctx.resume().catch(() => undefined);
@@ -180,5 +193,6 @@ export function browserAudioDeps(): AudioDeps {
     format: playsOgg() ? 'ogg' : 'mp3',
     now: () => performance.now(),
     baseUrl: `${import.meta.env.BASE_URL}sounds/`,
+    ambienceUrl: `${import.meta.env.BASE_URL}ambience/`,
   };
 }

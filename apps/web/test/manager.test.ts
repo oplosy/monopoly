@@ -24,11 +24,13 @@ describe('createAudioManager', () => {
     expect(f.fake.voices).toEqual([]);
   });
 
-  it('loads every sample once it is unlocked, in the format the browser plays', async () => {
+  it('loads every sample and the ambience once it is unlocked, in the format the browser plays', async () => {
     const { fetchSound } = await unlocked({ format: 'mp3' });
     const stems = Object.values(SAMPLES).flat();
-    expect(fetchSound).toHaveBeenCalledTimes(stems.length);
+    // Every sample, and the ambience recording.
+    expect(fetchSound).toHaveBeenCalledTimes(stems.length + 1);
     expect(fetchSound).toHaveBeenCalledWith('/sounds/card-slide-1.mp3');
+    expect(fetchSound).toHaveBeenCalledWith('/ambience/terrace.mp3');
   });
 
   it("plays a sample through its cue's gain and the master volume", async () => {
@@ -121,26 +123,27 @@ describe('createAudioManager', () => {
     expect(audio.getSettings().muted).toBe(true);
   });
 
-  it('plays the outdoor ambience while the table asks for it: looping wind, leaves and crickets, through the master volume', async () => {
+  it('loops the recorded terrace ambience while the table asks for it, through the master volume', async () => {
     const { audio, fake } = await unlocked();
     audio.ambience(true);
     const beds = fake.voices.filter((v) => v.kind === 'buffer');
-    expect(beds).toHaveLength(3);
-    for (const bed of beds) expect((bed.node as unknown as { loop: boolean }).loop).toBe(true);
+    expect(beds).toHaveLength(1);
+    expect(urlOf(beds[0]!.buffer)).toBe('/ambience/terrace.ogg');
+    expect((beds[0]!.node as unknown as { loop: boolean }).loop).toBe(true);
     // Asking twice starts nothing more.
     audio.ambience(true);
-    expect(fake.voices.filter((v) => v.kind === 'buffer')).toHaveLength(3);
+    expect(fake.voices.filter((v) => v.kind === 'buffer')).toHaveLength(1);
     audio.ambience(false);
-    for (const bed of beds) expect((bed.node as unknown as { stopped: boolean }).stopped).toBe(true);
+    expect((beds[0]!.node as unknown as { stopped: boolean }).stopped).toBe(true);
   });
 
-  it('starts the ambience asked for before the first gesture once sound unlocks', async () => {
+  it('starts the ambience asked for before the first gesture once its recording is loaded', async () => {
     const f = fakeAudioDeps();
     const audio = createAudioManager(f.deps);
     audio.ambience(true);
     expect(f.createContext).not.toHaveBeenCalled();
     audio.unlock();
     await flushAudio();
-    expect(f.fake.voices.filter((v) => v.kind === 'buffer')).toHaveLength(3);
+    expect(f.fake.voices.filter((v) => v.kind === 'buffer').map((v) => urlOf(v.buffer))).toEqual(['/ambience/terrace.ogg']);
   });
 });
