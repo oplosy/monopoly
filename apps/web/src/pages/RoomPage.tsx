@@ -4,6 +4,7 @@ import { LeaveButton } from './LeaveButton';
 import { Tabletop } from '../tabletop/Tabletop';
 import { JoinForm } from './JoinForm';
 import { Lobby } from './Lobby';
+import { useVoiceRoom } from '../voice/context';
 import { PaperPage } from './PaperPage';
 
 export function RoomPage() {
@@ -15,6 +16,8 @@ export function RoomPage() {
   const resuming = useGameStore((s) => s.resuming);
   const resume = useGameStore((s) => s.resume);
   const forget = useGameStore((s) => s.forgetSession);
+  const mine = session?.code === code;
+  useVoiceRoom(code, mine ? session.playerId : '', mine ? room?.seats : undefined);
 
   if (session?.code === code) {
     if (!room) return <PaperPage className="center-message"><p>Loading the room…</p></PaperPage>;
