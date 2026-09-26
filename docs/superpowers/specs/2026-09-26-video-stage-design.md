@@ -34,6 +34,14 @@ Table cards and the deck cast a contact shadow (`0 8px 18px rgba(0,0,0,.45), 0 2
 
 It is muted, looping and inline, and plays under everything with no pointer events. It holds still on its poster under `prefers-reduced-motion` or with the in-game Animations switch off. It pauses while the tab is hidden. If it cannot load, the poster stays (it is also the stage's background).
 
+## 6a. Filling the window
+
+A window of another shape is not letterboxed straight away: the stage **covers** it, cropping scenery evenly from both sides, but never past its safe area (`STAGE.safe`: x 72–1848, y 85–995). That keeps the seats beside the table, the felt's rim, and room for my hand below my table. Only beyond that is the stage scaled down to fit and letterboxed (ultra-wide, 4:3, portrait). My hand, End turn and the UI layers follow the edges the window shows (`--crop-x`, `--crop-y`, `fit.visible`). A 1907×945 window loses 64 stage px of floor above and below and shows no bars.
+
+## 6b. Ambience
+
+The terrace can be heard: a soft wind that swells in gusts every few seconds, leaves that rustle harder as it blows, and two crickets far off (`audio/ambience.ts`). All of it is synthesized with Web Audio, no files: looping noise beds with seamless crossfaded ends, and gusts scheduled on their levels. It plays at the table under the master volume (mute silences it), starts on the first gesture, fades in and out, and hushes in a hidden tab.
+
 ## 7. Rulings
 
 - Ruling: the felt is a superellipse with an `n` in the config, not the plain ellipse asked for — the video's felt is squarer than an ellipse, and an ellipse would leave its corners unused — cost if wrong: set `n: 2`.
@@ -42,4 +50,6 @@ It is muted, looping and inline, and plays under everything with no pointer even
 - Ruling: the video also holds still with the in-game Animations switch off — a player who turned motion off expects a still table — cost if wrong: drop the `motion === 'off'` term in `BackdropVideo`.
 - Ruling: portrait phones get the letterboxed stage with the words in the letterbox and a hint to turn the phone; the old portrait and landscape layouts are gone — a fixed 16:9 stage was asked for — cost if wrong: portrait play is small; a portrait composition would need its own video.
 - Ruling: a hovered hand card keeps its turn (it only lifts and grows) — straightened about the fan's far pivot, an outer card swung about 40 px sideways out from under the pointer and flickered — cost if wrong: hover no longer straightens a card; the inspect preview shows it large anyway.
+- Ruling: the stage covers the window within a safe area instead of always letterboxing — the user saw bars at the sides of a slightly wider window — cost if wrong: set `safe` to the whole stage to letterbox again.
+- Ruling: the ambience is synthesized, not recorded — no download to approve, no licence — cost if wrong: swap in recorded CC0 beds later behind the same `ambience()` call.
 - Ruling: the lobby shows the poster with the chairs where the seats will stand — the CSS table is gone everywhere — cost if wrong: none.
