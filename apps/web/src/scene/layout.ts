@@ -65,8 +65,10 @@ const REACH = 0.8;
 const MARGIN = 18;
 /** The piles box, in table card widths: deck, gap, discard, and the turn ring as tall as the box. */
 const PILES = { w: 2.8, h: 1.5 };
-/** Open felt between the piles and the tables above and below them, in card widths. */
+/** The open felt the card size is worked out with, between the piles and the tables, in card widths. */
 const PILES_GAP = 0.3;
+/** The open felt actually left there: wider, so the piles stand clear of both tables (the user asked). */
+const PILES_ROOM = 0.55;
 /** Open felt between the two far tables with three players (px). */
 const FAR_GAP = 28;
 /** A zone must hold a card and one band of the card behind it (a pair), in card heights (1 + 0.3 / 1.4). */
@@ -111,7 +113,7 @@ export function tableLayout(players: number, felt: Felt = FELT): TableLayout {
   // 3. The rows: the piles in the felt's middle, the tables above and below, as wide as the felt allows at
   // their outer edge (the zone's corners stay on the felt, MARGIN px in).
   const piles = { w: Math.round(cardW * PILES.w), h: Math.round(cardW * PILES.h) };
-  const gap = Math.round(cardW * PILES_GAP);
+  const gap = Math.round(cardW * PILES_ROOM);
   const center = rect(felt.cx - piles.w / 2, felt.cy - piles.h / 2, felt.cx + piles.w / 2, felt.cy + piles.h / 2);
   const half = feltHalfWidth(felt, reach + MARGIN) - MARGIN;
   const left = felt.cx - half;
