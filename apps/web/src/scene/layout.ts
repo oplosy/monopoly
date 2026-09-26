@@ -68,7 +68,7 @@ const PILES = { w: 2.8, h: 1.5 };
 /** The open felt the card size is worked out with, between the piles and the tables, in card widths. */
 const PILES_GAP = 0.3;
 /** The open felt actually left there: wider, so the piles stand clear of both tables (the user asked). */
-const PILES_ROOM = 0.55;
+const PILES_ROOM = 0.70;
 /** Open felt between the two far tables with three players (px). */
 const FAR_GAP = 28;
 /** A zone must hold a card and one band of the card behind it (a pair), in card heights (1 + 0.3 / 1.4). */
