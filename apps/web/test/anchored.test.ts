@@ -124,6 +124,12 @@ describe('placeStage', () => {
     expect(clear(p, [seat])).toBe(true);
   });
 
+  it('keeps its side while the action lasts, even when a smaller stage would fit the first choice', () => {
+    // Right was taken when the action came, so it stood on the left; a clear right must not pull it across.
+    const left = { left: 400 - 16 - 150, top: 220 };
+    expect(placeStage(piles, size, view, [], [], left)).toEqual(left);
+  });
+
   it('stands over the piles, its foot level with theirs, when both sides and the space above are taken', () => {
     const walls: Box[] = [
       { left: 0, top: 0, right: 395, bottom: 800 },

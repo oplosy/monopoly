@@ -78,7 +78,9 @@ export function placeBeside(
  * their foot; else left of them; else above them; else over them, its foot level with theirs (it is going
  * there). The first place in view that covers none of `seats` and none of `avoid` (tables, my hand, the HUD)
  * wins; if none is clear, the one that covers least of the seats, then least of the rest: a seat says who is
- * playing, so on a tiny table the action would rather lie over the edge of a table card.
+ * playing, so on a tiny table the action would rather lie over the edge of a table card. With `current` (where
+ * it stands now), it keeps that side while the action lasts unless another place covers clearly less: the stage
+ * shrinks and grows as answers come in, and must not jump across the piles.
  */
 export function placeStage(
   piles: Box,
@@ -86,6 +88,7 @@ export function placeStage(
   viewport: { width: number; height: number },
   avoid: readonly Box[],
   seats: readonly Box[] = [],
+  current?: { left: number; top: number },
   gap = 16,
 ): { left: number; top: number } {
   const midX = Math.round((piles.left + piles.right) / 2 - size.width / 2);
@@ -109,6 +112,11 @@ export function placeStage(
   const fits = places.filter((p) => p.left === p.moved.left && p.top === p.moved.top);
   const clear = fits.find((p) => cover(seats, p) === 0 && cover(avoid, p) === 0);
   const best = clear ?? places.reduce((a, b) => (worse(b, a) < 0 ? b : a));
+  // Where it stands now, moved by at most a few px: kept while it covers no seat more and at most a tenth of its
+  // own area more than the best place.
+  const still = current && places.find((p) => Math.abs(p.left - current.left) <= 8 && Math.abs(p.top - current.top) <= 8);
+  const room = 0.1 * size.width * size.height;
+  if (still && cover(seats, still) <= cover(seats, best) && cover(avoid, still) <= cover(avoid, best) + room) return { left: still.left, top: still.top };
   return { left: best.left, top: best.top };
 }
 

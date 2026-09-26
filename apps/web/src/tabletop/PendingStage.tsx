@@ -26,16 +26,20 @@ function useStagePlace(ref: RefObject<HTMLElement | null>): CSSProperties | unde
     const measure = () => {
       const origin = table.getBoundingClientRect();
       const all = (selector: string) => [...table.querySelectorAll(selector)].map(boxOf);
-      const next = placeStage(
-        boxOf(piles),
-        { width: el.offsetWidth, height: el.offsetHeight },
-        { width: window.innerWidth, height: window.innerHeight },
-        all(AVOID),
-        all(SEATS),
-      );
-      // The stage is placed inside the table, which starts at the top left of the screen.
-      const at = { left: Math.round(next.left - origin.left), top: Math.round(next.top - origin.top) };
-      setPlace((p) => (p && p.left === at.left && p.top === at.top ? p : at));
+      setPlace((p) => {
+        const next = placeStage(
+          boxOf(piles),
+          { width: el.offsetWidth, height: el.offsetHeight },
+          { width: window.innerWidth, height: window.innerHeight },
+          all(AVOID),
+          all(SEATS),
+          // Where it stands now, on the screen: it keeps its side while the action lasts.
+          p ? { left: p.left + origin.left, top: p.top + origin.top } : undefined,
+        );
+        // The stage is placed inside the table, which starts at the top left of the screen.
+        const at = { left: Math.round(next.left - origin.left), top: Math.round(next.top - origin.top) };
+        return p && p.left === at.left && p.top === at.top ? p : at;
+      });
     };
     measure();
     window.addEventListener('resize', measure);
