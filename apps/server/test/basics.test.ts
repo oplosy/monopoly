@@ -5,6 +5,11 @@ import { sanitizeNickname } from '../src/nickname';
 import { createChatLimiter, createRateLimiter } from '../src/rate-limit';
 
 describe('loadConfig', () => {
+  it('reads the Cloudflare TURN keys, and leaves them unset by default', () => {
+    expect(loadConfig({})).toMatchObject({ turnKeyId: null, turnApiToken: null });
+    expect(loadConfig({ CF_TURN_KEY_ID: 'k', CF_TURN_API_TOKEN: 't' })).toMatchObject({ turnKeyId: 'k', turnApiToken: 't' });
+  });
+
   it('uses defaults and reads overrides', () => {
     expect(loadConfig({})).toMatchObject({
       port: 3000, turnMs: 60_000, responseMs: 20_000, graceMs: 120_000,

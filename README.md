@@ -67,6 +67,8 @@ The server reads these environment variables:
 | `EMPTY_ROOM_MS` | `600000` | How long an empty room is kept |
 | `RATE_LIMIT` | `20` | Messages per second per connection |
 | `MAX_ROOMS` | `1000` | Most rooms at once |
+| `CF_TURN_KEY_ID` | | Cloudflare Realtime TURN key id: with the token, voice chat can relay through Cloudflare on strict networks |
+| `CF_TURN_API_TOKEN` | | That key's API token. Both stay on the server; without them voice uses STUN only |
 | `WEB_DIST` | `apps/web/dist` | Built web app to serve (set in the Docker image) |
 | `NODE_ENV` | | `test` lets clients choose the deck seed. Never set it to `test` in production. |
 

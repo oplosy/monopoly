@@ -11,6 +11,9 @@ export interface Config {
   allowTestSeed: boolean;
   /** Directory with the built web app (index.html), or null to serve only the API. */
   webDist: string | null;
+  /** Cloudflare Realtime TURN key: with its API token, voice chat gets a relay for strict networks. Server-side only. */
+  turnKeyId: string | null;
+  turnApiToken: string | null;
 }
 
 export function loadConfig(env: Record<string, string | undefined> = process.env): Config {
@@ -28,5 +31,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     maxRooms: num('MAX_ROOMS', 1000),
     allowTestSeed: env.NODE_ENV === 'test',
     webDist: env.WEB_DIST ?? null,
+    turnKeyId: env.CF_TURN_KEY_ID || null,
+    turnApiToken: env.CF_TURN_API_TOKEN || null,
   };
 }
