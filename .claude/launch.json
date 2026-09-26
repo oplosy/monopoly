@@ -4,14 +4,38 @@
     {
       "name": "web",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@deal-city/web", "dev", "--port", "5173", "--strictPort"],
+      "runtimeArgs": [
+        "--filter",
+        "@deal-city/web",
+        "dev",
+        "--port",
+        "5173",
+        "--strictPort"
+      ],
       "port": 5173
     },
     {
       "name": "server",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@deal-city/server", "dev"],
+      "runtimeArgs": [
+        "--filter",
+        "@deal-city/server",
+        "dev"
+      ],
       "port": 3000
+    },
+    {
+      "name": "web-preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@deal-city/web",
+        "preview",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "port": 4173
     }
   ]
 }
