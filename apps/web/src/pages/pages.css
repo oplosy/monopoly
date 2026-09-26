@@ -59,7 +59,7 @@
 .lobby-table {
   position: relative;
   overflow: hidden;
-  --plane-w: min(78vw, 110vh);
+  --plane-w: min(78vw, 90vh);
   --plane-h: calc(var(--plane-w) / 1.8);
   --plane-cy: calc(var(--plane-h) * 0.46 + 64px);
   height: calc(var(--plane-h) + 170px);
