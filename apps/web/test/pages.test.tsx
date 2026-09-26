@@ -129,6 +129,15 @@ describe('Lobby', () => {
     expect(socket.sentOf('chat:send')).toEqual([{ text: 'yes' }]);
   });
 
+  it('keeps the lobby chat read once it is full at 50 lines', () => {
+    const { socket, store } = lobby(['p1', 'p2']);
+    act(() => {
+      for (let id = 1; id <= 51; id++) socket.push('chat:message', { id, from: 'p2', name: 'Bob', text: `line ${id}`, at: id });
+    });
+    act(() => socket.push('chat:message', { id: 52, from: 'p2', name: 'Bob', text: 'one more', at: 52 }));
+    expect(store.getState().chatUnread).toBe(0);
+  });
+
   it('lets the host start once two players are seated', async () => {
     const user = userEvent.setup();
     const { socket, store } = lobby(['p1']);

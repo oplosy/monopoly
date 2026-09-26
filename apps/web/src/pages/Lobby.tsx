@@ -31,7 +31,9 @@ export function Lobby({ room }: { room: RoomState }) {
   const sendChat = useGameStore((s) => s.sendChat);
   const markChatRead = useGameStore((s) => s.markChatRead);
   // The lobby's thread is always open: every line in it is read.
-  useEffect(() => markChatRead(), [markChatRead, chat.length]);
+  // Keyed on the newest line, not the count, which stops at 50.
+  const newestLine = chat.at(-1)?.id;
+  useEffect(() => markChatRead(), [markChatRead, newestLine]);
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const [copied, setCopied] = useState(false);

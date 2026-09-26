@@ -16,7 +16,9 @@ interface Props {
 export function ChatSheet({ messages, me, onSend, onRead, onClose }: Props) {
   const ref = useRef<HTMLElement>(null);
   useDialogFocus(ref, '.chat-form input');
-  useEffect(() => onRead(), [onRead, messages.length]);
+  // Keyed on the newest line, not the count: once the chat holds 50 lines, a new one keeps the count at 50.
+  const newest = messages.at(-1)?.id;
+  useEffect(() => onRead(), [onRead, newest]);
   return (
     <aside
       ref={ref}

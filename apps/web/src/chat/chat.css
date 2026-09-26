@@ -86,6 +86,12 @@
   font-weight: 700;
   line-height: 1.25;
   overflow-wrap: anywhere;
+  /* Three lines at most: a far seat has little room above it, and the whole line is in the chat sheet. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
   box-shadow: 0 6px 16px rgb(0 0 0 / 0.4);
   pointer-events: none;
 }

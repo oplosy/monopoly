@@ -3,6 +3,7 @@ import { act, render, renderHook, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { ChatButton } from '../src/chat/ChatButton';
+import { ChatSheet } from '../src/chat/ChatSheet';
 import { CHAT_BUBBLE_MS, useChatBubbles } from '../src/chat/bubbles';
 import { ChatThread } from '../src/chat/ChatThread';
 import { renderTabletop } from './dom';
@@ -45,6 +46,18 @@ describe('ChatThread', () => {
     await user.type(box, 'still here{Enter}');
     await vi.waitFor(() => expect(onSend).toHaveBeenCalledTimes(1));
     expect(box).toHaveValue('still here');
+  });
+
+  it('keeps what was typed while a line was on its way', async () => {
+    let settle: (v: { ok: true }) => void = () => {};
+    const onSend = vi.fn(() => new Promise<{ ok: true }>((r) => (settle = r)));
+    const user = userEvent.setup();
+    render(<ChatThread messages={[]} me="p1" onSend={onSend} />);
+    const box = screen.getByRole('textbox', { name: 'Message' });
+    await user.type(box, 'hi{Enter}');
+    await user.type(box, ' there');
+    settle({ ok: true });
+    await vi.waitFor(() => expect(box).toHaveValue(' there'));
   });
 
   it('caps the box at 200 characters', () => {
@@ -99,5 +112,18 @@ describe('chat at the table', () => {
     expect(within(sheet).getByRole('textbox', { name: 'Message' })).toHaveFocus();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('complementary', { name: 'Chat' })).not.toBeInTheDocument();
+  });
+});
+
+describe('ChatSheet', () => {
+  it('keeps marking lines read once the chat is full at 50 lines', () => {
+    const lines = (from: number) => Array.from({ length: 50 }, (_, i) => m(from + i, 'p2', 'Bob', `line ${from + i}`));
+    const onRead = vi.fn();
+    const props = { me: 'p1', onSend: vi.fn(), onRead, onClose: vi.fn() };
+    const { rerender } = render(<ChatSheet messages={lines(1)} {...props} />);
+    onRead.mockClear();
+    // The 51st line: the store drops the oldest, so the list is still 50 long.
+    rerender(<ChatSheet messages={lines(2)} {...props} />);
+    expect(onRead).toHaveBeenCalledTimes(1);
   });
 });
