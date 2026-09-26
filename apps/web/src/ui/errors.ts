@@ -25,6 +25,7 @@ const MESSAGES: Record<string, string> = {
   notPlaying: 'The game has not started yet.',
   // Room and request errors.
   badRequest: 'The server did not understand that request.',
+  tooLong: 'That message is too long (200 characters at most).',
   notFound: 'That page does not exist.',
   gameOver: 'The game is over.',
   notFinished: 'The game is not over yet.',
