@@ -1,7 +1,8 @@
 import type { Server, Socket } from 'socket.io';
 import {
   AvatarSchema, ChatSendSchema, CreateRoomSchema, EmptySchema, IntentPayloadSchema, JoinRoomSchema, ResumeSchema, StartSchema,
-  type Ack, type ClientToServerEvents, type JoinedRoom, type ServerToClientEvents,
+  VoiceMicSchema, VoiceSignalSchema,
+  type Ack, type IceServer, type ClientToServerEvents, type JoinedRoom, type ServerToClientEvents,
 } from '@deal-city/protocol';
 import type { Config } from './config';
 import { sanitizeNickname } from './nickname';
@@ -17,13 +18,15 @@ interface Session {
   playerId: string;
 }
 
-export function registerSockets(io: IoServer, rooms: RoomManager, config: Config): void {
-  io.on('connection', (socket) => handleConnection(socket, rooms, config));
+export function registerSockets(io: IoServer, rooms: RoomManager, config: Config, iceServers: () => Promise<IceServer[]>): void {
+  io.on('connection', (socket) => handleConnection(socket, rooms, config, iceServers));
 }
 
-function handleConnection(socket: IoSocket, rooms: RoomManager, config: Config): void {
+function handleConnection(socket: IoSocket, rooms: RoomManager, config: Config, iceServers: () => Promise<IceServer[]>): void {
   const allow = createRateLimiter(config.rateLimitPerSec);
   const allowChat = createChatLimiter();
+  // Voice has its own budget: a burst of ICE candidates is normal and must not spend the game's.
+  const allowVoice = createRateLimiter(30);
   let session: Session | null = null;
   const conn: Connection = {
     roomState: (state) => socket.emit('room:state', state),
@@ -39,10 +42,10 @@ function handleConnection(socket: IoSocket, rooms: RoomManager, config: Config):
 
   /** Rate-limits, validates and acks every event; a handler bug never crashes the process. */
   const guard =
-    <P>(parser: Parser<P>, handler: (payload: P) => Ack<object>) =>
+    <P>(parser: Parser<P>, handler: (payload: P) => Ack<object>, limit: () => boolean = allow) =>
     (raw: unknown, ack: unknown): void => {
       const reply = typeof ack === 'function' ? (ack as (res: Ack<object>) => void) : () => undefined;
-      if (!allow()) return reply({ ok: false, error: 'rateLimited' });
+      if (!limit()) return reply({ ok: false, error: 'rateLimited' });
       const parsed = parser.safeParse(raw);
       if (!parsed.success) return reply({ ok: false, error: 'badRequest' });
       try {
@@ -53,8 +56,8 @@ function handleConnection(socket: IoSocket, rooms: RoomManager, config: Config):
       }
     };
 
-  const withSession = <P>(parser: Parser<P>, handler: (s: Session, payload: P) => Ack<object>) =>
-    guard(parser, (payload) => (session ? handler(session, payload) : { ok: false, error: 'noSession' }));
+  const withSession = <P>(parser: Parser<P>, handler: (s: Session, payload: P) => Ack<object>, limit: () => boolean = allow) =>
+    guard(parser, (payload) => (session ? handler(session, payload) : { ok: false, error: 'noSession' }), limit);
 
   const enter = (room: Room, playerId: string, token: string): Ack<JoinedRoom> => {
     session = { room, playerId };
@@ -118,6 +121,24 @@ function handleConnection(socket: IoSocket, rooms: RoomManager, config: Config):
     'chat:send',
     withSession(ChatSendSchema, (s, { text }) => (allowChat() ? s.room.chat(s.playerId, text) : { ok: false, error: 'rateLimited' })),
   );
+
+  // Joining answers with the ICE servers before the seat shows as in voice: by the time another player sees the joiner
+  // and sends an offer, the joiner already has what it needs to answer.
+  socket.on('voice:join', (raw: unknown, ack: unknown) => {
+    const reply = typeof ack === 'function' ? (ack as (res: Ack<{ iceServers: IceServer[] }>) => void) : () => undefined;
+    if (!allowVoice()) return reply({ ok: false, error: 'rateLimited' });
+    if (!EmptySchema.safeParse(raw).success) return reply({ ok: false, error: 'badRequest' });
+    const s = session;
+    if (!s || !s.room.hasSeat(s.playerId)) return reply({ ok: false, error: 'noSession' });
+    void iceServers().then((servers) => {
+      if (session !== s) return reply({ ok: false, error: 'noSession' });
+      reply({ ok: true, iceServers: servers });
+      s.room.voiceJoin(s.playerId);
+    });
+  });
+  socket.on('voice:leave', withSession(EmptySchema, (s) => s.room.voiceLeave(s.playerId), allowVoice));
+  socket.on('voice:mic', withSession(VoiceMicSchema, (s, { on }) => s.room.voiceMic(s.playerId, on), allowVoice));
+  socket.on('voice:signal', withSession(VoiceSignalSchema, (s, { to, data }) => s.room.voiceSignal(s.playerId, to, data), allowVoice));
 
   socket.on(
     'game:intent',
