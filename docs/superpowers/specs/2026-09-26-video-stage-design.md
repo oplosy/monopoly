@@ -40,7 +40,7 @@ A window of another shape is not letterboxed straight away: the stage **covers**
 
 ## 6b. Ambience
 
-The terrace can be heard: a soft wind that swells in gusts every few seconds, leaves that rustle harder as it blows, and two crickets far off (`audio/ambience.ts`). All of it is synthesized with Web Audio, no files: looping noise beds with seamless crossfaded ends, and gusts scheduled on their levels. It plays at the table under the master volume (mute silences it), starts on the first gesture, fades in and out, and hushes in a hidden tab.
+The terrace can be heard: a recorded 30 s loop of birdsong in the open, with running water behind it (`apps/web/public/ambience/terrace.{ogg,mp3}`, cut from Thimras' CC0 "Park ambiences"; see CREDITS.md). It loops seamlessly at the table under the master volume, so mute silences it. It loads on the first gesture, fades in and out, and hushes in a hidden tab (`audio/ambience.ts`, `useAmbience`).
 
 ## 7. Rulings
 
@@ -51,5 +51,5 @@ The terrace can be heard: a soft wind that swells in gusts every few seconds, le
 - Ruling: portrait phones get the letterboxed stage with the words in the letterbox and a hint to turn the phone; the old portrait and landscape layouts are gone — a fixed 16:9 stage was asked for — cost if wrong: portrait play is small; a portrait composition would need its own video.
 - Ruling: a hovered hand card keeps its turn (it only lifts and grows) — straightened about the fan's far pivot, an outer card swung about 40 px sideways out from under the pointer and flickered — cost if wrong: hover no longer straightens a card; the inspect preview shows it large anyway.
 - Ruling: the stage covers the window within a safe area instead of always letterboxing — the user saw bars at the sides of a slightly wider window — cost if wrong: set `safe` to the whole stage to letterbox again.
-- Ruling: the ambience is synthesized, not recorded — no download to approve, no licence — cost if wrong: swap in recorded CC0 beds later behind the same `ambience()` call.
+- Ruling: the ambience is the recorded CC0 park loop already chosen for Plan 9, not synthesis — synthesized wind and leaves sounded like static and crackled — cost if wrong: it carries a stream; a birds-and-leaves recording would need a download the user approves, behind the same `ambience()` call.
 - Ruling: the lobby shows the poster with the chairs where the seats will stand — the CSS table is gone everywhere — cost if wrong: none.
