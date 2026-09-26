@@ -1,21 +1,31 @@
 /* Voice chat (spec 2026-09-26-chat-and-voice §4). The button matches the chat button beside it. */
-.voice-controls { position: relative; display: inline-flex; align-items: flex-end; gap: 2px; }
+.voice-controls { display: inline-flex; align-items: center; gap: 8px; }
 .table-voice { position: absolute; top: 12px; left: calc(12px + 52px + 10px); z-index: 20; pointer-events: auto; }
-.voice-button {
+.voice-button,
+.voice-small {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
   padding: 0;
   border-radius: 50%;
   border: 3px solid #3b2410;
   background: var(--wood-dark);
   color: var(--gold);
   box-shadow: 0 4px 0 #3b2410, 0 8px 16px rgb(0 0 0 / 0.35);
+  cursor: pointer;
   touch-action: none;
   user-select: none;
+  transition: transform 80ms ease-out, box-shadow 80ms ease-out, background-color 120ms;
 }
+.voice-button { width: 52px; height: 52px; }
+.voice-small { width: 40px; height: 40px; font: 800 11px/1 var(--font-display); letter-spacing: 0.03em; }
 .voice-button svg { width: 24px; height: 24px; }
+.voice-small svg { width: 20px; height: 20px; }
+/* Pressed: the button sinks onto its shadow, like the other wooden buttons. */
+.voice-button:active:not(:disabled),
+.voice-small:active { transform: translateY(3px); box-shadow: 0 1px 0 #3b2410, 0 3px 8px rgb(0 0 0 / 0.35); }
+.voice-button:disabled { opacity: 0.6; cursor: progress; }
+.voice-button:focus-visible,
+.voice-small:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .voice-button.is-live {
   background: #1f8f4e;
   border-color: #0f5a2e;
@@ -24,12 +34,11 @@
 }
 .voice-button.is-muted { background: #7a2a22; border-color: #3b0f0b; color: #ffd9d4; box-shadow: 0 4px 0 #3b0f0b, 0 8px 16px rgb(0 0 0 / 0.35); }
 .voice-button.is-ptt { border-color: var(--gold); box-shadow: 0 0 0 3px rgb(255 216 74 / 0.45), 0 4px 0 #3b2410; }
-/* The mode in words, beside the button. */
+.voice-ptt.is-on { background: var(--gold); color: #3b2410; }
+.voice-leave { background: #c0392b; border-color: #5e1a12; color: #fff; box-shadow: 0 4px 0 #5e1a12, 0 8px 16px rgb(0 0 0 / 0.35); }
+.voice-leave:active { box-shadow: 0 1px 0 #5e1a12; }
+/* The mode in words, after the buttons. */
 .voice-state {
-  position: absolute;
-  top: 50%;
-  left: calc(100% + 14px);
-  transform: translateY(-50%);
   white-space: nowrap;
   padding: 5px 11px;
   border-radius: 999px;
@@ -41,42 +50,10 @@
 .voice-state.is-live { background: #1f8f4e; border-color: #0f5a2e; color: #fff; }
 .voice-state.is-muted { background: #fbe3df; border-color: #7a2a22; color: #7a2a22; }
 .voice-state.is-ptt { background: var(--paper); border-color: var(--gold); color: #3b2410; }
-.lobby-chat-head .voice-state { left: auto; right: calc(100% + 10px); }
-.voice-button:disabled { opacity: 0.6; }
-.voice-button:focus-visible, .voice-more:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
-.voice-more {
-  position: absolute;
-  right: -6px;
-  bottom: -6px;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border-radius: 50%;
-  border: 2px solid #3b2410;
-  background: var(--gold);
-  color: #3b2410;
-  font-size: 11px;
-  line-height: 1;
-}
-.voice-menu {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  z-index: 30;
-  display: grid;
-  gap: 0.4rem;
-  min-width: 11rem;
-  padding: 0.6rem 0.7rem;
-  border: 3px solid #3b2410;
-  border-radius: 14px;
-  background: var(--paper);
-  color: var(--ink);
-  box-shadow: 0 4px 0 #3b2410, 0 10px 22px rgb(0 0 0 / 0.35);
-  font-size: 0.9rem;
-}
-.voice-menu label { display: flex; gap: 0.5rem; align-items: center; white-space: nowrap; font-weight: 700; cursor: pointer; }
-.voice-menu input[type='checkbox'] { width: auto; margin: 0; accent-color: #3b2410; }
-.voice-leave { border-radius: 999px; padding: 0.3rem 0.8rem; color: #b3261e; }
+/* In the lobby the controls sit at the right of the chat's heading: the words go first. */
+.lobby-chat-head .voice-state { order: -1; }
+.lobby-chat-head .voice-button { width: 44px; height: 44px; }
+.lobby-chat-head .voice-small { width: 36px; height: 36px; }
 /* At the seat (stage px): a headset mark, a crossed mic while the mic is off, the talking ring, my mute switch. */
 .voice-mark {
   position: absolute;
@@ -115,5 +92,4 @@
 .voice-mute[aria-pressed='true'] { background: #d93a2b; color: #fff; }
 .voice-mute svg { width: 18px; height: 18px; }
 .lobby-chat-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.lobby-chat-head .voice-button { width: 44px; height: 44px; box-shadow: 0 3px 0 #3b2410; }
-.lobby-chat-head .voice-menu { left: auto; right: 0; }
+

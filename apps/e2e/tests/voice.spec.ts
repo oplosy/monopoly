@@ -24,7 +24,6 @@ test('two players talk: both join voice, connect, hear each other, and see the m
   await ann.getByRole('button', { name: 'Microphone' }).click();
   await expect(annOnBob.getByRole('img', { name: 'In voice, mic off' })).toBeVisible();
 
-  await bob.getByRole('button', { name: 'Voice options' }).click();
   await bob.getByRole('button', { name: 'Leave voice' }).click();
   await expect(ann.getByRole('group', { name: /^Bob's seat/ }).getByRole('img', { name: /In voice/ })).toHaveCount(0);
 

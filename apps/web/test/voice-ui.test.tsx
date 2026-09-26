@@ -25,7 +25,7 @@ const table = () => {
 };
 
 describe('voice at the table', () => {
-  it('joins from the corner, then offers the mic and a menu to leave or switch to push-to-talk', async () => {
+  it('joins from the corner, then shows the mic, a push-to-talk switch and a Leave button, all in sight', async () => {
     const user = userEvent.setup();
     const voice = voiceStore();
     const join = vi.fn(async () => void voice.setState({ status: 'on', hasMic: true, micOn: true }));
@@ -39,14 +39,14 @@ describe('voice at the table', () => {
     act(() => voice.setState({ setMic }));
     await user.click(mic);
     expect(setMic).toHaveBeenCalledWith(false);
-    await user.click(screen.getByRole('button', { name: 'Voice options' }));
-    const menu = screen.getByRole('group', { name: 'Voice options' });
     const setPushToTalk = vi.fn();
     const leave = vi.fn();
     act(() => voice.setState({ setPushToTalk, leave }));
-    await user.click(within(menu).getByRole('checkbox', { name: 'Push-to-talk' }));
+    const ptt = screen.getByRole('button', { name: 'Push-to-talk' });
+    expect(ptt).toHaveAttribute('aria-pressed', 'false');
+    await user.click(ptt);
     expect(setPushToTalk).toHaveBeenCalledWith(true);
-    await user.click(within(menu).getByRole('button', { name: 'Leave voice' }));
+    await user.click(screen.getByRole('button', { name: 'Leave voice' }));
     expect(leave).toHaveBeenCalled();
   });
 
@@ -81,21 +81,21 @@ describe('voice at the table', () => {
     expect(talk).toHaveBeenLastCalledWith(false);
   });
 
-  it('never opens the menu while holding to talk, and a right click never opens the mic', async () => {
+  it('switches the mic on a long press too, never swallowing the click, and a right click never talks', async () => {
     const voice = voiceStore();
-    const talk = vi.fn();
-    voice.setState({ status: 'on', hasMic: true, pushToTalk: true, talk });
+    const setMic = vi.fn();
+    voice.setState({ status: 'on', hasMic: true, micOn: true, setMic });
     renderTabletop({ state: table(), voice });
-    const hold = screen.getByRole('button', { name: 'Hold to talk' });
+    const mic = screen.getByRole('button', { name: 'Microphone' });
     const user = userEvent.setup();
-    await user.pointer({ keys: '[MouseLeft>]', target: hold });
+    await user.pointer({ keys: '[MouseLeft>]', target: mic });
     await new Promise((r) => setTimeout(r, 650));
-    expect(screen.queryByRole('group', { name: 'Voice options' })).toBeNull();
-    await user.pointer({ keys: '[/MouseLeft]', target: hold });
-    talk.mockClear();
-    await user.pointer({ keys: '[MouseRight]', target: hold });
+    await user.pointer({ keys: '[/MouseLeft]', target: mic });
+    expect(setMic).toHaveBeenCalledWith(false);
+    const talk = vi.fn();
+    act(() => voice.setState({ pushToTalk: true, micOn: false, talk }));
+    await user.pointer({ keys: '[MouseRight]', target: screen.getByRole('button', { name: 'Hold to talk' }) });
     expect(talk).not.toHaveBeenCalledWith(true);
-    expect(screen.getByRole('group', { name: 'Voice options' })).toBeInTheDocument();
   });
 
   it('marks each seat in voice, rings whoever talks, and mutes a player for me only', async () => {

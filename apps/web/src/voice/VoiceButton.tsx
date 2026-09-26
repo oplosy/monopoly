@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import { usePushToTalk, useVoice, useVoiceApi } from './context';
 import './voice.css';
-
-const LONG_PRESS_MS = 500;
 
 function MicIcon({ off }: { off: boolean }) {
   return (
@@ -24,32 +22,26 @@ function HeadsetIcon() {
   );
 }
 
-/** Join voice, then the mic (or hold-to-talk) with a small options menu: Leave voice, Push-to-talk. */
+function HangUpIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+      <path d="M12 9c-3.3 0-6.3 1-8.6 2.8a1.6 1.6 0 0 0-.4 2l1.3 2.1a1.6 1.6 0 0 0 1.9.7l2.6-.9a1.6 1.6 0 0 0 1-1.3l.2-1.6a9 9 0 0 1 4 0l.2 1.6a1.6 1.6 0 0 0 1 1.3l2.6.9a1.6 1.6 0 0 0 1.9-.7l1.3-2.1a1.6 1.6 0 0 0-.4-2C18.3 10 15.3 9 12 9z" />
+    </svg>
+  );
+}
+
+/**
+ * Voice chat's controls, all in sight: Join voice; then the mic (a click switches it; under push-to-talk it is held),
+ * a push-to-talk switch, a red Leave voice button, and the mic's mode in words.
+ */
 export function VoiceButton({ className = '' }: { className?: string }) {
   const voice = useVoiceApi();
   const status = useVoice((s) => s.status);
   const micOn = useVoice((s) => s.micOn);
   const hasMic = useVoice((s) => s.hasMic);
   const pushToTalk = useVoice((s) => s.pushToTalk);
-  const [menu, setMenu] = useState(false);
-  const press = useRef<ReturnType<typeof setTimeout> | null>(null);
   const holding = useRef(false);
-  const root = useRef<HTMLDivElement>(null);
   usePushToTalk();
-
-  useEffect(() => {
-    if (!menu) return;
-    const close = (e: PointerEvent | KeyboardEvent) => {
-      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !root.current?.contains(e.target as Node)) setMenu(false);
-    };
-    document.addEventListener('pointerdown', close);
-    document.addEventListener('keydown', close);
-    return () => {
-      document.removeEventListener('pointerdown', close);
-      document.removeEventListener('keydown', close);
-    };
-  }, [menu]);
-  useEffect(() => () => void (press.current && clearTimeout(press.current)), []);
 
   if (status !== 'on') {
     return (
@@ -68,73 +60,56 @@ export function VoiceButton({ className = '' }: { className?: string }) {
     );
   }
 
-  // Under push-to-talk a hold means talk, so the long press does not open the menu (the caret and a right click still do).
-  const startPress = (e: ReactPointerEvent<HTMLButtonElement>) => {
-    if (e.button !== 0) return;
-    if (pushToTalk) {
-      holding.current = true;
-      voice.getState().talk(true);
-    } else {
-      press.current = setTimeout(() => setMenu(true), LONG_PRESS_MS);
-    }
+  const holdToTalk = pushToTalk && hasMic;
+  const startHold = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!holdToTalk || e.button !== 0) return;
+    holding.current = true;
+    voice.getState().talk(true);
   };
-  const endPress = () => {
-    if (press.current) clearTimeout(press.current);
-    press.current = null;
-    if (holding.current) {
-      holding.current = false;
-      voice.getState().talk(false);
-    }
+  const endHold = () => {
+    if (!holding.current) return;
+    holding.current = false;
+    voice.getState().talk(false);
   };
+  const tone = micOn ? 'is-live' : holdToTalk ? 'is-ptt' : 'is-muted';
 
   return (
-    <div ref={root} className={`voice-controls is-on ${className}`}>
+    <div className={`voice-controls is-on ${className}`}>
       <button
         type="button"
-        className={['voice-button', micOn ? 'is-live' : pushToTalk && hasMic ? 'is-ptt' : 'is-muted'].join(' ')}
-        aria-label={pushToTalk ? 'Hold to talk' : 'Microphone'}
-        aria-pressed={pushToTalk ? undefined : micOn}
-        title={pushToTalk ? 'Hold to talk (or hold V)' : micOn ? 'Microphone on' : 'Microphone off'}
-        onPointerDown={startPress}
-        onPointerUp={endPress}
-        onPointerLeave={endPress}
-        onPointerCancel={endPress}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          // A touch screen's long press while holding to talk is talking, not a request for the menu.
-          if (!holding.current) setMenu(true);
-        }}
+        className={`voice-button ${tone}`}
+        aria-label={holdToTalk ? 'Hold to talk' : 'Microphone'}
+        aria-pressed={holdToTalk ? undefined : micOn}
+        title={holdToTalk ? 'Hold to talk (or hold V)' : micOn ? 'Click to mute' : 'Click to unmute'}
+        onPointerDown={startHold}
+        onPointerUp={endHold}
+        onPointerLeave={endHold}
+        onPointerCancel={endHold}
+        // A touch screen's long press while holding to talk is talking, not a request for a context menu.
+        onContextMenu={(e) => e.preventDefault()}
         onClick={() => {
-          if (!pushToTalk && !menu) void voice.getState().setMic(!micOn);
+          if (!holdToTalk) void voice.getState().setMic(!micOn);
         }}
       >
         <MicIcon off={!micOn} />
       </button>
-      {/* The mode in words: the colour alone did not say whether the mic is open or waits for V. */}
-      <span className={`voice-state ${micOn ? 'is-live' : pushToTalk && hasMic ? 'is-ptt' : 'is-muted'}`} data-testid="voice-state" aria-hidden="true">
-        {!hasMic ? 'Listening only' : micOn ? (pushToTalk ? 'Talking' : 'Mic on') : pushToTalk ? 'Push-to-talk: hold V' : 'Mic off'}
-      </span>
-      <button type="button" className="voice-more" aria-label="Voice options" aria-expanded={menu} onClick={() => setMenu((m) => !m)}>
-        ▾
+      <button
+        type="button"
+        className={`voice-small voice-ptt${pushToTalk ? ' is-on' : ''}`}
+        aria-label="Push-to-talk"
+        aria-pressed={pushToTalk}
+        title={pushToTalk ? 'Push-to-talk is on: hold V or the mic to talk' : 'Switch to push-to-talk'}
+        onClick={() => voice.getState().setPushToTalk(!pushToTalk)}
+      >
+        PTT
       </button>
-      {menu && (
-        <div className="voice-menu" role="group" aria-label="Voice options">
-          <label>
-            <input type="checkbox" checked={pushToTalk} onChange={(e) => voice.getState().setPushToTalk(e.target.checked)} />
-            Push-to-talk
-          </label>
-          <button
-            type="button"
-            className="voice-leave"
-            onClick={() => {
-              setMenu(false);
-              voice.getState().leave();
-            }}
-          >
-            Leave voice
-          </button>
-        </div>
-      )}
+      <button type="button" className="voice-small voice-leave" aria-label="Leave voice" title="Leave voice" onClick={() => voice.getState().leave()}>
+        <HangUpIcon />
+      </button>
+      {/* The mode in words: the colour alone does not say whether the mic is open or waits for V. */}
+      <span className={`voice-state ${tone}`} data-testid="voice-state" aria-live="polite">
+        {!hasMic ? 'Listening only (no mic access)' : micOn ? (pushToTalk ? 'Talking' : 'Mic on') : pushToTalk ? 'Push-to-talk: hold V' : 'Mic off'}
+      </span>
     </div>
   );
 }
