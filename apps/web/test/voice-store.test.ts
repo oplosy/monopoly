@@ -24,14 +24,15 @@ function setup(opts: { mic?: 'ok' | 'refused'; slowMic?: boolean; prefs?: Return
   const playbacks: Record<string, { setVolume: ReturnType<typeof vi.fn>; close: ReturnType<typeof vi.fn> }> = {};
   const trackOwner = new Map<MediaStreamTrack, string>([[micTrack, 'me']]);
   const prefs = opts.prefs ?? memoryVoicePrefs();
-  const store = createVoiceStore({
-    channel,
-    prefs,
-    getMic: vi.fn(async () => {
+  const getMic = vi.fn(async (): Promise<MediaStream> => {
       if (opts.mic === 'refused') throw new DOMException('denied', 'NotAllowedError');
       if (opts.slowMic) return new Promise<MediaStream>((resolve) => (grantMic = () => resolve(stream)));
       return stream;
-    }),
+  });
+  const store = createVoiceStore({
+    channel,
+    prefs,
+    getMic,
     createPc: (config) => new FakePc(config) as unknown as RTCPeerConnection,
     play: (track) => {
       const p = { setVolume: vi.fn(), close: vi.fn() };
@@ -46,7 +47,7 @@ function setup(opts: { mic?: 'ok' | 'refused'; slowMic?: boolean; prefs?: Return
     trackOwner.set(t, owner);
     FakePc.all.at(-1)!.ontrack?.({ track: t, streams: [] });
   };
-  return { store, channel, micTrack, levels, playbacks, prefs, remoteTrack, grantMic: () => grantMic(), signal: (from: string, data: SignalData) => listener(from, data) };
+  return { store, channel, getMic, micTrack, levels, playbacks, prefs, remoteTrack, grantMic: () => grantMic(), signal: (from: string, data: SignalData) => listener(from, data) };
 }
 
 beforeEach(() => vi.useFakeTimers());
@@ -120,7 +121,7 @@ describe('voice store', () => {
     expect(playbacks.p2!.setVolume).toHaveBeenLastCalledWith(0.5);
     store.getState().mute('p2', true);
     expect(playbacks.p2!.setVolume).toHaveBeenLastCalledWith(0);
-    expect(prefs.load()).toMatchObject({ volume: 0.5, muted: ['p2'] });
+    expect(prefs.load()).toMatchObject({ volume: 0.5, muted: ['ABCDEF:p2'] });
   });
 
   it('shows who is talking from their levels, with the hang time', async () => {
@@ -207,5 +208,93 @@ describe('voice store', () => {
     await flush();
     // Another room: no automatic rejoin.
     expect(channel.join).toHaveBeenCalledTimes(2);
+  });
+
+  it('a listener who asks for the mic, then leaves before allowing it, leaves no mic recording', async () => {
+    const { store, getMic, micTrack, channel } = setup({ mic: 'refused' });
+    await store.getState().join();
+    let grant: () => void = () => {};
+    const stream = { getTracks: () => [micTrack], getAudioTracks: () => [micTrack] } as unknown as MediaStream;
+    getMic.mockImplementationOnce(() => new Promise<MediaStream>((resolve) => (grant = () => resolve(stream))));
+    const asking = store.getState().setMic(true);
+    store.getState().leave();
+    grant();
+    await asking;
+    expect(micTrack.stop).toHaveBeenCalled();
+    expect(store.getState()).toMatchObject({ status: 'off', micOn: false, hasMic: false });
+    expect(channel.mic).not.toHaveBeenCalledWith(true);
+  });
+
+  it('tells the server again to leave when Leave came before the answer to the join', async () => {
+    const { store, channel } = setup();
+    let answer: (r: Ack<{ iceServers: IceServer[] }>) => void = () => {};
+    channel.join.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+    const joining = store.getState().join();
+    await flush();
+    store.getState().leave();
+    answer({ ok: true, iceServers: ICE });
+    await joining;
+    // The first leave reached the server before it had put this seat in voice.
+    expect(channel.leave).toHaveBeenCalledTimes(2);
+    expect(store.getState().status).toBe('off');
+  });
+
+  it('remembers a mute for its room only: whoever sits as p2 in another room is heard', () => {
+    const { store, prefs } = setup();
+    const two = [seat('p1', 'off'), seat('p2', 'off')];
+    store.getState().sync('AAAAAA', 'p1', two);
+    store.getState().mute('p2', true);
+    expect(store.getState().muted).toEqual(['p2']);
+    store.getState().sync('BBBBBB', 'p1', two);
+    expect(store.getState().muted).toEqual([]);
+    store.getState().sync('AAAAAA', 'p1', two);
+    expect(store.getState().muted).toEqual(['p2']);
+    expect(prefs.load().muted).toEqual(['AAAAAA:p2']);
+  });
+
+  describe('fresh connections after a failure or a missed rejoin', () => {
+    const resetsTo = (signal: ReturnType<typeof vi.fn>, to: string) =>
+      signal.mock.calls.filter((c) => c[0] === to && 'reset' in (c[1] as object)).length;
+
+    it('the impolite side resets the other end before each new offer', async () => {
+      const { store, channel } = setup();
+      store.getState().sync('ABCDEF', 'p2', [seat('p1', 'listening'), seat('p2', 'off')]);
+      await store.getState().join();
+      await flush();
+      const calls = channel.signal.mock.calls.filter((c) => c[0] === 'p1').map((c) => Object.keys(c[1] as object)[0]);
+      expect(calls[0]).toBe('reset');
+      expect(calls).toContain('description');
+    });
+
+    it('the polite side takes a reset as a fresh start, quietly', async () => {
+      const { store, channel, signal } = setup();
+      store.getState().sync('ABCDEF', 'p1', [seat('p1', 'off'), seat('p2', 'listening')]);
+      await store.getState().join();
+      const asked = resetsTo(channel.signal, 'p2');
+      const first = FakePc.all[0]!;
+      signal('p2', { reset: true });
+      expect(first.close).toHaveBeenCalled();
+      expect(FakePc.all).toHaveLength(2);
+      expect(resetsTo(channel.signal, 'p2')).toBe(asked);
+    });
+
+    it('the polite side asks for a fresh start when its connection fails for good; the impolite side rebuilds a few times at most', async () => {
+      const polite = setup();
+      polite.store.getState().sync('ABCDEF', 'p1', [seat('p1', 'off'), seat('p2', 'listening')]);
+      await polite.store.getState().join();
+      const asked = resetsTo(polite.channel.signal, 'p2');
+      const pc = FakePc.all[0]!;
+      pc.setState('failed'); // the ICE restart
+      pc.setState('failed');
+      expect(resetsTo(polite.channel.signal, 'p2')).toBe(asked + 1);
+      expect(FakePc.all).toHaveLength(1);
+
+      const impolite = setup();
+      impolite.store.getState().sync('ABCDEF', 'p2', [seat('p1', 'listening'), seat('p2', 'off')]);
+      await impolite.store.getState().join();
+      for (let i = 0; i < 10; i++) impolite.signal('p1', { reset: true });
+      // One connection from the join, then a bounded number of rebuilds, never a loop.
+      expect(FakePc.all.length).toBeLessThanOrEqual(1 + 4);
+    });
   });
 });

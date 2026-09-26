@@ -75,7 +75,7 @@ export function createPeer({ pc, polite, send, onTrack, onState, onFailed }: Pee
           const d = pc.localDescription;
           if (d) send({ description: { type: d.type, sdp: d.sdp } });
         }
-      } else {
+      } else if ('candidate' in data) {
         try {
           await pc.addIceCandidate(data.candidate ?? undefined);
         } catch (err) {

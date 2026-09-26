@@ -72,8 +72,10 @@ interface Link {
   peer: Peer;
   playback: Playback | null;
   meter: Meter | null;
-  rebuilt: boolean;
 }
+
+/** Fresh connections one player may force on another per join: enough to recover, never a loop. */
+const MAX_RESETS = 4;
 
 export function createVoiceStore(deps: VoiceDeps): VoiceStore {
   const { channel, prefs } = deps;
@@ -88,6 +90,11 @@ export function createVoiceStore(deps: VoiceDeps): VoiceStore {
   let generation = 0;
   let room: { code: string; me: string; seats: readonly SeatInfo[] } = { code: '', me: '', seats: [] };
   let rejoinPending = false;
+  const resets = new Map<string, number>();
+  // Mutes are kept per room ("CODE:playerId"): player ids are only unique within a room.
+  let mutedKeys = saved.muted;
+  const mutedIn = (code: string) => mutedKeys.filter((k) => k.startsWith(`${code}:`)).map((k) => k.slice(code.length + 1));
+  let micRequest: Promise<void> | null = null;
 
   const store = createStore<VoiceState>()((set, get) => {
     const micTrack = () => mic?.getAudioTracks()[0] ?? null;
@@ -106,8 +113,8 @@ export function createVoiceStore(deps: VoiceDeps): VoiceStore {
     }
 
     function save(): void {
-      const { pushToTalk, volume, muted } = get();
-      prefs.save({ pushToTalk, volume, muted });
+      const { pushToTalk, volume } = get();
+      prefs.save({ pushToTalk, volume, muted: mutedKeys });
     }
 
     function closeLink(playerId: string): void {
@@ -125,12 +132,18 @@ export function createVoiceStore(deps: VoiceDeps): VoiceStore {
       });
     }
 
-    function openLink(playerId: string, rebuilt = false): Link {
+    /**
+     * A new connection announces itself, unless it answers a reset: the impolite side resets the other end before its
+     * offer (so an offer never lands on a stale connection), and the polite side asks the impolite one for a fresh offer.
+     */
+    function openLink(playerId: string, quiet = false): Link {
+      const polite = room.me < playerId;
+      if (!quiet) channel.signal(playerId, { reset: true });
       const pc = deps.createPc({ iceServers: iceServers as RTCIceServer[] });
-      const link: Link = { peer: null as unknown as Peer, playback: null, meter: null, rebuilt };
+      const link: Link = { peer: null as unknown as Peer, playback: null, meter: null };
       link.peer = createPeer({
         pc,
-        polite: room.me < playerId,
+        polite,
         send: (data) => channel.signal(playerId, data),
         onTrack: (track) => {
           link.playback?.close();
@@ -144,15 +157,24 @@ export function createVoiceStore(deps: VoiceDeps): VoiceStore {
           set((s) => ({ connections: { ...s.connections, [playerId]: state } }));
         },
         onFailed: () => {
-          if (links.get(playerId) !== link || link.rebuilt) return;
-          closeLink(playerId);
-          links.set(playerId, openLink(playerId, true));
+          if (links.get(playerId) !== link) return;
+          // The ICE restart did not help: start over, led by the impolite side.
+          if (polite) channel.signal(playerId, { reset: true });
+          else rebuild(playerId);
         },
       });
       const track = micTrack();
       if (track) void link.peer.setTrack(track);
       set((s) => ({ connections: { ...s.connections, [playerId]: 'new' } }));
       return link;
+    }
+
+    function rebuild(playerId: string): void {
+      const done = resets.get(playerId) ?? 0;
+      if (done >= MAX_RESETS) return;
+      resets.set(playerId, done + 1);
+      closeLink(playerId);
+      links.set(playerId, openLink(playerId));
     }
 
     function reconcile(): void {
@@ -186,11 +208,22 @@ export function createVoiceStore(deps: VoiceDeps): VoiceStore {
       if (timer) clearInterval(timer);
       timer = null;
       detectors.clear();
+      resets.clear();
       set({ status: 'off', hasMic: false, micOn: false, talking: [], connections: {} });
     }
 
     channel.onSignal((from, data) => {
       if (get().status !== 'on' || from === room.me) return;
+      if ('reset' in data) {
+        if (room.me < from) {
+          // Polite: a fresh offer is on its way; meet it with a fresh connection.
+          closeLink(from);
+          links.set(from, openLink(from, true));
+        } else {
+          rebuild(from);
+        }
+        return;
+      }
       // An offer can arrive before the room state that shows its sender in voice.
       let link = links.get(from);
       if (!link) links.set(from, (link = openLink(from)));
@@ -203,7 +236,7 @@ export function createVoiceStore(deps: VoiceDeps): VoiceStore {
       micOn: false,
       pushToTalk: saved.pushToTalk,
       volume: saved.volume,
-      muted: saved.muted,
+      muted: [],
       talking: [],
       connections: {},
 
@@ -225,7 +258,11 @@ export function createVoiceStore(deps: VoiceDeps): VoiceStore {
         const stop = () => stream?.getTracks().forEach((t) => t.stop());
         if (mine !== generation) return stop();
         const res = await channel.join();
-        if (mine !== generation) return stop();
+        if (mine !== generation) {
+          // Leave went out before the server had put this seat in voice; it has now, so leave again.
+          if (res.ok) channel.leave();
+          return stop();
+        }
         if (!res.ok) {
           stop();
           set({ status: 'off' });
@@ -257,16 +294,29 @@ export function createVoiceStore(deps: VoiceDeps): VoiceStore {
       async setMic(on) {
         if (get().status !== 'on') return;
         if (on && !micTrack()) {
-          // A listener asks again, with a gesture this time.
-          try {
-            mic = await deps.getMic();
-          } catch {
-            return;
-          }
-          const track = micTrack()!;
-          micMeter = deps.meter(track);
-          set({ hasMic: true });
-          for (const link of links.values()) void link.peer.setTrack(track);
+          // A listener asks again, with a gesture this time; one prompt at a time.
+          if (micRequest) return micRequest;
+          const mine = generation;
+          micRequest = (async () => {
+            let stream: MediaStream;
+            try {
+              stream = await deps.getMic();
+            } catch {
+              return;
+            }
+            // Left voice (or the page) while the prompt was open: nothing may keep recording.
+            if (mine !== generation || get().status !== 'on') {
+              stream.getTracks().forEach((t) => t.stop());
+              return;
+            }
+            mic = stream;
+            const track = micTrack()!;
+            micMeter = deps.meter(track);
+            set({ hasMic: true });
+            for (const link of links.values()) void link.peer.setTrack(track);
+            applyMic(true);
+          })().finally(() => (micRequest = null));
+          return micRequest;
         }
         applyMic(on);
       },
@@ -284,11 +334,14 @@ export function createVoiceStore(deps: VoiceDeps): VoiceStore {
         for (const [id, link] of links) link.playback?.setVolume(volumeFor(id));
       },
       mute(playerId, on) {
-        set((s) => ({ muted: on ? [...new Set([...s.muted, playerId])] : s.muted.filter((m) => m !== playerId) }));
+        const key = `${room.code}:${playerId}`;
+        mutedKeys = on ? [...new Set([...mutedKeys, key])] : mutedKeys.filter((k) => k !== key);
+        set({ muted: mutedIn(room.code) });
         save();
         links.get(playerId)?.playback?.setVolume(volumeFor(playerId));
       },
       sync(code, me, seats) {
+        if (code !== room.code) set({ muted: mutedIn(code) });
         room = { code, me, seats };
         reconcile();
       },

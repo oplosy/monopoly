@@ -61,7 +61,12 @@ const SignalCandidateSchema = z.object({
 // The server relays these untouched; the shape check only keeps junk and oversized payloads out.
 export const VoiceSignalSchema = z.object({
   to: z.string().min(1).max(16),
-  data: z.union([z.object({ description: SignalDescriptionSchema }), z.object({ candidate: SignalCandidateSchema.nullable() })]),
+  data: z.union([
+    z.object({ description: SignalDescriptionSchema }),
+    z.object({ candidate: SignalCandidateSchema.nullable() }),
+    // Start over on a fresh connection: after a failure, or when one side missed the other leaving and coming back.
+    z.object({ reset: z.literal(true) }),
+  ]),
 });
 
 export type CreateRoomPayload = z.infer<typeof CreateRoomSchema>;

@@ -91,9 +91,11 @@ describe('voice schemas', () => {
     const offer = { to: 'p2', data: { description: { type: 'offer', sdp: 'v=0' } } };
     const ice = { to: 'p2', data: { candidate: { candidate: 'candidate:1 1 udp 1 1.2.3.4 5 typ host', sdpMid: '0', sdpMLineIndex: 0 } } };
     const end = { to: 'p2', data: { candidate: null } };
-    for (const ok of [offer, ice, end]) expect(VoiceSignalSchema.safeParse(ok).success).toBe(true);
+    const reset = { to: 'p2', data: { reset: true } };
+    for (const ok of [offer, ice, end, reset]) expect(VoiceSignalSchema.safeParse(ok).success).toBe(true);
     expect(VoiceSignalSchema.safeParse({ to: 'p2', data: { description: { type: 'hello' } } }).success).toBe(false);
     expect(VoiceSignalSchema.safeParse({ to: 'p2', data: {} }).success).toBe(false);
+    expect(VoiceSignalSchema.safeParse({ to: 'p2', data: { reset: false } }).success).toBe(false);
     expect(VoiceSignalSchema.safeParse({ to: 'x'.repeat(40), data: { candidate: null } }).success).toBe(false);
     expect(VoiceSignalSchema.safeParse({ to: 'p2', data: { description: { type: 'offer', sdp: 'x'.repeat(15_001) } } }).success).toBe(false);
   });
