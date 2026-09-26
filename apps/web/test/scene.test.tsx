@@ -48,7 +48,9 @@ describe('TableScene', () => {
     );
     const plane = container.querySelector('.plane')!;
     expect(plane).toContainElement(screen.getByText('On the table'));
-    expect(plane.querySelector('.table-felt')).toHaveAttribute('aria-hidden', 'true');
+    // The table itself (its wooden body, rail and felt) is decoration.
+    expect(plane.querySelector('.table-body')).toHaveAttribute('aria-hidden', 'true');
+    expect(plane.querySelector('.table-body .table-felt')).not.toBeNull();
     expect(container.querySelector('.scene-ground')).toHaveAttribute('aria-hidden', 'true');
     expect(container.querySelectorAll('.prop, .cloth, .dapple')).toHaveLength(0);
   });
