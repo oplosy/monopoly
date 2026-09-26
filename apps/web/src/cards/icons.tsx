@@ -20,10 +20,10 @@ export const ICON_SCALE: Record<ActionKind, number> = {
   slyDeal: 1,
   forcedDeal: 1,
   debtCollector: 1,
-  birthday: 1,
+  birthday: 1.15,
   passGo: 1,
   house: 1,
-  hotel: 1,
+  hotel: 1.15,
   doubleRent: 1,
 };
 
