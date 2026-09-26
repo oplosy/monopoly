@@ -6,26 +6,17 @@ export interface PlanePoint {
   y: number;
 }
 
-/** Degrees counter-clockwise from the right-hand edge (270° is nearest the viewer); radius in table radii. */
-export function planePoint(angle: number, radius: number): PlanePoint {
-  const a = (angle * Math.PI) / 180;
-  return { x: round2(50 + 50 * radius * Math.cos(a)), y: round2(50 - 50 * radius * Math.sin(a)) };
-}
-
-/** Where a seat's avatar sits in the lobby, just outside the rim. */
-export const SEAT_UI_RADIUS = 1.08;
-
 const SEAT_ANGLES: Record<number, readonly number[]> = { 1: [270], 2: [270, 90], 3: [270, 150, 30] };
 
+/** A seat's direction from the table's middle: degrees counter-clockwise from the right-hand edge (270° is mine). */
 export interface SeatSpot {
   angle: number;
-  ui: PlanePoint;
 }
 
-/** Seat spots for 1–3 players in turn order, starting with the viewer's seat at 270° (the lobby's chairs). */
+/** Seat spots for 1–3 players in turn order, starting with the viewer's seat at 270°. Where each stands is layout.ts's. */
 export function seatLayout(playerCount: number): SeatSpot[] {
   const n = Math.min(3, Math.max(1, Math.trunc(playerCount)));
-  return SEAT_ANGLES[n]!.map((angle) => ({ angle, ui: planePoint(angle, SEAT_UI_RADIUS) }));
+  return SEAT_ANGLES[n]!.map((angle) => ({ angle }));
 }
 
 export interface SeatPlace {
