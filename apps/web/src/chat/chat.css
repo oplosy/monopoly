@@ -19,3 +19,73 @@
 .chat-form { display: flex; gap: 0.4rem; }
 .chat-form input { flex: 1; min-width: 0; }
 .chat-form button { border-radius: 999px; padding: 0.4rem 0.9rem; }
+
+/* The corner button: beside the gear (tabletop.css .hud), the same wood. */
+.chat-button {
+  position: absolute;
+  top: 12px;
+  right: calc(12px + 52px + 10px);
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid #3b2410;
+  background: var(--wood-dark);
+  color: var(--gold);
+  box-shadow: 0 4px 0 #3b2410, 0 8px 16px rgb(0 0 0 / 0.35);
+  pointer-events: auto;
+}
+.chat-button svg { width: 24px; height: 24px; }
+.chat-button.is-open { border-color: var(--gold); }
+.chat-button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.chat-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #d93a2b;
+  color: #fff;
+  font: 800 12px/20px var(--font-num);
+}
+/* The sheet: the game log's place and look (tabletop.css .log-drawer). */
+.chat-sheet {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 25;
+  width: min(22rem, 100cqw);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--paper);
+  box-shadow: -8px 0 24px rgb(0 0 0 / 0.3);
+  pointer-events: auto;
+}
+.chat-sheet .chat-thread { flex: 1; }
+/* A new line beside its sender's seat (stage px: it is part of the seat). */
+.chat-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 320px;
+  padding: 8px 14px;
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.4);
+  pointer-events: none;
+}

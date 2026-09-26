@@ -50,10 +50,10 @@
   pointer-events: none;
 }
 .calib-panel {
-  /* Beside the gear, in the top right corner: two short rows, clear of the seats below. */
+  /* Left of the gear and the chat button, in the top right corner: two short rows, clear of the seats below. */
   position: absolute;
   top: 12px;
-  right: calc(12px + 52px + 10px);
+  right: calc(12px + 2 * 52px + 20px);
   z-index: 60;
   display: grid;
   grid-template-columns: auto auto;

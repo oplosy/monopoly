@@ -27,10 +27,12 @@ interface Props {
   playsLeft: number | null;
   /** The timer ring, when this player is on the clock. */
   clock?: ReactNode;
+  /** A chat line just sent by this player, shown beside the seat for a moment. */
+  bubble?: string;
 }
 
 /** A player at the table (flat UI): ribbon, character, hand badge, timer ring. A button while they are a target. */
-export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, handCount, playsLeft, clock }: Props) {
+export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, handCount, playsLeft, clock, bubble }: Props) {
   const at = useProjected(anchor);
   const pick = useTableInteraction().player(playerId);
   // While cards fly to or from this hand, the badge and the back fan still show them where they were.
@@ -71,6 +73,11 @@ export function Seat({ playerId, name, avatar, anchor, isMe, active, connected, 
       {!connected && <span className="tag warn">offline</span>}
       {!isMe && shown > 0 && <BackFan count={shown} anchor={`hand:${playerId}`} />}
       {playsLeft !== null && <Pips left={playsLeft} />}
+      {bubble && (
+        <span className="chat-bubble" aria-live="polite">
+          {bubble}
+        </span>
+      )}
     </div>
   );
 }

@@ -2,6 +2,9 @@ import { autoPayment, legalIntentsForView, waitingOnView, type Intent, type Inte
 import type { GameStatePayload } from '@deal-city/protocol';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
 import { useAmbience } from '../audio/audio-context';
+import { useChatBubbles } from '../chat/bubbles';
+import { ChatButton } from '../chat/ChatButton';
+import { ChatSheet } from '../chat/ChatSheet';
 import { MotionStage } from '../motion/MotionStage';
 import { useStage, useStaged, useStageEffect } from '../motion/stage-context';
 import { moveOptions, playBlocker, playOptions, type PlayKind, type PlayOption } from '../game/choices';
@@ -50,7 +53,7 @@ import './tabletop.css';
 import '../motion/motion.css';
 
 /** Clicks inside these never count as clicking the empty table. */
-const INTERACTIVE = 'button, input, label, [role="dialog"], .tray, .log-drawer, .hud';
+const INTERACTIVE = 'button, input, label, [role="dialog"], .tray, .log-drawer, .chat-sheet, .hud';
 
 /** The game table: the felt table with everyone's cards, my hand, the seats and the HUD. */
 export function Tabletop() {
@@ -81,6 +84,10 @@ function GameTable({ game }: { game: GameStatePayload }) {
   const names = useGameStore((s) => s.names);
   const log = useGameStore((s) => s.log);
   const sendIntent = useGameStore((s) => s.sendIntent);
+  const chat = useGameStore((s) => s.chat);
+  const chatUnread = useGameStore((s) => s.chatUnread);
+  const sendChat = useGameStore((s) => s.sendChat);
+  const markChatRead = useGameStore((s) => s.markChatRead);
   const inspect = useInspect();
   const stage = useStage();
   const busy = useStaged((s) => s.busy);
@@ -94,6 +101,8 @@ function GameTable({ game }: { game: GameStatePayload }) {
   const { view, deadlines } = game;
   const legal = useMemo(() => legalIntentsForView(view), [view]);
   const [logOpen, setLogOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const bubbles = useChatBubbles(chat, view.me, chatOpen);
   const [selected, setSelected] = useState<Selection>(null);
   const [aim, setAim] = useState<Aim | null>(null);
   /** A card dropped where several plays fit: its popover opens at the drop point. */
@@ -128,6 +137,7 @@ function GameTable({ game }: { game: GameStatePayload }) {
       inspect.hide();
       cancel();
       setLogOpen(false);
+      setChatOpen(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -365,6 +375,7 @@ function GameTable({ game }: { game: GameStatePayload }) {
                     handCount={handCount}
                     playsLeft={playerId === view.me && myTurn && view.turn.phase === 'play' ? view.turn.playsLeft : null}
                     clock={clockFor(playerId)}
+                    bubble={bubbles[playerId]}
                   />
                 );
               })}
@@ -373,9 +384,25 @@ function GameTable({ game }: { game: GameStatePayload }) {
             <div className="stage-ui" style={uiStyle}>
               {popover}
               {drag.state && <DragGhost key={drag.state.card} drag={drag} />}
-              <Hud code={room?.code ?? ''} logOpen={logOpen} onToggleLog={() => setLogOpen((open) => !open)} />
+              <Hud
+                code={room?.code ?? ''}
+                logOpen={logOpen}
+                onToggleLog={() => {
+                  setChatOpen(false);
+                  setLogOpen((open) => !open);
+                }}
+              />
+              <ChatButton
+                unread={chatUnread}
+                open={chatOpen}
+                onToggle={() => {
+                  setLogOpen(false);
+                  setChatOpen((open) => !open);
+                }}
+              />
               {calib && <CalibrationPanel felt={felt} />}
               {logOpen && <LogDrawer entries={log} names={names} onClose={() => setLogOpen(false)} />}
+              {chatOpen && <ChatSheet messages={chat} me={view.me} onSend={sendChat} onRead={markChatRead} onClose={() => setChatOpen(false)} />}
               {view.winner && (
                 <GameOverStage
                   view={view}
