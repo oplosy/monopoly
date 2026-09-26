@@ -1,6 +1,7 @@
 # Deal City: table layout, camera and card feel (design, Plans 10–12)
 
 **Date:** 2026-09-25
+**Superseded in part:** the tilted table, its perspective and the per-window layout modes (§3–5) are replaced by the 1920×1080 video stage, `2026-09-26-video-stage-design.md`.
 **Status:** Approved in conversation; written spec awaiting the user's review.
 **Parent spec:** `2026-09-24-table-redesign-design.md` (Plans 6–8, merged). This spec is an addendum: where the two disagree, this one wins for the sections it names in §11. The painted-scene addendum `2026-09-25-scene-art-design.md` (Plan 9, PR #10) is **on hold**: its art returns in a later phase, after this spec's plans.
 
