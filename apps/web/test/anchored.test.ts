@@ -71,6 +71,28 @@ describe('placeBeside, keeping clear of boxes to avoid (my table, the seats)', (
   });
 });
 
+describe('placeBeside keeps its place', () => {
+  const anchor = box(660, 700, 120, 168);
+  // Above and right of the card each cover about 100 × 100 px; left, lifted and the corner are walled off.
+  const above = box(590, 508, 100, 100);
+  const walls = [box(590, 0, 260, 500), box(388, 694, 260, 180), box(1172, 712, 260, 180)];
+  // A breathing seat on the right: a little smaller, then a little larger than what lies above.
+  const seat = (grow: number) => box(792, 694, 100 + grow, 100);
+
+  it('stays where it is while another place is only a little clearer', () => {
+    const first = placeBeside(anchor, size, desktop, 12, [above, seat(-4), ...walls]);
+    expect(first.side).toBe('right');
+    expect(placeBeside(anchor, size, desktop, 12, [above, seat(4), ...walls], first)).toEqual(first);
+    // The card it answers breathes too (a target): the tray follows it, on the same side.
+    expect(placeBeside(box(659, 699, 122, 170), size, desktop, 12, [above, seat(4), ...walls], first).side).toBe('right');
+  });
+
+  it('moves when another place is clearly better', () => {
+    const first = placeBeside(anchor, size, desktop, 12, [above, seat(-4), ...walls]);
+    expect(placeBeside(anchor, size, desktop, 12, [above, seat(80), ...walls], first).side).toBe('above');
+  });
+});
+
 describe('placeStage', () => {
   const view = { width: 1000, height: 800 };
   const piles: Box = { left: 400, top: 300, right: 600, bottom: 400 };

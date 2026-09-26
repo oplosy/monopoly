@@ -34,7 +34,8 @@ const overlaps = (a: Box, b: Box) => a.left < b.right && b.left < a.right && a.t
  * else to its right, to its left, or below. The box always stays MARGIN px inside the viewport.
  * With boxes to `avoid` (my table, the seats), the first place clear of them wins: above, right,
  * left, then lifted above what it would cover, then the bottom right corner; if none is clear, the
- * one that covers least.
+ * one that covers least. With `current` (where it stands now), it stays unless another place covers clearly
+ * less: an animated box it avoids (a breathing seat) must not make it hop between two near-equal places.
  */
 export function placeBeside(
   anchor: Box,
@@ -42,6 +43,7 @@ export function placeBeside(
   viewport: { width: number; height: number },
   gap = 12,
   avoid: readonly Box[] = [],
+  current?: Placement,
 ): Placement {
   const plain = besideAnchor(anchor, size, viewport, gap);
   if (avoid.length === 0) return plain;
@@ -63,7 +65,12 @@ export function placeBeside(
   // The first place that covers nothing, else the one that covers least (the first of equals).
   const places = [above, right, left, lifted, corner].filter(inView);
   if (places.length === 0) return plain;
-  return places.reduce((best, p) => (covered(p) < covered(best) ? p : best));
+  const best = places.reduce((b, p) => (covered(p) < covered(b) ? p : b));
+  // The place it stands in now, moved by at most a few px (the anchor may breathe too).
+  const still = current && places.find((p) => Math.abs(p.left - current.left) <= 8 && Math.abs(p.top - current.top) <= 8);
+  // "Clearly less": by more than a tenth of the box's own area.
+  if (still && covered(still) <= covered(best) + 0.1 * size.width * size.height) return still;
+  return best;
 }
 
 /**
@@ -126,8 +133,10 @@ export function useAnchoredPosition(anchor: AnchorLike | null, ref: RefObject<HT
     if (!el || !anchor) return;
     const measure = () => {
       const box = el.getBoundingClientRect();
-      const next = placeBeside(anchor.getBoundingClientRect(), { width: box.width, height: box.height }, { width: window.innerWidth, height: window.innerHeight }, 12, avoid?.());
-      setPlace((p) => (p.left === next.left && p.top === next.top && p.side === next.side ? p : next));
+      setPlace((p) => {
+        const next = placeBeside(anchor.getBoundingClientRect(), { width: box.width, height: box.height }, { width: window.innerWidth, height: window.innerHeight }, 12, avoid?.(), p);
+        return p.left === next.left && p.top === next.top && p.side === next.side ? p : next;
+      });
     };
     measure();
     // The selected hand card lifts with a CSS transition on its list item, not on the card itself:
