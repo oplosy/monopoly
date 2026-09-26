@@ -24,7 +24,7 @@ The UI layers sit over the stage's box on the screen, unscaled. Words and button
 
 ## 4. Sizes
 
-Hand card 224×314 stage px, a quarter tucked below the stage's edge; it rests below the felt. The table card is 103 px: the far tables, the piles and my table share 80 % of the felt's half height, each holding a pair at full size. A crowded tableau tightens, then shrinks to 78 % (fitTableau). At 1366×768 that is a 159 px hand card and a 73 px table card.
+Hand card 224×314 stage px, a quarter tucked below the stage's edge; it rests below the felt. The table card is 95 px: the far tables, the piles and my table share 80 % of the felt's half height, each holding a pair, and the card is 92 % of the largest that allows (the user asked for a touch smaller). A crowded tableau tightens, then shrinks to 78 % (fitTableau). At 1366×768 that is a 159 px hand card and a 68 px table card.
 
 ## 5. Sitting on the table
 

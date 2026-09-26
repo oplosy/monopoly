@@ -71,6 +71,8 @@ const PILES_GAP = 0.3;
 const FAR_GAP = 28;
 /** A zone must hold a card and one band of the card behind it (a pair), in card heights (1 + 0.3 / 1.4). */
 const ZONE_CARDS = 1.7 / CARD_RATIO;
+/** Table cards a touch under the largest the rows allow: the felt keeps some open cloth around them. */
+const TABLE_CARD = 0.92;
 /** The wooden rail around the felt, in px: the seats stand beyond it. */
 const RAIL = 48;
 const AVATAR = 96;
@@ -102,7 +104,7 @@ export function tableLayout(players: number, felt: Felt = FELT): TableLayout {
 
   // 2. The table card: the far tables, the piles and my table share the felt's height, each table holding a pair.
   const reach = felt.ry * REACH;
-  const cardW = Math.floor(clamp(64, reach / (PILES.h / 2 + PILES_GAP + ZONE_CARDS * CARD_RATIO), 140));
+  const cardW = Math.floor(clamp(64, TABLE_CARD * (reach / (PILES.h / 2 + PILES_GAP + ZONE_CARDS * CARD_RATIO)), 140));
   const card = { w: cardW, h: Math.round(cardW * CARD_RATIO) };
   const cardFloor = Math.round(cardW * 0.78);
 

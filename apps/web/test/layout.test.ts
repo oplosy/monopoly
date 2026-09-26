@@ -81,11 +81,12 @@ describe('tableLayout', () => {
     }
   });
 
-  it('sizes the cards large: a hand card over 220 px and a table card over 100 px on the 1920×1080 stage', () => {
+  it('sizes the cards: a hand card over 220 px and a table card a touch under 100 px on the 1920×1080 stage', () => {
     const L = tableLayout(3, FELT);
     expect(L.hand.w).toBeGreaterThanOrEqual(220);
     expect(L.hand.h).toBe(Math.round(L.hand.w * 1.4));
-    expect(L.card.w).toBeGreaterThanOrEqual(100);
+    expect(L.card.w).toBeGreaterThanOrEqual(92);
+    expect(L.card.w).toBeLessThanOrEqual(96);
     expect(L.card.h).toBe(Math.round(L.card.w * 1.4));
     expect(L.cardFloor).toBeLessThanOrEqual(L.card.w);
     expect(L.cardFloor).toBeGreaterThanOrEqual(Math.round(L.card.w * 0.75));
