@@ -1,8 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { ACTIONS, CARDS, COLOR_KEYS, COLORS, type ActionKind, type Color } from '@deal-city/engine';
+import { ACTIONS, CARDS, COLOR_KEYS, COLORS, rentRuleText, type ActionKind, type Color } from '@deal-city/engine';
 import { CardFace } from '../src/cards/CardFace';
-import { ACTION_FAMILY, contrast, FAMILY_COLORS, PAPER } from '../src/cards/theme';
+import { RULE_WRAP, TITLE_WRAP, wrapLines } from '../src/cards/text';
+import { ACTION_FAMILY, contrast, FAMILY_COLORS, mixHex, PAPER } from '../src/cards/theme';
 
 interface Text {
   content: string;
@@ -18,7 +19,7 @@ function texts(id: string): Text[] {
   return [...html.matchAll(/<text([^>]*)>([^<]*)<\/text>/g)].map(([, attrs, content]) => {
     const attr = (name: string) => new RegExp(`${name}="([^"]*)"`).exec(attrs!)?.[1];
     return {
-      content: content!,
+      content: content!.replace(/&#x27;/g, "'").replace(/&amp;/g, '&'),
       fill: attr('fill') ?? '#000000',
       opacity: Number(attr('opacity') ?? 1),
       fontSize: Number(attr('font-size')),
@@ -51,9 +52,41 @@ describe('card text contrast (WCAG AA)', () => {
     expect(readable(label, mix(COLORS[color].hex, PAPER, 0.2))).toBeGreaterThanOrEqual(needed(label));
   });
 
-  it.each(Object.keys(ACTIONS) as ActionKind[])('the %s action band label is readable', (kind) => {
-    const label = texts(firstCard((c) => c.type === 'action' && c.action === kind)).find((t) => t.content === 'ACTION')!;
-    expect(readable(label, FAMILY_COLORS[ACTION_FAMILY[kind]].band)).toBeGreaterThanOrEqual(needed(label));
+  /** One card of each action kind, with the color its face is painted in. */
+  const playCards: [string, string, string, string][] = [
+    ...(Object.keys(ACTIONS) as ActionKind[]).map((kind) => {
+      const id = firstCard((c) => c.type === 'action' && c.action === kind);
+      return [kind, id, FAMILY_COLORS[ACTION_FAMILY[kind]], ACTIONS[kind].name] as [string, string, string, string];
+    }),
+  ];
+  /** Paper text is measured on the lightest stop of the gradient, the worst case. */
+  const lightest = (color: string) => mixHex(color, '#FFFFFF', 0.18);
+
+  it.each(playCards)('the %s name is readable on the lightest stop', (_, id, color, name) => {
+    const all = texts(id);
+    for (const line of wrapLines(name.toUpperCase(), TITLE_WRAP)) {
+      const t = all.find((x) => x.content === line);
+      expect(t, line).toBeDefined();
+      expect(readable(t!, lightest(color)), line).toBeGreaterThanOrEqual(needed(t!));
+    }
+  });
+
+  it.each(playCards)('the %s rule is readable on its panel', (_, id, color) => {
+    const card = CARDS.find((c) => c.id === id)!;
+    const rule = card.type === 'action' ? ACTIONS[card.action].text : rentRuleText(card as Extract<typeof card, { type: 'rent' }>);
+    const panel = mix('#000000', lightest(color), 0.2);
+    const all = texts(id);
+    for (const line of wrapLines(rule, RULE_WRAP)) {
+      const t = all.find((x) => x.content === line);
+      expect(t, line).toBeDefined();
+      expect(readable(t!, panel), line).toBeGreaterThanOrEqual(needed(t!));
+    }
+  });
+
+  it.each(playCards)('the %s value is readable on its badge', (_, id) => {
+    const card = CARDS.find((c) => c.id === id)!;
+    const t = texts(id).find((x) => x.content === `${card.value}M`)!;
+    expect(readable(t, PAPER)).toBeGreaterThanOrEqual(needed(t));
   });
 
   it('two-color wildcard names are readable on their bands', () => {

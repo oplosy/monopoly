@@ -1,6 +1,7 @@
 import { useId, type ReactNode, type SVGProps } from 'react';
 import { COLORS, type CardDef, type Color } from '@deal-city/engine';
-import { FONT_DISPLAY, FONT_NUM, INK, MUTED, PAPER } from './theme';
+import { RULE_WRAP, TITLE_WRAP, round2, wrapLines } from './text';
+import { FONT_DISPLAY, FONT_NUM, FONT_TITLE, INK, MUTED, PAPER, mixHex } from './theme';
 
 export const W = 250;
 export const H = 350;
@@ -18,8 +19,22 @@ export function useSvgId(prefix: string): string {
   return `${prefix}-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 }
 
-/** The card canvas: rounded clip, paper background, ink border, accessible name. */
-export function CardSvg({ label, className, children }: { label: string; className?: string; children: ReactNode }) {
+/** The card canvas: rounded clip, a background (paper by default), a border (ink by default), accessible name. */
+export function CardSvg({
+  label,
+  className,
+  children,
+  background = PAPER,
+  border = INK,
+  defs,
+}: {
+  label: string;
+  className?: string;
+  children: ReactNode;
+  background?: string;
+  border?: string;
+  defs?: ReactNode;
+}) {
   const clipId = useSvgId('card-clip');
   return (
     <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label} className={className} xmlns="http://www.w3.org/2000/svg">
@@ -28,12 +43,13 @@ export function CardSvg({ label, className, children }: { label: string; classNa
         <clipPath id={clipId}>
           <rect width={W} height={H} rx={14} />
         </clipPath>
+        {defs}
       </defs>
       <g clipPath={`url(#${clipId})`}>
-        <rect width={W} height={H} fill={PAPER} />
+        <rect width={W} height={H} fill={background} />
         {children}
       </g>
-      <rect x={1} y={1} width={W - 2} height={H - 2} rx={13} fill="none" stroke={INK} strokeWidth={2} />
+      <rect x={1} y={1} width={W - 2} height={H - 2} rx={13} fill="none" stroke={border} strokeWidth={2} />
     </svg>
   );
 }
@@ -108,5 +124,70 @@ export function RentLadder({ color, x, y, width, rowHeight, fontSize = 15 }: { c
         );
       })}
     </g>
+  );
+}
+
+/** Where a play card's icon or wheel sits: a paper disc in the middle of the card. */
+export const MEDALLION = { cx: 125, cy: 150, r: 68 } as const;
+
+const PANEL = { x: 16, y: 244, width: 218, height: 90 } as const;
+
+/**
+ * An action or rent card (spec 2026-09-26-card-type-legibility D2, D3): the whole card in `color`, and top to bottom
+ * the value, the name, the medallion holding `children`, and the rule.
+ */
+export function PlayCard({
+  label,
+  className,
+  color,
+  value,
+  name,
+  rule,
+  children,
+}: {
+  label: string;
+  className?: string;
+  color: string;
+  value: number;
+  name: string;
+  rule: string;
+  children: ReactNode;
+}) {
+  const gradientId = useSvgId('play-fill');
+  const title = wrapLines(name.toUpperCase(), TITLE_WRAP);
+  const two = title.length > 1;
+  const rules = wrapLines(rule, RULE_WRAP);
+  const panelMid = PANEL.y + PANEL.height / 2;
+  return (
+    <CardSvg
+      label={label}
+      className={className}
+      background={`url(#${gradientId})`}
+      border={mixHex(color, '#000000', 0.3)}
+      defs={
+        <linearGradient id={gradientId} x1={0} y1={0} x2={1} y2={1}>
+          <stop offset={0} stopColor={mixHex(color, '#FFFFFF', 0.18)} />
+          <stop offset={1} stopColor={mixHex(color, '#000000', 0.22)} />
+        </linearGradient>
+      }
+    >
+      {title.map((line, i) => (
+        <text key={i} x={128} y={two ? 28 + i * 25 : 36} textAnchor="middle" dominantBaseline="central" fontFamily={FONT_TITLE} fontWeight={700} fontSize={two ? 22 : 24} fill={PAPER}>
+          {line}
+        </text>
+      ))}
+      <circle cx={32} cy={32} r={19} fill={PAPER} />
+      <text x={32} y={32} textAnchor="middle" dominantBaseline="central" fontFamily={FONT_NUM} fontWeight={700} fontSize={15} fill={mixHex(color, '#000000', 0.2)}>
+        {`${value}M`}
+      </text>
+      <circle cx={MEDALLION.cx} cy={MEDALLION.cy} r={MEDALLION.r} fill={PAPER} />
+      {children}
+      <rect x={PANEL.x} y={PANEL.y} width={PANEL.width} height={PANEL.height} rx={12} fill="#000000" fillOpacity={0.2} />
+      {rules.map((line, i) => (
+        <text key={i} x={W / 2} y={round2(panelMid + (i - (rules.length - 1) / 2) * 16)} textAnchor="middle" dominantBaseline="central" fontFamily={FONT_DISPLAY} fontSize={13} fill={PAPER}>
+          {line}
+        </text>
+      ))}
+    </CardSvg>
   );
 }

@@ -21,6 +21,7 @@ export function round2(n: number): number {
 
 /** Character budgets per text box (checked against every card's text by tests). */
 export const NAME_WRAP = 14;
-export const TITLE_WRAP = 13;
-export const EFFECT_WRAP = 28;
-export const RENT_WRAP = 30;
+/** A play card's name, upper-cased: at most two lines (spec 2026-09-26-card-type-legibility D3). */
+export const TITLE_WRAP = 9;
+/** A play card's rule in its panel: at most four lines. */
+export const RULE_WRAP = 30;
