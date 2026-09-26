@@ -124,7 +124,7 @@ export function tableLayout(players: number, felt: Felt = FELT): TableLayout {
   const avatar = AVATAR;
   const leftX = Math.round((felt.cx - felt.rx - RAIL) / 2);
   const rightX = Math.round((felt.cx + felt.rx + RAIL + STAGE.w) / 2);
-  const farY = Math.round(felt.cy - reach * 0.5);
+  const farY = Math.round(felt.cy - reach * 0.4);
   const handTop = STAGE.h - (hand.h - hand.rest);
   const myY = Math.round(Math.min(felt.cy + reach * 0.55, handTop - avatar - 24));
   const ui = (x: number, y: number): PlanePoint => ({ x: pctX(x), y: pctY(y) });

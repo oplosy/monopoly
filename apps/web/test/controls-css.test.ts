@@ -22,7 +22,8 @@ describe('a round End turn with its clock (D5)', () => {
     const end = rule(table, '.end-turn');
     expect(end).toMatch(/--end:\s*136px/);
     expect(end).toMatch(/width:\s*var\(--end\)/);
-    expect(end).toMatch(/right:\s*calc\(var\(--hand-reserve\) \/ 2 - var\(--end\) \/ 2\)/);
+    // Beside my hand's right end, inside the edges the window shows.
+    expect(end).toMatch(/right:\s*calc\(var\(--crop-x, 0px\) \+ var\(--hand-reserve\) \/ 2 - var\(--end\) \/ 2\)/);
     expect(rule(table, '.end-turn-button')).toMatch(/border-radius:\s*50%/);
   });
 

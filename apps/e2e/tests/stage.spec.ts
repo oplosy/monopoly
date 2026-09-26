@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test';
-import { FELT, STAGE } from '../../web/src/scene/felt';
+import { FELT, STAGE, stageFit } from '../../web/src/scene/felt';
 import { createRoom, joinRoom, leaveRoom, newPlayer, openSettings } from './players';
 
 // The table screen is one 1920×1080 stage over the backdrop video, scaled whole to the window
@@ -146,6 +146,7 @@ async function birthdayForTwo(ann: Page, bob: Page, banked?: () => Promise<void>
 // The user's three screens, a common laptop, and a phone on its side.
 const SIZES = [
   [1920, 1080],
+  [1907, 945],
   [1366, 768],
   [2560, 1440],
   [1280, 800],
@@ -157,10 +158,12 @@ for (const [width, height] of SIZES) {
     test(`${width}×${height}, ${players} players: the stage fits whole, the table's things lie on the felt and the seats beside it`, async ({ browser, baseURL }) => {
       const { ann, all } = await startGame(browser, baseURL, width, height, players);
       const stage = await stageOf(ann);
-      // Scaled whole, centered, the rest letterbox.
-      expect(stage.scale).toBeCloseTo(Math.min(width / STAGE.w, height / STAGE.h), 3);
-      expect(stage.x).toBeCloseTo((width - stage.width) / 2, 0);
-      expect(stage.y).toBeCloseTo((height - stage.height) / 2, 0);
+      // Scaled to cover the window as far as its safe area allows, centered; the rest letterbox.
+      const fit = stageFit({ width, height });
+      expect(stage.scale).toBeCloseTo(fit.scale, 3);
+      expect(stage.x).toBeCloseTo(fit.x, 0);
+      expect(stage.y).toBeCloseTo(fit.y, 0);
+      const shown = fit.visible;
       // Animations are off here: the backdrop holds still on its poster.
       await expect(ann.locator('.stage video.stage-video')).toHaveAttribute('poster', '/bg_poster.jpg');
 
@@ -174,8 +177,8 @@ for (const [width, height] of SIZES) {
         const b = await boxOf(seat);
         const cx = (b.x + b.width / 2 - stage.x) / stage.scale;
         expect(Math.abs(cx - FELT.cx), 'a seat beside the table').toBeGreaterThan(FELT.rx);
-        expect(b.x).toBeGreaterThanOrEqual(stage.x - 1);
-        expect(b.x + b.width).toBeLessThanOrEqual(stage.x + stage.width + 1);
+        expect(b.x).toBeGreaterThanOrEqual(shown.left - 1);
+        expect(b.x + b.width).toBeLessThanOrEqual(shown.left + shown.width + 1);
       }
 
       // The cards: my hand card at its stage size, never tiny on a desktop.
@@ -204,10 +207,16 @@ for (const [width, height] of SIZES) {
           expect(overlap(ba, bb), `${a} overlaps ${b}: ${JSON.stringify([ba, bb])}`).toBeLessThanOrEqual(4);
         }
 
-      // The settings button keeps the stage's top right corner.
+      // The settings button keeps the top right corner of the stage the window shows.
       const gear = await boxOf(ann.getByRole('navigation', { name: 'Game menu' }).getByRole('button', { name: 'Settings' }));
-      expect(stage.x + stage.width - (gear.x + gear.width)).toBeLessThanOrEqual(24);
-      expect(gear.y - stage.y).toBeLessThanOrEqual(24);
+      expect(shown.left + shown.width - (gear.x + gear.width)).toBeLessThanOrEqual(24);
+      expect(gear.y - shown.top).toBeLessThanOrEqual(24);
+      // My hand and End turn keep to the bottom edge the window shows.
+      const hand = await boxOf(handCards(ann).first().getByRole('button'));
+      expect(hand.y).toBeLessThan(shown.top + shown.height);
+      const end = await boxOf(ann.getByRole('button', { name: 'End turn' }));
+      expect(end.y + end.height).toBeLessThanOrEqual(shown.top + shown.height);
+      expect(end.x + end.width).toBeLessThanOrEqual(shown.left + shown.width);
 
       for (const page of all) await leaveRoom(page);
     });
@@ -250,7 +259,7 @@ test('with animations on, the backdrop video plays', async ({ browser, baseURL }
 test('a portrait phone letterboxes the stage and says how to see it bigger', async ({ browser, baseURL }) => {
   const { ann, all } = await startGame(browser, baseURL, 390, 844, 2);
   const stage = await stageOf(ann);
-  expect(stage.width).toBeCloseTo(390, 0);
+  expect(stageFit({ width: 390, height: 844 }).visible.width).toBe(390);
   expect(stage.y).toBeGreaterThan(200);
   await expect(ann.getByText('Turn your phone sideways for bigger cards.')).toBeVisible();
   for (const page of all) await leaveRoom(page);

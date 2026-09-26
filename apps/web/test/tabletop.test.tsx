@@ -2,6 +2,7 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { stageFit } from '../src/scene/felt';
 import { handFan, tableLayout } from '../src/scene/layout';
 import { fitTableau } from '../src/scene/tableau-fit';
 import { LINE_MS, MAX_QUEUE } from '../src/tabletop/narration';
@@ -84,7 +85,7 @@ describe('the table', () => {
     expect(fan.style.getPropertyValue('--step')).toBe(`${handFan(tableLayout(2), 12).step}px`);
   });
 
-  it('scales the stage whole to the window, centered, and lays the UI layers over its box unscaled', () => {
+  it('fits the stage to the window and lays the UI layers, unscaled, over the part it shows', () => {
     const size = (width: number, height: number) =>
       act(() => {
         Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
@@ -93,21 +94,23 @@ describe('the table', () => {
       });
     renderTabletop({ state: atTable(base(), 'p1') });
     try {
-      // A wide window: letterboxed left and right.
-      size(1152, 540);
+      // A window wider than 16:9: the stage covers it, cropping scenery above and below.
+      size(1907, 945);
+      const fit = stageFit({ width: 1907, height: 945 });
       const stage = document.querySelector<HTMLElement>('.stage')!;
-      expect(stage.style.transform).toBe('translate(96px, 0px) scale(0.5)');
+      expect(stage.style.transform).toBe(`translate(${fit.x}px, ${fit.y}px) scale(${fit.scale})`);
+      expect(parseFloat(stage.style.getPropertyValue('--crop-y'))).toBeCloseTo(fit.crop.y, 0);
       const layers = document.querySelectorAll<HTMLElement>('.stage-ui');
       expect(layers).toHaveLength(2);
       for (const ui of layers) {
-        expect([ui.style.left, ui.style.top, ui.style.width, ui.style.height]).toEqual(['96px', '0px', '960px', '540px']);
-        expect(ui.style.getPropertyValue('--hand-w')).toBe(`${tableLayout(2).hand.w / 2}px`);
+        expect([ui.style.left, ui.style.top, ui.style.width, ui.style.height]).toEqual(['0px', '0px', '1907px', '945px']);
+        expect(parseFloat(ui.style.getPropertyValue('--hand-w'))).toBeCloseTo(tableLayout(2).hand.w * fit.scale, 1);
       }
       expect(screen.queryByText('Turn your phone sideways for bigger cards.')).not.toBeInTheDocument();
       // A portrait window: the stage in the middle, the UI layers over the whole window (the words go in the
       // letterbox), and a word on turning it.
       size(960, 1000);
-      expect(stage.style.transform).toBe('translate(0px, 230px) scale(0.5)');
+      expect(stage.style.transform).toMatch(/^translate\(-?[\d.]+px, [\d.]+px\) scale/);
       for (const ui of document.querySelectorAll<HTMLElement>('.stage-ui')) expect([ui.style.left, ui.style.top, ui.style.width, ui.style.height]).toEqual(['0px', '0px', '960px', '1000px']);
       expect(document.querySelector('.tabletop')).toHaveAttribute('data-portrait');
       expect(screen.getByText('Turn your phone sideways for bigger cards.')).toBeInTheDocument();

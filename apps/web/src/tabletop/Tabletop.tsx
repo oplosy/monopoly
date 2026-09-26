@@ -10,7 +10,7 @@ import { PaperPage } from '../pages/PaperPage';
 import { seatPlan } from '../scene/geometry';
 import { BackdropVideo } from '../scene/BackdropVideo';
 import { calibrating, CalibrationPanel, FeltOutline, useFeltCalibration } from '../scene/Calibration';
-import { FELT, STAGE, stageFit } from '../scene/felt';
+import { FELT, stageFit } from '../scene/felt';
 import { tableLayout } from '../scene/layout';
 import { LayoutProvider } from '../scene/layout-context';
 import { layoutStyle } from '../scene/layout-style';
@@ -266,9 +266,12 @@ function GameTable({ game }: { game: GameStatePayload }) {
   // A portrait window letterboxes the stage above and below: the UI layers take the whole window, so the words
   // stand in the letterbox (the action in play above the table, the narrator and the trays below it).
   const portrait = viewport.height > viewport.width;
-  const stageBox = { left: fit.x, top: fit.y, width: STAGE.w * fit.scale, height: STAGE.h * fit.scale };
-  const uiStyle = { ...layoutStyle(layout, fit.scale), ...(portrait ? { left: 0, top: 0, width: viewport.width, height: viewport.height } : stageBox) };
-  const rootStyle = { '--stage-top': `${stageBox.top}px`, '--stage-bottom': `${stageBox.top + stageBox.height}px` } as CSSProperties;
+  // Elsewhere they lie over the part of the stage the window shows (it may crop scenery at the edges).
+  const shown = fit.visible;
+  const uiStyle = { ...layoutStyle(layout, fit.scale), ...(portrait ? { left: 0, top: 0, width: viewport.width, height: viewport.height } : shown) };
+  const rootStyle = { '--stage-top': `${shown.top}px`, '--stage-bottom': `${shown.top + shown.height}px` } as CSSProperties;
+  // What the window crops off the stage's edges (stage px): my hand and End turn keep to the edges it shows.
+  const cropStyle = { '--crop-x': `${Math.round(fit.crop.x * 10) / 10}px`, '--crop-y': `${Math.round(fit.crop.y * 10) / 10}px` } as CSSProperties;
 
   const onBackground = (e: MouseEvent<HTMLDivElement>) => {
     if (e.target instanceof Element && e.target.closest(INTERACTIVE)) return;
@@ -315,7 +318,7 @@ function GameTable({ game }: { game: GameStatePayload }) {
             <div
               ref={stageRef}
               className="stage"
-              style={{ ...layoutStyle(layout), transform: `translate(${fit.x}px, ${fit.y}px) scale(${fit.scale})` }}
+              style={{ ...layoutStyle(layout), ...cropStyle, transform: `translate(${fit.x}px, ${fit.y}px) scale(${fit.scale})` }}
             >
               <BackdropVideo />
               {turnPulse && (

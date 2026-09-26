@@ -256,7 +256,8 @@
 .hand-fan {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--hand-rest) * -1);
+  /* Along the bottom edge the window shows (the stage may be cropped there). */
+  bottom: calc(var(--crop-y, 0px) - var(--hand-rest));
   transform: translateX(-50%);
   z-index: 10;
   display: flex;
@@ -304,7 +305,7 @@
 .hand-fan.is-empty {
   position: absolute;
   left: 50%;
-  bottom: 40px;
+  bottom: calc(var(--crop-y, 0px) + 40px);
   transform: translateX(-50%);
   z-index: 10;
   margin: 0;
@@ -419,8 +420,8 @@
   --end: 136px;
   --ring-color: var(--gold);
   position: absolute;
-  right: calc(var(--hand-reserve) / 2 - var(--end) / 2);
-  bottom: calc(var(--hand-w) * 0.5 + 12px);
+  right: calc(var(--crop-x, 0px) + var(--hand-reserve) / 2 - var(--end) / 2);
+  bottom: calc(var(--crop-y, 0px) + var(--hand-w) * 0.5 + 12px);
   z-index: 11;
   width: var(--end);
   height: var(--end);
@@ -632,7 +633,7 @@
 .tray.is-anchored { position: fixed; transform: none; bottom: auto; }
 /* Paying picks cards on my table, not in my hand: the hand tucks down and the tray sits at the bottom,
    so the cards to pay with stay clear at the 22° tilt. */
-.tabletop:has(.pay-tray) .hand-fan { bottom: calc(var(--hand-h) * -0.8); }
+.tabletop:has(.pay-tray) .hand-fan { bottom: calc(var(--crop-y, 0px) - var(--hand-h) * 0.8); }
 .tabletop .pay-tray { bottom: 12px; }
 .tray-title { margin: 0; font-weight: 700; font-size: 0.9rem; }
 /* The pay tray is one compact strip (mockup 05): the meter and the buttons share a row. */
