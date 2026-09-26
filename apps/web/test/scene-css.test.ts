@@ -11,12 +11,13 @@ describe('the plain table (spec 2026-09-25-table-layout §3–4)', () => {
     expect(scene).not.toMatch(/--tilt:\s*(?!22deg)\d+deg/);
   });
 
-  it('lays a felt table with a wooden rim on a plain navy ground', () => {
+  it('lays a felt table in a wooden rail, on a wooden body, on a plain navy ground', () => {
     expect(rule(tokens, ':root')).toMatch(/--bg:\s*#1d3445/);
     expect(rule(tokens, 'body')).toMatch(/background:\s*var\(--bg\)/);
     expect(rule(scene, '.scene-ground')).toMatch(/background:\s*var\(--bg\)/);
-    expect(rule(scene, '.table-felt')).toMatch(/radial-gradient\([^)]*var\(--felt-1\)[^)]*var\(--felt-2\)/);
-    expect(rule(scene, '.table-felt')).toMatch(/var\(--rim\)/);
+    expect(rule(scene, '.table-felt')).toMatch(/radial-gradient\(.*var\(--felt-1\).*var\(--felt-2\)/);
+    expect(rule(scene, '.table-rail')).toMatch(/var\(--wood-1\).*var\(--wood-2\)/s);
+    expect(rule(scene, '.table-edge')).toMatch(/translateZ\(/);
   });
 
   it('keeps no picnic scenery', () => {
@@ -28,7 +29,8 @@ describe('the plain table (spec 2026-09-25-table-layout §3–4)', () => {
     for (const v of ['--plane-w', '--plane-h', '--plane-cx', '--plane-cy']) expect(plane).toContain(`var(${v}`);
     expect(plane).not.toMatch(/translateY/);
     expect(rule(scene, '.scene-perspective')).toMatch(/perspective:\s*var\(--perspective/);
-    expect(rule(scene, '.table-felt')).toMatch(/border-radius:\s*var\(--felt-radius/);
+    expect(rule(scene, '.table-felt')).toMatch(/border-radius:\s*var\(--radius\)/);
+    expect(rule(scene, '.scene')).toMatch(/--radius:\s*var\(--felt-radius/);
   });
 
   it('keeps no hand-tuned plane sizes', () => {

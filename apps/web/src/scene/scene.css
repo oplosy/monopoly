@@ -9,6 +9,13 @@
   inset: 0;
   overflow: hidden;
   --tilt: 22deg;
+  /* The table: a walnut rail and body; the rail's width and the body's thickness follow the plane. */
+  --wood-1: #7b4c2b;
+  --wood-2: #3f2414;
+  --wood-edge: #24150b;
+  --rail: clamp(8px, calc(var(--plane-w) * 0.026), 34px);
+  --thick: clamp(8px, calc(var(--plane-h) * 0.05), 30px);
+  --radius: var(--felt-radius, calc(var(--plane-h) / 2));
 }
 
 .scene-ground { position: absolute; inset: 0; background: var(--bg); }
@@ -33,12 +40,51 @@
   transform-style: preserve-3d;
 }
 
-/* Green felt with a thin wooden rim, and its shadow on the ground: a stadium (round ends, straight sides). */
+/* The table: a felt top in a padded wooden rail, on a wooden body thick enough to show its edge at 22°. All of
+   it is a stadium (round ends, straight sides); the rail and the body lie outside the plane, so the layout's
+   zones keep the whole felt. */
+.table-body { position: absolute; inset: 0; transform-style: preserve-3d; }
+.table-edge,
+.table-rail {
+  position: absolute;
+  inset: calc(var(--rail) * -1);
+  border-radius: calc(var(--radius) + var(--rail));
+}
+/* The body's slices sink below the top; the deepest casts the table's shadow on the ground. */
+.table-edge {
+  background: linear-gradient(var(--wood-edge), color-mix(in srgb, var(--wood-edge) 70%, black));
+  transform: translateZ(calc(var(--thick) * var(--k) / -10));
+}
+.table-edge:nth-child(10) { box-shadow: 0 0 calc(var(--thick) * 2) calc(var(--thick) * 0.6) rgb(0 0 0 / 0.55); }
+/* The rail: lit from above, a highlight along its top edge, rounded down into the felt. */
+.table-rail {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgb(255 255 255 / 0.16), transparent 60%),
+    linear-gradient(var(--wood-1), var(--wood-2));
+  box-shadow:
+    inset 0 2px 0 rgb(255 255 255 / 0.22),
+    inset 0 -2px 3px rgb(0 0 0 / 0.5),
+    0 1px 0 rgb(255 255 255 / 0.06);
+}
+/* The felt: sunk into the rail (its inner shadow), a soft light on its middle, a fine cloth grain, and a
+   stitched line along its edge. */
 .table-felt {
   position: absolute;
   inset: 0;
-  border-radius: var(--felt-radius, calc(var(--plane-h) / 2));
-  background: radial-gradient(ellipse at 50% 40%, var(--felt-1), var(--felt-2) 70%);
-  box-shadow: 0 0 0 calc(var(--plane-w) * 0.012) var(--rim), 0 calc(var(--plane-h) * 0.04) calc(var(--plane-h) * 0.08) rgb(0 0 0 / 0.5);
+  border-radius: var(--radius);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--felt-1) 88%, white), var(--felt-1) 35%, var(--felt-2) 78%);
+  box-shadow:
+    inset 0 0 0 2px rgb(0 0 0 / 0.35),
+    inset 0 calc(var(--plane-h) * 0.02) calc(var(--plane-h) * 0.05) rgb(0 0 0 / 0.45);
+}
+.table-felt::after {
+  content: '';
+  position: absolute;
+  inset: calc(var(--rail) * 0.7);
+  border-radius: calc(var(--radius) - var(--rail) * 0.7);
+  border: 2px dashed rgb(255 255 255 / 0.1);
+  pointer-events: none;
 }
 .plane-anchor { position: absolute; width: 0; height: 0; }
