@@ -7,9 +7,13 @@ import { renderTabletop, sentIntents } from './dom';
 import { atTable, payload, play } from './fixtures';
 import { reduceMotion, stubAnimations } from './motion';
 
+// Motion keeps requestAnimationFrame from the moment it loads: hold it before the imports bring Motion in.
+const frames = await vi.hoisted(async () => (await import('./frames')).holdFrames());
+
 afterEach(() => {
   Reflect.deleteProperty(document, 'elementsFromPoint');
   vi.useRealTimers();
+  frames.release();
 });
 
 /** jsdom has no layout to hit-test: make `el` the only element under every point. */
@@ -218,19 +222,26 @@ describe('drag and drop', () => {
     }
   });
 
+  /** Sweeps a pressed card right, 60 px a frame: the pointer's speed alone turns the ghost. */
+  const sweep = async (card: HTMLElement) => {
+    for (let i = 1; i <= 8; i++) {
+      fireEvent.pointerMove(card, { ...mouse, clientX: 100 + i * 60, clientY: 300 });
+      await act(() => frames.next());
+    }
+  };
+
   it('leans with the pointer only while animations are on', async () => {
     const lean = async () => {
+      frames.take();
       renderTabletop({ state: tableWith(['money-2-1']) });
       under(null);
       const card = handCard(/^2M money/);
       vi.spyOn(card, 'getBoundingClientRect').mockReturnValue(box(80, 560, 100, 140));
       fireEvent.pointerDown(card, { ...mouse, button: 0, clientX: 100, clientY: 600 });
-      for (let i = 1; i <= 8; i++) {
-        fireEvent.pointerMove(card, { ...mouse, clientX: 100 + i * 60, clientY: 300 });
-        await act(() => new Promise((resolve) => setTimeout(resolve, 16)));
-      }
+      await sweep(card);
       const m = /rotate\(([-\d.]+)deg\)/.exec(document.querySelector<HTMLElement>('.drag-ghost')!.style.transform);
       cleanup();
+      frames.release();
       return m ? Math.abs(Number(m[1])) : 0;
     };
     expect(await lean()).toBeGreaterThan(1);
@@ -243,22 +254,21 @@ describe('drag and drop', () => {
   });
 
   it('keeps a dropped card at the lean it had while it waits, so its flight starts from that very turn', async () => {
+    frames.take();
     renderTabletop({ state: tableWith(['wild-red-yellow-1']) });
     under(screen.getByRole('region', { name: 'Your area' }));
     const card = handCard(/^Property wildcard/);
     vi.spyOn(card, 'getBoundingClientRect').mockReturnValue(box(80, 560, 100, 140));
     fireEvent.pointerDown(card, { ...mouse, button: 0, clientX: 100, clientY: 600 });
-    for (let i = 1; i <= 8; i++) {
-      fireEvent.pointerMove(card, { ...mouse, clientX: 100 + i * 60, clientY: 300 });
-      await act(() => new Promise((resolve) => setTimeout(resolve, 16)));
-    }
+    await sweep(card);
     const turnNow = () => Number(/rotate\(([-\d.]+)deg\)/.exec(document.querySelector<HTMLElement>('.drag-ghost')!.style.transform)?.[1] ?? 0);
     // Released mid-sweep over my table, where several plays fit: the card waits there for a choice.
     fireEvent.pointerUp(card, { ...mouse, clientX: 580, clientY: 300 });
     expect(screen.getByRole('dialog', { name: /^Play / })).toBeInTheDocument();
     const dropped = turnNow();
     expect(Math.abs(dropped)).toBeGreaterThan(1);
-    await act(() => new Promise((resolve) => setTimeout(resolve, 200)));
+    // 200 ms of frames with the pointer still: the lean itself settles back upright in that time.
+    for (let t = 0; t < 200; t += 16) await act(() => frames.next());
     expect(turnNow()).toBe(dropped);
   });
 
