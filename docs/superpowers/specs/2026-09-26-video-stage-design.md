@@ -34,6 +34,8 @@ Table cards and the deck cast a contact shadow (`0 8px 18px rgba(0,0,0,.45), 0 2
 
 It is muted, looping and inline, and plays under everything with no pointer events. It holds still on its poster under `prefers-reduced-motion` or with the in-game Animations switch off. It pauses while the tab is hidden. If it cannot load, the poster stays (it is also the stage's background).
 
+The video and poster in `public/` have the generator's corner mark (a translucent sparkle at about 1740, 900) removed. One alpha (0.36) and one colour were fitted for the whole mark from the average of all 480 frames, the blend was undone in every frame (the wicker under it comes back), and a 2–3 px band along the mark's edge was filled from its surroundings. Only a 128 px square was touched, and the frames and the loop are unchanged. The user's originals stay in `Downloads/public`.
+
 ## 6a. Filling the window
 
 A window of another shape is not letterboxed straight away: the stage **covers** it, cropping scenery evenly from both sides, but never past its safe area (`STAGE.safe`: x 72–1848, y 85–995). That keeps the seats beside the table, the felt's rim, and room for my hand below my table. Only beyond that is the stage scaled down to fit and letterboxed (ultra-wide, 4:3, portrait). My hand, End turn and the UI layers follow the edges the window shows (`--crop-x`, `--crop-y`, `fit.visible`). A 1907×945 window loses 64 stage px of floor above and below and shows no bars.
