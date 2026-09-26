@@ -95,8 +95,10 @@ function GameTable({ game }: { game: GameStatePayload }) {
   const role = myRole(view);
   const viewport = useViewport();
   const playerCount = view.players.length;
-  // A tray leaves room above the hand in portrait (layout.ts); the cards keep their size.
-  const trayShown = role !== null;
+  // A tray leaves room above the hand in portrait (layout.ts); the cards keep their size. An answer tray stands
+  // beside my Just Say No instead when I hold one, so it needs no room there.
+  const answersBesideCard = (role?.kind === 'respond' || role?.kind === 'counter') && legal.some((i) => i.type === 'respondJustSayNo');
+  const trayShown = role !== null && !answersBesideCard;
   const layout = useMemo(() => tableLayout(viewport, playerCount, { tray: trayShown }), [viewport, playerCount, trayShown]);
   // Keyed by the action, not the version: another payer finishing must not reset this player's picks.
   const payKey = role?.kind === 'pay' ? `${role.pending.actorId}:${role.pending.cardIds.join(',')}` : '';

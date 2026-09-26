@@ -91,6 +91,15 @@ describe('shakes', () => {
     expect(fast.shakes[0]!.at).toBe(Math.round(fast.flights[0]!.duration / 2));
   });
 
+  it('shakes a big rent when its card reaches the center, and a set complete once its card has landed', () => {
+    const rent = schedule([scene([flight('action')], 0, [{ type: 'bigRent', stamp: '×2' }])], 0);
+    expect(rent.shakes).toEqual([{ at: Math.round(rent.flights[0]!.duration * 0.3), px: SHAKE_PX.bigRent }]);
+    // Sped up, the set's scene starts before the card that completes it has landed: the shake waits for it.
+    const sped = schedule([scene([flight('arc')]), scene([], 0, [{ type: 'setComplete', groupId: 'g1' }])], 2);
+    const [card] = sped.flights;
+    expect(sped.shakes).toEqual([{ at: card!.delay + card!.duration, px: SHAKE_PX.setComplete }]);
+  });
+
   it('shakes with the peaks that are effects', () => {
     const t = schedule([scene([], 0, [{ type: 'setComplete', groupId: 'g1' }]), scene([flight('arc')], 0, [{ type: 'confetti' }])], 0);
     expect(t.shakes.map((s) => s.px)).toEqual([SHAKE_PX.setComplete, SHAKE_PX.confetti]);

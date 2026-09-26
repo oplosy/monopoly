@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { SoundControl } from '../audio/SoundControl';
 import { MotionControl } from '../motion/MotionControl';
 import { LeaveButton } from '../pages/LeaveButton';
@@ -19,6 +19,8 @@ function Gear() {
  */
 export function Hud({ code, logOpen, onToggleLog }: { code: string; logOpen: boolean; onToggleLog(): void }) {
   const navigate = useNavigate();
+  // In the animation lab, leaving restarts the scenario (lab-socket.ts): the page stays.
+  const inLab = useLocation().pathname.startsWith('/lab');
   const [open, setOpen] = useState(false);
   const menu = useRef<HTMLElement>(null);
   const gear = useRef<HTMLButtonElement>(null);
@@ -84,7 +86,10 @@ export function Hud({ code, logOpen, onToggleLog }: { code: string; logOpen: boo
             Game log
           </button>
           {/* The same menu item as Game log, in red: leaving is the one step that cannot be undone. */}
-          <LeaveButton label="Leave game" className="hud-item danger" after={() => navigate('/')} />
+          <LeaveButton label="Leave game" className="hud-item danger" after={() => {
+              if (!inLab) navigate('/');
+            }}
+          />
         </div>
       )}
     </nav>

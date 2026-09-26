@@ -81,6 +81,18 @@ export function sceneLength(scene: Scene, length: (f: Flight) => number = natura
  * Lays a batch's scenes end to end. A batch longer than the budget is sped up to fit it, and a batch
  * with others waiting behind it plays twice as fast; sped-up scenes overlap (spec §7.3).
  */
+/**
+ * When an effect's shake hits: a big rent when its card reaches the center (the action path reads it there, at
+ * 0.3 of its flight); a set complete once the card that completes it has landed, even when a sped-up scene
+ * starts earlier; the rest when the effect starts.
+ */
+function hitAt(type: Effect['type'], at: number, flights: readonly TimedFlight[], landedSoFar: number): number {
+  const action = flights.find((f) => f.flight.style === 'action');
+  if (type === 'bigRent' && action) return action.delay + Math.round(action.duration * 0.3);
+  if (type === 'setComplete') return Math.max(at, landedSoFar);
+  return at;
+}
+
 export function schedule(scenes: readonly Scene[], waiting: number, length: (f: Flight) => number = natural): Timeline {
   const naturalTotal = scenes.reduce((sum, s) => sum + sceneLength(s, length), 0);
   let scale = naturalTotal > BUDGET_MS ? BUDGET_MS / naturalTotal : 1;
@@ -109,7 +121,7 @@ export function schedule(scenes: readonly Scene[], waiting: number, length: (f: 
     for (const effect of scene.effects) {
       const at = Math.round(AT_LANDING.has(effect.type) ? landed : start);
       effects.push({ effect, at });
-      if (effect.type in SHAKE_PX) shakes.push({ at, px: SHAKE_PX[effect.type as keyof typeof SHAKE_PX] });
+      if (effect.type in SHAKE_PX) shakes.push({ at: hitAt(effect.type, at, timed, total), px: SHAKE_PX[effect.type as keyof typeof SHAKE_PX] });
     }
     start += sceneLength(scene, length) * advance;
   }

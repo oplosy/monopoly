@@ -156,9 +156,12 @@ export function useAnchoredPosition(anchor: AnchorLike | null, ref: RefObject<HT
     // transitionend bubbles, so listen on the window and measure again once anything has landed.
     window.addEventListener('transitionend', measure);
     window.addEventListener('resize', measure);
+    // A long hand scrolls sideways under its popover: scroll events do not bubble, so listen in the capture phase.
+    window.addEventListener('scroll', measure, true);
     return () => {
       window.removeEventListener('transitionend', measure);
       window.removeEventListener('resize', measure);
+      window.removeEventListener('scroll', measure, true);
     };
   });
   return place;

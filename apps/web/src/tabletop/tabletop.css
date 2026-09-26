@@ -141,13 +141,13 @@
 }
 .turn-wedge {
   position: absolute;
-  left: 50%;
-  /* Its middle sits --reach card widths from the center (scene/geometry.ts wedgeReach): the ring's inner
-     edge is 0.74 from it, and the wedge is 0.45 tall. */
-  top: calc(var(--card-w) * (0.515 - var(--reach, 0.72)));
-  translate: -50% 0;
-  border-left: calc(var(--card-w) * 0.3) solid transparent;
-  border-right: calc(var(--card-w) * 0.3) solid transparent;
+  /* Its middle sits at (--wx, --wy) card widths from the ring's middle, in the ring's own turned frame
+     (scene/geometry.ts wedgeSpot): in the gap between the piles, or beside them. */
+  left: calc(50% + var(--card-w) * var(--wx, 0));
+  top: calc(50% + var(--card-w) * var(--wy, -0.72));
+  translate: -50% -50%;
+  border-left: calc(var(--card-w) * 0.25) solid transparent;
+  border-right: calc(var(--card-w) * 0.25) solid transparent;
   border-bottom: calc(var(--card-w) * 0.45) solid var(--gold);
   filter: drop-shadow(0 0 6px rgb(255 216 74 / 0.9));
 }
@@ -273,7 +273,8 @@
   max-width: calc(100vw - 2 * var(--hand-reserve));
   overflow-x: auto;
   overflow-y: hidden;
-  padding-top: calc(var(--hand-rest) + var(--hand-h) * 0.15);
+  /* Room for the selected card: it rises by the rest and 8 px, and grows from below by 8 %. */
+  padding-top: calc(var(--hand-rest) + 12px + var(--hand-h) * 0.15);
   pointer-events: none;
   scrollbar-width: thin;
 }

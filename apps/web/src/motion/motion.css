@@ -3,7 +3,9 @@
 
 /* ---------- Effects layer: cards in flight ---------- */
 /* The screen shake moves this wrapper (motion/shake.ts). It holds the table and the flight layer, so
-   clones shake with the cards they land on. */
+   clones shake with the cards they land on. While it shakes, its translate makes it the containing block of
+   every position: fixed child (flights, trays, popovers); it covers the viewport from its top left, so they
+   stay put. Keep it that way: nothing may sit above the table inside it. */
 .stage-shake { position: relative; }
 .flight-layer {
   position: fixed;
@@ -151,8 +153,8 @@
 :root[data-motion='on'] .gameover-actions button:active { scale: 0.96; }
 /* The turn ring swings to the next seat. */
 :root[data-motion='on'] .turn-ring { transition: rotate 0.6s cubic-bezier(0.3, 1.2, 0.5, 1); }
-/* The wedge moves out past the piles, or back into their gap, as the ring turns. */
-:root[data-motion='on'] .turn-wedge { transition: top 0.6s cubic-bezier(0.3, 1.2, 0.5, 1); }
+/* The wedge moves beside the piles, or back into their gap, as the ring turns. */
+:root[data-motion='on'] .turn-wedge { transition: left 0.6s cubic-bezier(0.3, 1.2, 0.5, 1), top 0.6s cubic-bezier(0.3, 1.2, 0.5, 1); }
 @keyframes breathe { 50% { scale: 1.035; } }
 /* My plays are spent: End turn breathes, so the turn plainly waits on it (spec 2026-09-25-table-controls D3). */
 :root[data-motion='on'] .end-turn.is-due { animation: due-breathe 1.8s ease-in-out infinite; }

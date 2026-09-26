@@ -60,41 +60,35 @@ export function discardJitter(cardId: string): { rotate: number; dx: number; dy:
   return { rotate: (h % 31) - 15, dx: ((h >>> 8) % 13) - 6, dy: ((h >>> 16) % 9) - 4 };
 }
 
-/** The deck and the discard pile around the table center, in card widths (y up): side by side, 0.6 apart. */
-const PILES = [
-  { x1: -1.3, x2: -0.3, y1: -0.7, y2: 0.7 },
-  { x1: 0.3, x2: 1.3, y1: -0.7, y2: 0.7 },
-];
 /** The turn wedge's own size, in card widths. */
-const WEDGE = { w: 0.6, h: 0.45 };
-/** Where the wedge sits on the turn ring by default: in the gap between the piles. */
+const WEDGE = { w: 0.5, h: 0.45 };
+/** Where the wedge rests pointing straight up or down: in the gap between the piles, this far from the middle. */
 const WEDGE_REST = 0.72;
-/** Room the wedge keeps from the piles when it moves out past them (the table's tilt blurs an exact fit). */
+/** The piles' outer edge left and right of the middle (card, gap, card: 2.6 card widths). */
+const PILES_EDGE = 1.3;
+/** Room the wedge keeps from the piles beside them (the table's tilt blurs an exact fit). */
 export const WEDGE_CLEAR = 0.1;
 
 /**
- * How far from the table center the turn wedge sits, in card widths, when it points at a seat at
- * `angle` (degrees, y up). Straight up or down it rests in the gap between the piles; toward a side
- * seat it moves out just past the piles, so it never lies over a card (PR #12's deferred minor).
+ * Where the turn wedge's middle sits in the turn ring's own frame: card widths from the ring's middle, x right
+ * and y down, before the ring's `turn` (degrees, clockwise). The ring's turn points the wedge at the seat at
+ * `angle` (degrees, y up). Pointing straight up or down, the wedge rests in the gap between the piles; toward a
+ * side seat it stands beside the piles at their middle height, so it never lies over a pile or reaches the
+ * tables above and below them.
  */
-export function wedgeReach(angle: number): number {
+export function wedgeSpot(angle: number, turn: number): { x: number; y: number } {
   const a = (angle * Math.PI) / 180;
-  // The wedge turns to point at the seat: its box grows with that turn.
-  const turn = ((90 - angle) * Math.PI) / 180;
-  const hx = (WEDGE.w / 2) * Math.abs(Math.cos(turn)) + (WEDGE.h / 2) * Math.abs(Math.sin(turn));
-  const hy = (WEDGE.w / 2) * Math.abs(Math.sin(turn)) + (WEDGE.h / 2) * Math.abs(Math.cos(turn));
-  const over = (reach: number, room: number) => {
-    const cx = reach * Math.cos(a);
-    const cy = reach * Math.sin(a);
-    return PILES.some(
-      (p) => cx - hx < p.x2 + room - 1e-9 && cx + hx > p.x1 - room + 1e-9 && cy - hy < p.y2 + room - 1e-9 && cy + hy > p.y1 - room + 1e-9,
-    );
-  };
-  // Straight up or down, the wedge fits the gap exactly.
-  if (!over(WEDGE_REST, 0)) return WEDGE_REST;
-  let hundredths = Math.round(WEDGE_REST * 100);
-  while (over(hundredths / 100, WEDGE_CLEAR) && hundredths < 400) hundredths += 1;
-  return hundredths / 100;
+  const updown = Math.abs(Math.cos(a)) < 0.05;
+  // The wedge turns to point at the seat: its box is this wide on the table.
+  const r = ((90 - angle) * Math.PI) / 180;
+  const hx = (WEDGE.w / 2) * Math.abs(Math.cos(r)) + (WEDGE.h / 2) * Math.abs(Math.sin(r));
+  // On the screen (y down).
+  const sx = updown ? 0 : Math.sign(Math.cos(a)) * (PILES_EDGE + WEDGE_CLEAR + hx);
+  const sy = updown ? -Math.sign(Math.sin(a)) * WEDGE_REST : 0;
+  // Into the ring's frame: undo its clockwise turn.
+  const t = (turn * Math.PI) / 180;
+  const round = (v: number) => Math.round(v * 1000) / 1000 || 0;
+  return { x: round(sx * Math.cos(t) + sy * Math.sin(t)), y: round(-sx * Math.sin(t) + sy * Math.cos(t)) };
 }
 
 /** Largest angle between the outermost hand cards, in degrees. */
