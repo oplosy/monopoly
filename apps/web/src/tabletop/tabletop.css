@@ -33,6 +33,9 @@
   font-size: calc(var(--card-w) * 0.28);
 }
 .tableau[data-rows='2'] { flex-wrap: wrap; }
+/* A far player's cards lie on the side of their zone that faces the piles, as mine do: the gaps either side of
+   the piles match. */
+.tableau:not(.is-mine) { align-items: flex-end; align-content: flex-end; }
 /* Groups and the bank are the row's items, spaced (or overlapped) by the fit's gap. */
 .tableau-groups { display: contents; }
 .tableau-groups > *,
