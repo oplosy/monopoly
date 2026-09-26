@@ -16,7 +16,32 @@
   user-select: none;
 }
 .voice-button svg { width: 24px; height: 24px; }
-.voice-button.is-live { border-color: #3ddc84; color: #bff5d4; }
+.voice-button.is-live {
+  background: #1f8f4e;
+  border-color: #0f5a2e;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgb(61 220 132 / 0.6), 0 0 20px 6px rgb(61 220 132 / 0.55), 0 4px 0 #0f5a2e;
+}
+.voice-button.is-muted { background: #7a2a22; border-color: #3b0f0b; color: #ffd9d4; box-shadow: 0 4px 0 #3b0f0b, 0 8px 16px rgb(0 0 0 / 0.35); }
+.voice-button.is-ptt { border-color: var(--gold); box-shadow: 0 0 0 3px rgb(255 216 74 / 0.45), 0 4px 0 #3b2410; }
+/* The mode in words, beside the button. */
+.voice-state {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 14px);
+  transform: translateY(-50%);
+  white-space: nowrap;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 2px solid #3b2410;
+  font: 800 13px/1.2 var(--font-display);
+  letter-spacing: 0.01em;
+  pointer-events: none;
+}
+.voice-state.is-live { background: #1f8f4e; border-color: #0f5a2e; color: #fff; }
+.voice-state.is-muted { background: #fbe3df; border-color: #7a2a22; color: #7a2a22; }
+.voice-state.is-ptt { background: var(--paper); border-color: var(--gold); color: #3b2410; }
+.lobby-chat-head .voice-state { left: auto; right: calc(100% + 10px); }
 .voice-button:disabled { opacity: 0.6; }
 .voice-button:focus-visible, .voice-more:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .voice-more {

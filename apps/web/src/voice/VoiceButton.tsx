@@ -29,6 +29,7 @@ export function VoiceButton({ className = '' }: { className?: string }) {
   const voice = useVoiceApi();
   const status = useVoice((s) => s.status);
   const micOn = useVoice((s) => s.micOn);
+  const hasMic = useVoice((s) => s.hasMic);
   const pushToTalk = useVoice((s) => s.pushToTalk);
   const [menu, setMenu] = useState(false);
   const press = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -90,7 +91,7 @@ export function VoiceButton({ className = '' }: { className?: string }) {
     <div ref={root} className={`voice-controls is-on ${className}`}>
       <button
         type="button"
-        className={['voice-button', micOn && 'is-live'].filter(Boolean).join(' ')}
+        className={['voice-button', micOn ? 'is-live' : pushToTalk && hasMic ? 'is-ptt' : 'is-muted'].join(' ')}
         aria-label={pushToTalk ? 'Hold to talk' : 'Microphone'}
         aria-pressed={pushToTalk ? undefined : micOn}
         title={pushToTalk ? 'Hold to talk (or hold V)' : micOn ? 'Microphone on' : 'Microphone off'}
@@ -109,6 +110,10 @@ export function VoiceButton({ className = '' }: { className?: string }) {
       >
         <MicIcon off={!micOn} />
       </button>
+      {/* The mode in words: the colour alone did not say whether the mic is open or waits for V. */}
+      <span className={`voice-state ${micOn ? 'is-live' : pushToTalk && hasMic ? 'is-ptt' : 'is-muted'}`} data-testid="voice-state" aria-hidden="true">
+        {!hasMic ? 'Listening only' : micOn ? (pushToTalk ? 'Talking' : 'Mic on') : pushToTalk ? 'Push-to-talk: hold V' : 'Mic off'}
+      </span>
       <button type="button" className="voice-more" aria-label="Voice options" aria-expanded={menu} onClick={() => setMenu((m) => !m)}>
         ▾
       </button>

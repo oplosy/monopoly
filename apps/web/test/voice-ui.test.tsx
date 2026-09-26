@@ -50,6 +50,24 @@ describe('voice at the table', () => {
     expect(leave).toHaveBeenCalled();
   });
 
+  it('says in words which mode the mic is in', () => {
+    const voice = voiceStore();
+    voice.setState({ status: 'on', hasMic: true, micOn: true });
+    renderTabletop({ state: table(), voice });
+    const mode = () => screen.getByTestId('voice-state');
+    expect(mode()).toHaveTextContent('Mic on');
+    expect(screen.getByRole('button', { name: 'Microphone' })).toHaveClass('is-live');
+    act(() => voice.setState({ micOn: false }));
+    expect(mode()).toHaveTextContent('Mic off');
+    expect(screen.getByRole('button', { name: 'Microphone' })).toHaveClass('is-muted');
+    act(() => voice.setState({ pushToTalk: true }));
+    expect(mode()).toHaveTextContent('Push-to-talk: hold V');
+    act(() => voice.setState({ micOn: true }));
+    expect(mode()).toHaveTextContent('Talking');
+    act(() => voice.setState({ hasMic: false, micOn: false, pushToTalk: false }));
+    expect(mode()).toHaveTextContent('Listening only');
+  });
+
   it('holds to talk under push-to-talk', async () => {
     const voice = voiceStore();
     const talk = vi.fn();
