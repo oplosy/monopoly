@@ -11,7 +11,7 @@ const answer = {
     },
   ],
 };
-const ok = (body: unknown) => vi.fn(async (_url: string | URL | Request, _init?: RequestInit) => new Response(JSON.stringify(body), { status: 201 }));
+const ok = (body: unknown) => vi.fn<typeof fetch>(async () => new Response(JSON.stringify(body), { status: 201 }));
 
 describe('createIceServers', () => {
   it('asks Cloudflare for credentials, drops port 53, and keeps them for 11 hours', async () => {

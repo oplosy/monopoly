@@ -148,6 +148,15 @@ Deal City is played by two or three friends who are not in the same place. For a
   - Each hears the other: the remote audio's level rises above zero.
   - Seats show the talking ring. Closing the mic changes the seat's mark on the other side.
 
+### 4.7 As built (Plan 14)
+
+- **Ack before broadcast:** `voice:join` is acked with the ICE servers before the seat shows as in voice, so the joiner can answer the first offer. A signal from a player not yet seen in voice also opens a connection.
+- **Mic muting:** closing the mic disables its track (`enabled = false`) and never renegotiates.
+- **Voice options:** besides the long press and the right click, a small caret button opens the menu, so a keyboard can reach it.
+- **Rejoin:** the automatic rejoin is keyed to the room code, kept in `sessionStorage` for the tab.
+- **Seat marks:** they show at the table only; the lobby has the voice button beside its chat.
+- **Failed connections:** after the ICE restart, a failed connection is rebuilt once per join, then shows "Could not connect".
+
 ## 5. Out of scope
 
 - Video.

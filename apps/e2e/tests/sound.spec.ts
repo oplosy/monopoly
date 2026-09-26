@@ -33,7 +33,7 @@ test('the sound toggle and the volume are remembered across a reload', async ({ 
   await ann.getByRole('button', { name: 'Start game' }).click();
 
   const settings = await openSettings(ann);
-  const volume = settings.getByRole('slider', { name: 'Volume' });
+  const volume = settings.getByRole('slider', { name: 'Volume', exact: true });
   // From 60 down to 30, in steps of 5, as a keyboard player would.
   for (let i = 0; i < 6; i++) await volume.press('ArrowLeft');
   await ann.reload();
