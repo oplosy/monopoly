@@ -4,7 +4,7 @@ import { CardBack } from '../cards/CardBack';
 import { cardName, plural } from '../game/log';
 import { useAnchor } from '../motion/anchor-context';
 import { CountUp, useCountShift } from '../motion/stage-context';
-import { discardJitter, wedgeReach } from '../scene/geometry';
+import { discardJitter, wedgeSpot } from '../scene/geometry';
 import type { PlaneRect } from '../scene/layout';
 import { dropClass, useDropState } from './drag';
 import { TableCard } from './TableCard';
@@ -29,6 +29,7 @@ export function CenterPiles({ view, at, activeAngle }: { view: GameView; at: Pla
   const target = 90 - (activeAngle ?? 90);
   if (turn.current === null) turn.current = target;
   else turn.current += (((target - turn.current) % 360) + 360) % 360;
+  const wedge = wedgeSpot(activeAngle ?? 90, turn.current);
   return (
     <section
       ref={center}
@@ -40,7 +41,7 @@ export function CenterPiles({ view, at, activeAngle }: { view: GameView; at: Pla
       <div
         className="turn-ring"
         aria-hidden="true"
-        style={{ '--turn': `${turn.current}deg`, '--reach': wedgeReach(activeAngle ?? 90) } as CSSProperties}
+        style={{ '--turn': `${turn.current}deg`, '--wx': wedge.x, '--wy': wedge.y } as CSSProperties}
       >
         {activeAngle !== null && <span className="turn-wedge" />}
       </div>
