@@ -254,7 +254,8 @@
   margin-left: calc(var(--step, calc(var(--hand-w) * 0.62)) - var(--hand-w));
   transform-origin: 50% 160%;
   transform: translateY(var(--drop, 0px)) rotate(var(--rot, 0deg));
-  transition: transform 0.15s ease-out, translate 0.15s ease-out;
+  /* The step glides too: a card more or fewer, or a fan turning into a flat row, closes up smoothly. */
+  transition: transform 0.15s ease-out, translate 0.15s ease-out, margin-left 0.25s ease-out;
 }
 .hand-fan > li:first-child { margin-left: 0; }
 .hand-fan > li:hover,
