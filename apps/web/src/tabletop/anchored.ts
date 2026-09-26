@@ -66,6 +66,45 @@ export function placeBeside(
   return places.reduce((best, p) => (covered(p) < covered(best) ? p : best));
 }
 
+/**
+ * Where the action in play stands, around the deck and the discard pile (`piles`): right of them, level with
+ * their foot; else left of them; else above them; else over them, its foot level with theirs (it is going
+ * there). The first place in view that covers none of `seats` and none of `avoid` (tables, my hand, the HUD)
+ * wins; if none is clear, the one that covers least of the seats, then least of the rest: a seat says who is
+ * playing, so on a tiny table the action would rather lie over the edge of a table card.
+ */
+export function placeStage(
+  piles: Box,
+  size: { width: number; height: number },
+  viewport: { width: number; height: number },
+  avoid: readonly Box[],
+  seats: readonly Box[] = [],
+  gap = 16,
+): { left: number; top: number } {
+  const midX = Math.round((piles.left + piles.right) / 2 - size.width / 2);
+  const foot = Math.round(piles.bottom - size.height);
+  const places = [
+    { left: Math.round(piles.right + gap), top: foot },
+    { left: Math.round(piles.left - gap - size.width), top: foot },
+    { left: midX, top: Math.round(piles.top - gap - size.height) },
+    { left: midX, top: foot },
+  ].map((p) => ({
+    left: clamp(p.left, MARGIN, viewport.width - size.width - MARGIN),
+    top: clamp(p.top, MARGIN, viewport.height - size.height - MARGIN),
+    moved: p,
+  }));
+  const boxOf = (p: { left: number; top: number }): Box => ({ left: p.left, top: p.top, right: p.left + size.width, bottom: p.top + size.height });
+  const area = (a: Box, b: Box) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+  const cover = (boxes: readonly Box[], p: { left: number; top: number }) => boxes.reduce((sum, b) => sum + area(boxOf(p), b), 0);
+  const worse = (a: { left: number; top: number }, b: { left: number; top: number }) =>
+    cover(seats, a) - cover(seats, b) || cover(avoid, a) - cover(avoid, b);
+  // A place that had to be pushed back into view is not beside the piles any more: it only wins if nothing else is clear.
+  const fits = places.filter((p) => p.left === p.moved.left && p.top === p.moved.top);
+  const clear = fits.find((p) => cover(seats, p) === 0 && cover(avoid, p) === 0);
+  const best = clear ?? places.reduce((a, b) => (worse(b, a) < 0 ? b : a));
+  return { left: best.left, top: best.top };
+}
+
 function besideAnchor(anchor: Box, size: { width: number; height: number }, viewport: { width: number; height: number }, gap: number): Placement {
   const centerX = Math.round(clamp((anchor.left + anchor.right) / 2 - size.width / 2, MARGIN, viewport.width - size.width - MARGIN));
   const centerY = Math.round(clamp((anchor.top + anchor.bottom) / 2 - size.height / 2, MARGIN, viewport.height - size.height - MARGIN));

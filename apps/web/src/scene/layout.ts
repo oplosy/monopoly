@@ -129,6 +129,28 @@ export function project(
   return { x: round1(ox + (plane.cx + dx - ox) * s), y: round1((plane.cy + dy * Math.cos(rad(tilt))) * s), s };
 }
 
+/**
+ * The deck and the discard pile's box on the screen, in px: the flat UI that belongs to the table's middle
+ * ("Your turn", the action in play) is placed against it.
+ */
+export function centerOnScreen(layout: Pick<TableLayout, 'plane' | 'perspective' | 'tilt' | 'viewport' | 'center'>): {
+  l: number;
+  t: number;
+  r: number;
+  b: number;
+} {
+  const { x, y, w, h } = layout.center;
+  const corners = [
+    { x, y },
+    { x: x + w, y },
+    { x, y: y + h },
+    { x: x + w, y: y + h },
+  ].map((p) => project(layout, p));
+  const xs = corners.map((c) => c.x);
+  const ys = corners.map((c) => c.y);
+  return { l: Math.min(...xs), t: Math.min(...ys), r: Math.max(...xs), b: Math.max(...ys) };
+}
+
 /** Is plane point `p` (percent) on the felt, `inset` px inside the rim? */
 export function onFelt(layout: Pick<TableLayout, 'plane' | 'radius'>, p: PlanePoint, inset = 0): boolean {
   const { w, h } = layout.plane;

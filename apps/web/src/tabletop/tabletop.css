@@ -338,20 +338,21 @@
 }
 .narrator.is-prompt .narrator-text { background: var(--gold); }
 .narrator button { pointer-events: auto; border-radius: 999px; padding: 0.35rem 0.9rem; }
+/* The action in play stands around the deck and the discard pile, clear of every seat and table: PendingStage
+   measures where (anchored.ts placeStage) and sets left and top. */
 .pending-stage {
   position: absolute;
-  left: 50%;
-  top: calc(2.5vh + 3rem);
-  transform: translateX(-50%);
+  left: 0;
+  top: 0;
   z-index: 14;
   display: grid;
   justify-items: center;
   gap: 0.35rem;
-  max-width: calc(100vw - 2rem);
+  max-width: min(18rem, calc(100vw - 2rem));
   pointer-events: none;
 }
 .pending-cards { display: flex; gap: 0.4rem; }
-.pending-cards .card-svg { width: calc(var(--card-w) * 1.1); height: auto; rotate: -3deg; filter: drop-shadow(0 8px 14px rgb(0 0 0 / 0.4)); }
+.pending-cards .card-svg { width: var(--card-w); height: auto; rotate: -3deg; filter: drop-shadow(0 8px 14px rgb(0 0 0 / 0.4)); }
 .pending-text,
 .pending-wait {
   margin: 0;
@@ -363,9 +364,6 @@
   text-align: center;
 }
 .pending-wait { font-weight: 600; font-size: 0.85rem; }
-/* With 2 players the far seat sits at the top middle, where the action in play stands: the action
-   stands just left of that seat instead, so it never hides who played it. */
-.tabletop.players-2 .pending-stage { left: auto; right: calc(50% + 3.2rem); transform: none; justify-items: end; max-width: calc(50% - 3.2rem - 8px); }
 /* End turn: a round wooden button beside the right end of my hand, lifted off the corner, with my turn's
    seconds inside and its clock around it (spec 2026-09-25-table-controls D5, D6). */
 .end-turn {
@@ -483,10 +481,9 @@
 .sound-control input[type='range'] { width: 7rem; accent-color: var(--gold); }
 /* A thumb's height for the volume slider too. */
 .hud-panel input[type='range'] { min-height: 44px; }
-/* Up to tablet widths, and on short screens, the narrator and the action in play sit below the gear's row. */
+/* Up to tablet widths, and on short screens, the narrator sits below the gear's row. */
 @media (max-width: 1100px), (max-height: 500px) {
   .narrator { top: calc(12px + 44px + 1.2rem); }
-  .pending-stage { top: calc(12px + 44px + 4.2rem); }
 }
 .log-drawer {
   position: absolute;
@@ -510,10 +507,17 @@
 .tabletop[data-layout='portrait'] .end-turn { --end: 104px; right: 24px; bottom: calc(var(--hand-h) - var(--hand-rest) + 24px); }
 .tabletop[data-layout='portrait'][data-compact] .end-turn { --end: 76px; }
 .tabletop[data-layout='portrait'][data-compact] .hud { top: 6px; right: 6px; }
-/* Over the table's middle (the deck and the discard pile), where the plane's center lands on screen: the far
-   seats stand below the gear. */
-.tabletop[data-layout='portrait'] .narrator { top: var(--plane-cy); transform: translate(-50%, -50%); }
-.tabletop[data-layout='portrait'][data-compact] .pending-stage { top: 7.5rem; }
+/* In portrait the narrator speaks from the strip between my table and my hand, between my seat and End turn:
+   the far seats stand below the gear, and the table's middle holds the piles. */
+.tabletop[data-layout='portrait'] .narrator {
+  top: auto;
+  bottom: calc(var(--hand-h) - var(--hand-rest) + 14px);
+  max-width: calc(100vw - 2 * (104px + 32px));
+}
+.tabletop[data-layout='portrait'][data-compact] .narrator { max-width: calc(100vw - 2 * (76px + 32px)); }
+/* A portrait table has no room beside the piles, so the action in play stands over them (it is going there):
+   its words go above its card, into the gap below the far tables. */
+.tabletop[data-layout='portrait'] .pending-cards { order: 2; }
 :root[data-motion='off'] .narrator,
 :root[data-motion='off'] .end-turn-button { transition: none; }
 
@@ -690,9 +694,15 @@
 .tabletop[data-layout='landscape'] .end-turn { --end: 72px; right: max(16px, calc((var(--side) + 16px - var(--end)) / 2)); bottom: 28px; }
 /* The action in play stands at the top middle, between the far seats (which sit at the sides) and below
    nothing; the trays wait at the bottom right (End turn's corner, empty while a tray shows), beside my zone. */
-.tabletop[data-layout='landscape'] .pending-stage,
-.tabletop[data-layout='landscape'].players-2 .pending-stage { left: 50%; right: auto; top: 8px; transform: translateX(-50%); justify-items: center; max-width: min(16rem, calc(var(--plane-w) * 0.5)); }
+
 .tabletop[data-layout='landscape'] .pending-text, .tabletop[data-layout='landscape'] .pending-wait { font-size: 0.8rem; border-radius: 12px; }
+/* A short landscape table: the action in play lies low, its words beside its card. */
+.tabletop[data-layout='landscape'] .pending-stage { grid-template-columns: auto minmax(0, 10rem); align-items: center; justify-items: start; }
+.tabletop[data-layout='landscape'] .pending-cards { grid-row: 1 / span 2; }
+/* The smallest landscape phones leave barely a card's width around the piles: a narrower, smaller stage. */
+.tabletop[data-layout='landscape'][data-compact] .pending-stage { grid-template-columns: auto minmax(0, 7.5rem); }
+.tabletop[data-layout='landscape'][data-compact] .pending-text,
+.tabletop[data-layout='landscape'][data-compact] .pending-wait { font-size: 0.72rem; }
 /* A tray anchored beside my Just Say No card keeps its own place and size. */
 .tabletop[data-layout='landscape'] .tray:not(.is-anchored) { left: auto; right: 8px; bottom: 8px; transform: none; width: min(24rem, max(var(--side), 30vw)); max-width: min(24rem, max(var(--side), 30vw)); padding: 0.6rem 0.7rem; }
 /* Discarding picks cards in my hand: that tray waits above the hand's right end. */

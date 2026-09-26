@@ -36,17 +36,18 @@
 
 /* ---------- Peak moments ---------- */
 .turn-pulse {
+  /* Just above the deck and the discard pile (layout-style.ts), so my cards leave the deck in plain view. */
   position: absolute;
-  left: 50%;
-  top: 42%;
-  transform: translate(-50%, -50%);
+  left: var(--center-x, 50%);
+  top: var(--center-t, 42%);
+  transform: translate(-50%, calc(-100% - 12px));
   z-index: 16;
   margin: 0;
   padding: 0.35em 1.2em;
   border-radius: 999px;
   background: var(--gold);
   color: #3b2a10;
-  font: 800 clamp(1.4rem, 3vw, 2.4rem) var(--font-display);
+  font: 800 clamp(1.2rem, 2.2vw, 1.9rem) var(--font-display);
   box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
   pointer-events: none;
 }

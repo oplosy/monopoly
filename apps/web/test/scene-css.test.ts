@@ -86,9 +86,9 @@ describe('the plain table (spec 2026-09-25-table-layout §3–4)', () => {
     expect(empty).toMatch(/aspect-ratio:\s*5 \/ 7/);
   });
 
-  it('keeps the narrator off the seats: beside the table on landscape phones, over the center in portrait', () => {
+  it('keeps the narrator off the seats: beside the table on landscape phones, above my hand in portrait', () => {
     const table = readCss(new URL('../src/tabletop/tabletop.css', import.meta.url));
     expect(rule(table, ".tabletop[data-layout='landscape'] .narrator")).toMatch(/right:\s*8px/);
-    expect(rule(table, ".tabletop[data-layout='portrait'] .narrator")).toMatch(/top:\s*var\(--plane-cy\)/);
+    expect(rule(table, ".tabletop[data-layout='portrait'] .narrator")).toMatch(/bottom:\s*calc\(var\(--hand-h\) - var\(--hand-rest\)/);
   });
 });
