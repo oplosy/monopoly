@@ -49,7 +49,8 @@
   box-shadow: 0 4px 0 #3b2410, 0 10px 22px rgb(0 0 0 / 0.35);
   font-size: 0.9rem;
 }
-.voice-menu label { display: flex; gap: 0.4rem; align-items: center; }
+.voice-menu label { display: flex; gap: 0.5rem; align-items: center; white-space: nowrap; font-weight: 700; cursor: pointer; }
+.voice-menu input[type='checkbox'] { width: auto; margin: 0; accent-color: #3b2410; }
 .voice-leave { border-radius: 999px; padding: 0.3rem 0.8rem; color: #b3261e; }
 /* At the seat (stage px): a headset mark, a crossed mic while the mic is off, the talking ring, my mute switch. */
 .voice-mark {
@@ -67,8 +68,9 @@
   color: #3b2410;
 }
 .voice-mark svg { width: 18px; height: 18px; }
-.seat.is-talking .avatar-frame { box-shadow: 0 0 0 4px #3ddc84, 0 0 20px 6px rgb(61 220 132 / 0.75); animation: voice-pulse 0.9s ease-in-out infinite alternate; }
-@keyframes voice-pulse { to { box-shadow: 0 0 0 6px #3ddc84, 0 0 28px 10px rgb(61 220 132 / 0.55); } }
+/* An outline, not a shadow: it shows together with the gold glow of the player whose turn it is. */
+.seat.is-talking .avatar-frame { outline: 4px solid #3ddc84; outline-offset: 4px; animation: voice-pulse 0.9s ease-in-out infinite alternate; }
+@keyframes voice-pulse { to { outline-offset: 7px; outline-color: rgb(61 220 132 / 0.6); } }
 :root[data-motion='off'] .seat.is-talking .avatar-frame { animation: none; }
 .voice-mute {
   position: absolute;
