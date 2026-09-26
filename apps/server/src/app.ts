@@ -19,7 +19,14 @@ export async function buildServer(
   app.get('/healthz', async () => ({ ok: true }));
 
   if (config.webDist && existsSync(join(config.webDist, 'index.html'))) {
-    await app.register(fastifyStatic, { root: config.webDist });
+    await app.register(fastifyStatic, {
+      root: config.webDist,
+      // Vite names build files after their content: they never change, so the browser keeps them without asking.
+      // Everything else (the page, the video, the sounds) is checked again, so an update is never missed.
+      setHeaders: (res, path) => {
+        if (/[\\/]assets[\\/]/.test(path)) res.header('cache-control', 'public, max-age=31536000, immutable');
+      },
+    });
     app.setNotFoundHandler((req, reply) =>
       req.method === 'GET' ? reply.sendFile('index.html') : reply.code(404).send({ error: 'notFound' }),
     );

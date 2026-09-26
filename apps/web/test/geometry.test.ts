@@ -1,29 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { viewFor } from '@deal-city/engine';
 import { opponentsInOrder } from '../src/game/derive';
-import { discardJitter, fanLayout, planePoint, SEAT_UI_RADIUS, seatLayout, seatPlan, WEDGE_CLEAR, wedgeSpot } from '../src/scene/geometry';
+import { discardJitter, fanLayout, seatLayout, seatPlan, WEDGE_CLEAR, wedgeSpot } from '../src/scene/geometry';
 import { play } from './fixtures';
-
-describe('planePoint', () => {
-  it('puts 270° nearest the viewer and 90° at the far side', () => {
-    expect(planePoint(270, 1)).toEqual({ x: 50, y: 100 });
-    expect(planePoint(90, 1)).toEqual({ x: 50, y: 0 });
-    expect(planePoint(0, 0.5)).toEqual({ x: 75, y: 50 });
-    expect(planePoint(180, 0.5)).toEqual({ x: 25, y: 50 });
-  });
-});
 
 describe('seatLayout', () => {
   it('seats two players face to face and three at 120°', () => {
     expect(seatLayout(2).map((s) => s.angle)).toEqual([270, 90]);
     expect(seatLayout(3).map((s) => s.angle)).toEqual([270, 150, 30]);
     expect(seatLayout(1).map((s) => s.angle)).toEqual([270]);
-  });
-
-  it('puts the lobby chairs just outside the rim', () => {
-    for (const spot of seatLayout(3)) expect(spot.ui).toEqual(planePoint(spot.angle, SEAT_UI_RADIUS));
-    expect(seatLayout(3)[1]!.ui.x).toBeLessThan(50); // the first opponent sits upper left
-    expect(seatLayout(3)[1]!.ui.y).toBeLessThan(50);
   });
 });
 

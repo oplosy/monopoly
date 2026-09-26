@@ -22,6 +22,8 @@ export interface LabSocket extends SocketLike {
   leave(playerId: string): void;
   /** Called after every change, for the lab's buttons. */
   subscribe(listener: () => void): () => void;
+  /** Connects: the store, already listening, then resumes into the scenario. Again after `close`, it reconnects. */
+  open(): void;
   /** Stops every timer (the page is leaving or restarting). */
   close(): void;
 }
@@ -103,9 +105,6 @@ export function createLabSocket(scenario: Scenario, now: () => number = Date.now
     notify();
   };
 
-  // The store registers its listeners as it is created, then waits for the connection.
-  later(0, () => emit('connect'));
-
   return {
     connected: true,
     on(event, listener) {
@@ -148,6 +147,9 @@ export function createLabSocket(scenario: Scenario, now: () => number = Date.now
       return () => {
         listeners.delete(listener);
       };
+    },
+    open() {
+      later(0, () => emit('connect'));
     },
     close() {
       for (const timer of timers) clearTimeout(timer);
