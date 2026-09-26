@@ -2,6 +2,9 @@
    :root[data-motion='on'], so the in-game Animations switch turns them all off; 'off' keeps only fades. */
 
 /* ---------- Effects layer: cards in flight ---------- */
+/* The screen shake moves this wrapper (motion/shake.ts). It holds the table and the flight layer, so
+   clones shake with the cards they land on. */
+.stage-shake { position: relative; }
 .flight-layer {
   position: fixed;
   inset: 0;
@@ -33,17 +36,18 @@
 
 /* ---------- Peak moments ---------- */
 .turn-pulse {
+  /* Just above the deck and the discard pile (layout-style.ts), so my cards leave the deck in plain view. */
   position: absolute;
-  left: 50%;
-  top: 42%;
-  transform: translate(-50%, -50%);
+  left: var(--center-x, 50%);
+  top: var(--center-t, 42%);
+  transform: translate(-50%, calc(-100% - 12px));
   z-index: 16;
   margin: 0;
   padding: 0.35em 1.2em;
   border-radius: 999px;
   background: var(--gold);
   color: #3b2a10;
-  font: 800 clamp(1.4rem, 3vw, 2.4rem) var(--font-display);
+  font: 800 clamp(1.2rem, 2.2vw, 1.9rem) var(--font-display);
   box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
   pointer-events: none;
 }
@@ -147,9 +151,13 @@
 :root[data-motion='on'] .gameover-actions button:active { scale: 0.96; }
 /* The turn ring swings to the next seat. */
 :root[data-motion='on'] .turn-ring { transition: rotate 0.6s cubic-bezier(0.3, 1.2, 0.5, 1); }
+/* The wedge moves out past the piles, or back into their gap, as the ring turns. */
+:root[data-motion='on'] .turn-wedge { transition: top 0.6s cubic-bezier(0.3, 1.2, 0.5, 1); }
 @keyframes breathe { 50% { scale: 1.035; } }
 /* My plays are spent: End turn breathes, so the turn plainly waits on it (spec 2026-09-25-table-controls D3). */
 :root[data-motion='on'] .end-turn.is-due { animation: due-breathe 1.8s ease-in-out infinite; }
+:root[data-motion='on'] .end-turn-button:hover:not([aria-disabled='true']) { transform: scale(1.06); }
+:root[data-motion='on'] .end-turn-button:hover:not([aria-disabled='true']):active { transform: scale(1.02) translateY(3px); }
 @keyframes due-breathe { 50% { scale: 1.06; } }
 @keyframes tick { from { scale: 0.9; } }
 @keyframes pop-in { from { opacity: 0; scale: 0.85; } }

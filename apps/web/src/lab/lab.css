@@ -1,0 +1,32 @@
+/* The animation lab's panel: small, in the bottom-left corner beside the hand, and it folds away. */
+.lab-panel {
+  position: fixed;
+  left: 8px;
+  bottom: 8px;
+  z-index: 60;
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  width: min(220px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+  padding: 6px;
+  font: 12px/1.3 system-ui, sans-serif;
+  color: #fff;
+  background: rgb(8 14 36 / 0.88);
+  border: 1px solid rgb(255 255 255 / 0.25);
+  border-radius: 10px;
+}
+.lab-panel.is-closed { width: auto; padding: 4px; }
+.lab-panel button,
+.lab-panel select { font: inherit; padding: 2px 6px; }
+.lab-toggle { font-weight: 700; }
+.lab-steps ol { margin: 4px 0 0; padding-left: 16px; }
+.lab-moves { display: flex; flex-wrap: wrap; gap: 3px; }
+.lab-player { display: contents; }
+.lab-error { color: #ffb4a8; margin: 0; }
+.lab-wait { color: #fff; padding: 2rem; }
+/* Phones: the hand fills the bottom, so the panel goes to the top-left corner. */
+@media (max-width: 700px) {
+  .lab-panel { bottom: auto; top: 8px; }
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { placeBeside } from '../src/tabletop/anchored';
+import { placeBeside, placeStage, type Box } from '../src/tabletop/anchored';
 
 const box = (left: number, top: number, width: number, height: number) => ({ left, top, right: left + width, bottom: top + height });
 const desktop = { width: 1440, height: 900 };
@@ -68,5 +68,74 @@ describe('placeBeside, keeping clear of boxes to avoid (my table, the seats)', (
   it('opens above the card, as without boxes, when nothing is clear', () => {
     const everywhere = [box(0, 0, 844, 390)];
     expect(placeBeside(card, tray, landscape, 12, everywhere)).toEqual(placeBeside(card, tray, landscape));
+  });
+});
+
+describe('placeBeside keeps its place', () => {
+  const anchor = box(660, 700, 120, 168);
+  // Above and right of the card each cover about 100 × 100 px; left, lifted and the corner are walled off.
+  const above = box(590, 508, 100, 100);
+  const walls = [box(590, 0, 260, 500), box(388, 694, 260, 180), box(1172, 712, 260, 180)];
+  // A breathing seat on the right: a little smaller, then a little larger than what lies above.
+  const seat = (grow: number) => box(792, 694, 100 + grow, 100);
+
+  it('stays where it is while another place is only a little clearer', () => {
+    const first = placeBeside(anchor, size, desktop, 12, [above, seat(-4), ...walls]);
+    expect(first.side).toBe('right');
+    expect(placeBeside(anchor, size, desktop, 12, [above, seat(4), ...walls], first)).toEqual(first);
+    // The card it answers breathes too (a target): the tray follows it, on the same side.
+    expect(placeBeside(box(659, 699, 122, 170), size, desktop, 12, [above, seat(4), ...walls], first).side).toBe('right');
+  });
+
+  it('moves when another place is clearly better', () => {
+    const first = placeBeside(anchor, size, desktop, 12, [above, seat(-4), ...walls]);
+    expect(placeBeside(anchor, size, desktop, 12, [above, seat(80), ...walls], first).side).toBe('above');
+  });
+});
+
+describe('placeStage', () => {
+  const view = { width: 1000, height: 800 };
+  const piles: Box = { left: 400, top: 300, right: 600, bottom: 400 };
+  const size = { width: 150, height: 180 };
+  const box = (p: { left: number; top: number }): Box => ({ left: p.left, top: p.top, right: p.left + size.width, bottom: p.top + size.height });
+  const clear = (p: { left: number; top: number }, avoid: Box[]) =>
+    avoid.every((b) => box(p).right <= b.left || b.right <= box(p).left || box(p).bottom <= b.top || b.bottom <= box(p).top);
+
+  it('stands right of the piles, level with their foot, when nothing is there', () => {
+    expect(placeStage(piles, size, view, [])).toEqual({ left: 616, top: 220 });
+  });
+
+  it('goes left of the piles when a seat stands on the right', () => {
+    const seat: Box = { left: 700, top: 200, right: 800, bottom: 420 };
+    const p = placeStage(piles, size, view, [seat]);
+    expect(p.left + size.width).toBeLessThanOrEqual(piles.left);
+    expect(clear(p, [seat])).toBe(true);
+  });
+
+  it('would rather cover table cards than any bit of a seat when no place is clear', () => {
+    // A corner of a seat pokes into the place right of the piles; table cards fill every other place.
+    const seat: Box = { left: 700, top: 350, right: 760, bottom: 420 };
+    const cards: Box[] = [
+      { left: 200, top: 200, right: 395, bottom: 420 },
+      { left: 395, top: 100, right: 605, bottom: 290 },
+      { left: 400, top: 300, right: 600, bottom: 400 },
+    ];
+    const p = placeStage(piles, size, view, cards, [seat]);
+    expect(clear(p, [seat])).toBe(true);
+  });
+
+  it('keeps its side while the action lasts, even when a smaller stage would fit the first choice', () => {
+    // Right was taken when the action came, so it stood on the left; a clear right must not pull it across.
+    const left = { left: 400 - 16 - 150, top: 220 };
+    expect(placeStage(piles, size, view, [], [], left)).toEqual(left);
+  });
+
+  it('stands over the piles, its foot level with theirs, when both sides and the space above are taken', () => {
+    const walls: Box[] = [
+      { left: 0, top: 0, right: 395, bottom: 800 },
+      { left: 605, top: 0, right: 1000, bottom: 800 },
+      { left: 395, top: 0, right: 605, bottom: 290 },
+    ];
+    expect(placeStage(piles, { width: 200, height: 100 }, view, walls)).toEqual({ left: 400, top: 300 });
   });
 });

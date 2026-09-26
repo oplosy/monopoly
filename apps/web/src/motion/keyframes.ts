@@ -48,6 +48,8 @@ export interface FlightPath {
   /** The table center, where action cards pause; halfway is used without it. */
   center: Pose | null;
   viewportWidth: number;
+  /** Degrees the card lands turned by (a landing settle, spec 2026-09-25 §6.3). */
+  tilt?: number;
 }
 
 /**
@@ -66,11 +68,11 @@ export function flightKeyframes(path: FlightPath): Keyframe[] {
   return frames.map((f, i) => (i < frames.length - 1 ? { ...f, easing: EASE } : f));
 }
 
-function legs({ from, to, style, center, viewportWidth }: FlightPath): Keyframe[] {
+function legs({ from, to, style, center, viewportWidth, tilt = 0 }: FlightPath): Keyframe[] {
   const start: Keyframe = { transform: poseTransform(from) };
-  const end: Keyframe = { transform: poseTransform(to) };
+  const end: Keyframe = { transform: poseTransform(to, { turn: tilt }) };
   // A small bounce as the card lands.
-  const land: Keyframe = { offset: 0.88, transform: poseTransform(to, { grow: 1.05 }) };
+  const land: Keyframe = { offset: 0.88, transform: poseTransform(to, { grow: 1.05, turn: tilt }) };
   const lift = Math.min(80, Math.max(24, Math.hypot(to.cx - from.cx, to.cy - from.cy) * 0.18));
   const mid = between(from, to);
   const read = readable(center ?? mid, viewportWidth);
@@ -94,7 +96,7 @@ function legs({ from, to, style, center, viewportWidth }: FlightPath): Keyframe[
       return [
         start,
         { offset: 0.15, transform: poseTransform(from, { lift: 40, grow: 1.15 }) },
-        { offset: 0.85, transform: poseTransform(to, { lift: 40, grow: 1.15 }) },
+        { offset: 0.85, transform: poseTransform(to, { lift: 40, grow: 1.15, turn: tilt }) },
         end,
       ];
     case 'flip':

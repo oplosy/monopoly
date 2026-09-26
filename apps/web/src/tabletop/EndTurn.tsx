@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { useSound } from '../audio/audio-context';
 import { secondsLeft, useDrain, useNow } from '../ui/clock';
 import { CRITICAL_SECONDS, LOW_SECONDS } from './TimerRing';
 
@@ -26,13 +27,24 @@ export function EndTurn({ deadline, total, drainKey, due, busy, onEnd }: Props) 
   const seconds = secondsLeft(deadline, now);
   const low = seconds !== null && seconds <= LOW_SECONDS;
   const critical = seconds !== null && seconds <= CRITICAL_SECONDS;
+  const sound = useSound();
   return (
     <div
       className={['end-turn', due && 'is-due', low && 'is-low', critical && 'is-critical', deadline === null && 'is-paused'].filter(Boolean).join(' ')}
       style={{ '--p': (fraction ?? 1).toFixed(3) } as CSSProperties}
     >
       <span className="end-turn-ring" aria-hidden="true" />
-      <button type="button" className="end-turn-button" aria-describedby="end-turn-clock" aria-disabled={busy || undefined} onClick={onEnd}>
+      <button
+        type="button"
+        className="end-turn-button"
+        aria-describedby="end-turn-clock"
+        aria-disabled={busy || undefined}
+        onClick={onEnd}
+        // The same soft tick as a hand card under the mouse.
+        onPointerEnter={(e) => {
+          if (e.pointerType === 'mouse' && !busy) sound('hover');
+        }}
+      >
         End turn
       </button>
       {/* Read as the button's description; drawn as the seconds in its lower half. */}

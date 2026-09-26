@@ -1,11 +1,12 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useSound } from '../audio/audio-context';
 import { useGameStoreApi } from '../store/context';
 import { AnchorProvider } from './anchor-context';
 import { AnchorRegistry } from './anchors';
 import { FlightLayer } from './FlightLayer';
 import { motionMode } from './mode';
-import { settleCards } from './settle';
+import { shakeScene } from './shake';
+import { landCard, landingTilt, settleCards } from './settle';
 import { createStage } from './stage';
 import { StageProvider } from './stage-context';
 
@@ -17,6 +18,7 @@ export function MotionStage({ children }: { children: ReactNode }) {
   const store = useGameStoreApi();
   const [registry] = useState(() => new AnchorRegistry());
   const sound = useSound();
+  const shaker = useRef<HTMLDivElement>(null);
   const [stage] = useState(() =>
     createStage(
       {
@@ -25,6 +27,14 @@ export function MotionStage({ children }: { children: ReactNode }) {
         settle: (before, skip) => settleCards(registry, before, skip),
         // useSound keeps a background tab down to my turn.
         sound,
+        tilt: landingTilt,
+        land: (key, tilt) => {
+          const el = registry.element(key);
+          if (el) landCard(el, tilt);
+        },
+        shake: (px) => {
+          if (shaker.current) shakeScene(shaker.current, px);
+        },
       },
       store.getState().game,
     ),
@@ -48,8 +58,11 @@ export function MotionStage({ children }: { children: ReactNode }) {
   return (
     <AnchorProvider value={registry}>
       <StageProvider value={stage}>
-        {children}
-        <FlightLayer />
+        {/* The screen shake moves the table and the flights together. */}
+        <div ref={shaker} className="stage-shake">
+          {children}
+          <FlightLayer />
+        </div>
       </StageProvider>
     </AnchorProvider>
   );

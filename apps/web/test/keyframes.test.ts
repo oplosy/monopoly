@@ -81,3 +81,10 @@ describe('flightEasing', () => {
     for (const style of ['slide', 'arc', 'flip', 'gather'] as const) expect(flightEasing(style), style).toBe(EASE);
   });
 });
+
+it('lands a tilted flight turned by its tilt', () => {
+  const start = { cx: 0, cy: 0, width: 100, height: 140, rotate: 0 };
+  const end = { cx: 400, cy: 0, width: 100, height: 140, rotate: 5 };
+  const frames = flightKeyframes({ from: start, to: end, style: 'arc', center: null, viewportWidth: 1440, tilt: -2 });
+  expect(frames.at(-1)!.transform).toBe(poseTransform(end, { turn: -2 }));
+});

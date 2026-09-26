@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { AnchorRegistry } from '../src/motion/anchors';
 import type { Pose } from '../src/motion/pose';
-import { settleCards, settleOffset } from '../src/motion/settle';
+import { LAND_MS, landCard, landingTilt, settleCards, settleOffset } from '../src/motion/settle';
+import { shakeKeyframes } from '../src/motion/shake';
 import { stubAnimations } from './motion';
 
 const pose = (cx: number, cy: number): Pose => ({ cx, cy, width: 100, height: 140, rotate: 0 });
@@ -50,4 +51,30 @@ describe('settleCards', () => {
       animations.restore();
     }
   });
+});
+
+describe('landing', () => {
+  it('picks a tilt of 1.5–3° either way', () => {
+    const seq = (...v: number[]) => () => v.shift()!;
+    expect(landingTilt(seq(0, 0.1))).toBe(1.5);
+    expect(landingTilt(seq(0.999, 0.9))).toBe(-3);
+  });
+
+  it('settles a landed card from its tilt on top of its own rotation', () => {
+    const el = document.createElement('div');
+    const animate = vi.fn();
+    el.animate = animate as never;
+    landCard(el, 2.5);
+    const [frames, options] = animate.mock.calls[0]!;
+    expect(frames[0]).toMatchObject({ rotate: '2.5deg' });
+    expect(frames.at(-1)).toMatchObject({ rotate: '0deg' });
+    expect(options).toMatchObject({ duration: LAND_MS, composite: 'add' });
+  });
+});
+
+it('shakes no further than its strength and comes back to rest', () => {
+  const frames = shakeKeyframes(6);
+  const xs = frames.map((f) => Number(String(f.translate).split('px')[0]));
+  expect(Math.max(...xs.map(Math.abs))).toBe(6);
+  expect(frames.at(-1)!.translate).toBe('0px 0px');
 });

@@ -12,6 +12,8 @@ export const routes: RouteObject[] = [
       { path: '/', element: <Home /> },
       { path: '/room/:code', element: <RoomPage /> },
       { path: '/gallery', element: <Gallery /> },
+      // The animation lab (Plan 12): its own chunk, loaded only when opened.
+      { path: '/lab', lazy: async () => ({ Component: (await import('./lab/Lab')).Lab }) },
       { path: '*', element: <NotFound /> },
     ],
   },

@@ -7,7 +7,7 @@ import { AnchorRegistry } from '../src/motion/anchors';
 import { celebrate } from '../src/motion/confetti';
 import { FlightLayer } from '../src/motion/FlightLayer';
 import { StageProvider } from '../src/motion/stage-context';
-import { EFFECT_MS, STYLE_MS } from '../src/motion/timing';
+import { EFFECT_MS, flightMs } from '../src/motion/timing';
 import { PendingStage } from '../src/tabletop/PendingStage';
 import { Tableau } from '../src/tabletop/Tableau';
 import { TimerRing } from '../src/tabletop/TimerRing';
@@ -176,10 +176,12 @@ describe('peak moments', () => {
       const cards = () => [...document.querySelectorAll<HTMLElement>('.gameover-card')];
       expect(cards()).toHaveLength(7);
       expect(cards().every((c) => c.style.visibility === 'hidden')).toBe(true);
-      act(() => vi.advanceTimersByTime(STYLE_MS.arc));
+      // jsdom measures every pose at 0, 0: each flight has the length of a distance of 0.
+      const arc = flightMs('arc', 0);
+      act(() => vi.advanceTimersByTime(arc));
       expect(celebrate).not.toHaveBeenCalled();
       // The sets land in the banner (seven cards, 60 ms apart), then the confetti flies (plan decision 9).
-      act(() => vi.advanceTimersByTime(6 * 60 + STYLE_MS.arc - 1));
+      act(() => vi.advanceTimersByTime(6 * 60 + arc - 1));
       expect(celebrate).not.toHaveBeenCalled();
       act(() => vi.advanceTimersByTime(1));
       expect(cards().some((c) => c.style.visibility === 'hidden')).toBe(false);

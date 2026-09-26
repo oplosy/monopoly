@@ -5,11 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MotionMode } from '../src/motion/mode';
 import { DRAW_STAGGER } from '../src/motion/planner';
 import type { Pose } from '../src/motion/pose';
+import type { FlightStyle } from '../src/motion/scenes';
 import { createStage, MAX_CLONES, type Stage } from '../src/motion/stage';
-import { EFFECT_MS, STYLE_MS } from '../src/motion/timing';
+import { EFFECT_MS, flightMs, SHAKE_PX, STYLE_MS } from '../src/motion/timing';
 import { payload } from './fixtures';
 
 const pose = (cx: number, cy: number): Pose => ({ cx, cy, width: 100, height: 140, rotate: 0 });
+/** A flight's length when the fake poses put both its ends at the same spot (its distance is 0). */
+const still = (style: FlightStyle): number => flightMs(style, 0);
 
 /** Poses before a change (snapshot) and after it (measure); any other key is at `fallback`, or missing. */
 function fakePoses(before: Record<string, Pose> = {}, after: Record<string, Pose> = {}, fallback: Pose | null = null) {
@@ -50,6 +53,58 @@ beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
 
 describe('createStage', () => {
+  it('shakes the table when a set completes, never after a snap, never with motion off', () => {
+    const s0 = makeState({ players: [{ id: 'p1', hand: ['prop-brown-2'], groups: [{ color: 'brown', cards: ['prop-brown-1'] }] }, { id: 'p2' }] });
+    const shake = vi.fn();
+    const poses = fakePoses({}, {}, pose(0, 0));
+    const stage = createStage({ poses, mode: () => 'fly', settle: vi.fn(), shake }, payload(s0, 'p1'));
+    const { game } = next(s0, 'p1', { type: 'playProperty', card: 'prop-brown-2', color: 'brown' });
+    show(stage, game);
+    vi.runAllTimers();
+    expect(shake).toHaveBeenCalledWith(SHAKE_PX.setComplete);
+
+    shake.mockClear();
+    const again = createStage({ poses, mode: () => 'fly', settle: vi.fn(), shake }, payload(s0, 'p1'));
+    show(again, game);
+    again.snap();
+    vi.runAllTimers();
+    expect(shake).not.toHaveBeenCalled();
+
+    const off = createStage({ poses, mode: () => 'instant', settle: vi.fn(), shake }, payload(s0, 'p1'));
+    show(off, game);
+    vi.runAllTimers();
+    expect(shake).not.toHaveBeenCalled();
+  });
+
+  it('lands a revealed card with the tilt its clone carries, and nothing lands with motion off', () => {
+    const s0 = banker();
+    const poses = fakePoses({ 'card:money-1-1': pose(0, 0) }, { 'card:money-1-1': pose(480, 0) });
+    const land = vi.fn();
+    const stage = createStage({ poses, mode: () => 'fly', settle: vi.fn(), tilt: () => 2.5, land }, payload(s0, 'p1'));
+    const { game } = next(s0, 'p1', { type: 'playToBank', card: 'money-1-1' });
+    show(stage, game);
+    const clone = stage.getState().clones[0]!;
+    expect(clone.tilt).toBe(2.5);
+    vi.advanceTimersByTime(clone.delay + clone.duration);
+    expect(land).toHaveBeenCalledWith('card:money-1-1', 2.5);
+
+    const off = vi.fn();
+    const instant = createStage({ poses, mode: () => 'instant', settle: vi.fn(), tilt: () => 2.5, land: off }, payload(s0, 'p1'));
+    show(instant, game);
+    vi.runAllTimers();
+    expect(off).not.toHaveBeenCalled();
+  });
+
+  it('gives a flight the length of its distance', () => {
+    const s0 = banker();
+    const poses = fakePoses({ 'card:money-1-1': pose(0, 0) }, { 'card:money-1-1': pose(960, 0) });
+    const { stage } = setup(payload(s0, 'p1'), { poses });
+    const { game } = next(s0, 'p1', { type: 'playToBank', card: 'money-1-1' });
+    show(stage, game);
+    const clone = stage.getState().clones[0]!;
+    expect(clone.duration).toBe(flightMs(clone.style, 960));
+  });
+
   it('shows the first payload at once, with nothing to play', () => {
     const { stage } = setup(null);
     const game = payload(banker(), 'p1');
@@ -72,10 +127,10 @@ describe('createStage', () => {
     stage.committed(game);
     expect(settle).toHaveBeenCalledWith(new Map([['card:money-1-1', pose(10, 10)]]), new Set(['card:money-1-1']));
     expect(stage.getState().clones).toMatchObject([
-      { card: 'money-1-1', face: 'up', style: 'arc', from: pose(10, 10), to: pose(50, 50), delay: 0, duration: STYLE_MS.arc },
+      { card: 'money-1-1', face: 'up', style: 'arc', from: pose(10, 10), to: pose(50, 50), delay: 0, duration: flightMs('arc', Math.hypot(40, 40)) },
     ]);
 
-    vi.advanceTimersByTime(STYLE_MS.arc);
+    vi.advanceTimersByTime(flightMs('arc', Math.hypot(40, 40)));
     expect(stage.getState()).toMatchObject({ busy: false, clones: [] });
     expect(stage.getState().hidden.size).toBe(0);
   });
@@ -124,11 +179,11 @@ describe('createStage', () => {
     show(stage, b.game);
     show(stage, c.game);
     expect(stage.getState().clones.map((cl) => cl.card)).toEqual(['money-1-1']);
-    vi.advanceTimersByTime(STYLE_MS.arc);
-    expect(stage.getState().clones).toMatchObject([{ card: 'money-1-2', duration: STYLE_MS.arc / 2 }]);
-    vi.advanceTimersByTime(STYLE_MS.arc / 2);
-    expect(stage.getState().clones).toMatchObject([{ card: 'money-1-3', duration: STYLE_MS.arc }]);
-    vi.advanceTimersByTime(STYLE_MS.arc);
+    vi.advanceTimersByTime(still('arc'));
+    expect(stage.getState().clones).toMatchObject([{ card: 'money-1-2', duration: Math.round(still('arc') / 2) }]);
+    vi.advanceTimersByTime(Math.round(still('arc') / 2));
+    expect(stage.getState().clones).toMatchObject([{ card: 'money-1-3', duration: still('arc') }]);
+    vi.advanceTimersByTime(still('arc'));
     expect(stage.getState().busy).toBe(false);
   });
 
@@ -265,8 +320,8 @@ describe('createStage', () => {
     show(stage, payload(r.state, 'p1', { events: r.events }));
     expect(stage.getState().clones.map((c) => c.card)).not.toContain('money-3-2');
     // The first card lands; the 13th (leaving 50 ms apart) has not left yet, and now gets a clone.
-    vi.advanceTimersByTime(STYLE_MS.slide);
-    expect(stage.getState().clones).toContainEqual(expect.objectContaining({ card: 'money-3-2', delay: 12 * 50 - STYLE_MS.slide }));
+    vi.advanceTimersByTime(still('slide'));
+    expect(stage.getState().clones).toContainEqual(expect.objectContaining({ card: 'money-3-2', delay: 12 * 50 - still('slide') }));
     expect(stage.getState().clones.length).toBeLessThanOrEqual(MAX_CLONES);
   });
 
@@ -274,7 +329,7 @@ describe('createStage', () => {
     const s0 = banker();
     const { stage, sound } = setup(payload(s0, 'p1'));
     show(stage, next(s0, 'p1', { type: 'playToBank', card: 'money-1-1' }).game);
-    vi.advanceTimersByTime(STYLE_MS.arc - 1);
+    vi.advanceTimersByTime(still('arc') - 1);
     expect(sound).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1);
     expect(sound.mock.calls).toEqual([['coin']]);

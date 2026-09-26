@@ -83,7 +83,8 @@ export function Hud({ code, logOpen, onToggleLog }: { code: string; logOpen: boo
           <button type="button" className="hud-item" aria-expanded={logOpen} onClick={openLog}>
             Game log
           </button>
-          <LeaveButton label="Leave game" after={() => navigate('/')} />
+          {/* The same menu item as Game log, in red: leaving is the one step that cannot be undone. */}
+          <LeaveButton label="Leave game" className="hud-item danger" after={() => navigate('/')} />
         </div>
       )}
     </nav>

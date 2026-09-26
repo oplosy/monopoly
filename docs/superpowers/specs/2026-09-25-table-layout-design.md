@@ -278,6 +278,51 @@ Durations are tuned to the new distances in pixels, and landings get a small set
 
 For each animation, a CDP screencast is recorded and a strip of frames is shown to the user; glitches are fixed test-first. The queue rules (parent §7.3) stay.
 
+### 6.4 As built (Plan 12)
+
+- **The animation lab (`/lab`).** It shows the real table on a rigged game and needs no server.
+  - A local socket (`lab/lab-socket.ts`) runs the engine and feeds the real store.
+  - Seven scenarios (`lab/scenarios.ts`): your turn, rent and payments, steals, Just Say No, opponents' moves, the peaks (timer, leaving, winning), and the reshuffle.
+  - A small panel (bottom left; top left on phones; it folds away) picks the scenario, restarts it, and moves the other players.
+  - Computer players answer by themselves only while an action waits on them (after 900 ms); their own turns are the panel's buttons. Players listed in `manual` answer only by button, which is how the Just Say No chain is played.
+  - The lab is a lazy route (its own chunk), so the e2e suite, which serves the production build, uses it too. It uses `makeState` from `@deal-city/engine/testing`.
+  - The user watched every animation there, and the review frame strips were recorded from it with a scratch Playwright script (not committed).
+- **Flight lengths follow the distance.** A flight lasts its style's length × `clamp(√(distance / 480 px), 0.75, 1.3)`. Paths that pause (`action`, `slam`, `float`) keep their fixed length. The stage measures both ends before it schedules the batch, so sounds, effects and reveals stay on the same clock.
+- **Landing settle.** A card that lands on the table (not a `gather` back) lands turned by 1.5–3°, either way. When its clone lands, the real card takes over at that same tilt and settles to 0 in 340 ms with a small overshoot. The settle uses `composite: 'add'` on `rotate`, so a bank note or a discard keeps its own angle. There is no tilt when a card appears without a flight.
+- **Screen shake.** The strength depends on the moment:
+
+  | Moment | Shake |
+  |---|---|
+  | Deal Breaker's last card lands | 8 px |
+  | A Just Say No slams (halfway through its flight) | 6 px |
+  | Winning | 5 px |
+  | Big rent | 4 px |
+  | Set complete | 2 px |
+
+  The shake runs on the stage's clock, so a snapped or skipped batch never shakes the table, and it never happens with animations off. A wrapper around the table and the flight layer shakes both together.
+- **The turn wedge stays off the piles.** `wedgeReach(angle)` (`scene/geometry.ts`) sets how far the wedge sits from the center:
+  - pointing straight up or down, it rests in the gap between the deck and the discard pile (as before);
+  - toward a side seat, it moves just past the piles, with 0.1 card widths of room for the tilt.
+
+  The ring keeps its size and its always-forward turn, and the wedge's reach changes with the turn.
+- **Found in the review and fixed** (asked by the user):
+  - **"Your turn" sat over the deck** just as my draws left it. It now stands above the piles. The layout gives the piles' box on the screen (`centerOnScreen`, `--center-*`).
+  - **The action in play covered the far players' table cards.** It is now placed by measuring (`placeStage`): right of the piles, level with their foot; else left of them; else above them; else over them. It avoids the seats first, then the table cards, my hand, the menu and End turn. On the smallest landscape phone (568×320, 3 players) no place is clear, and it covers the edge of a table card rather than a seat.
+  - **The portrait narrator covered the deck.** It now speaks from the strip between my table and my hand. It keeps quiet while a tray (answer, pay, discard) is open in that strip.
+  - **The action in play keeps its side while the action lasts:** answers coming in shrink or grow it, and it must not jump across the piles (found in the final review).
+  - **A growing hand jumped from a fan to a flat row.** The step between cards now glides (0.25 s).
+  - **An answer tray hopped between two places** every half second on phones: a breathing seat and a breathing card made two near-equal places swap. `placeBeside` now keeps its place (within 8 px) unless another covers clearly less (more than a tenth of its area).
+  - **Leave game** is now the same menu item as Game log, in red.
+  - **Found while building the lab and fixed:** the computer players ended their opponents' turns by themselves.
+- **Rulings:**
+  - the lab panel sits in a corner;
+  - the table remounts per scenario;
+  - queue tests use distance-aware lengths;
+  - the tilt applies only to cards whose clone flew;
+  - the wedge reach replaced the plan's bigger ring;
+  - the action in play is placed by measuring instead of per-mode CSS rules.
+- **Not changed:** the drag lean tests (`test/drag.test.tsx`) are flaky under load on `main` too. A separate task is open for them.
+
 ---
 
 ## 7. What is removed or kept

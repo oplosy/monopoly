@@ -38,7 +38,7 @@ function Flight({ clone }: { clone: Clone }) {
     const easing = flightEasing(clone.style);
     const timing: KeyframeAnimationOptions = { duration: clone.duration, delay: clone.delay, easing, fill: 'both' };
     const path = el.animate(
-      flightKeyframes({ from: clone.from, to: clone.to, style: clone.style, center: clone.center, viewportWidth: window.innerWidth }),
+      flightKeyframes({ from: clone.from, to: clone.to, style: clone.style, center: clone.center, viewportWidth: window.innerWidth, tilt: clone.tilt }),
       timing,
     );
     const turn = clone.face === 'reveal' ? card.current?.animate(revealKeyframes(clone.style), { ...timing, easing: easing === 'linear' ? 'linear' : 'ease-in-out' }) : undefined;

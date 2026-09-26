@@ -129,6 +129,28 @@ export function project(
   return { x: round1(ox + (plane.cx + dx - ox) * s), y: round1((plane.cy + dy * Math.cos(rad(tilt))) * s), s };
 }
 
+/**
+ * The deck and the discard pile's box on the screen, in px: the flat UI that belongs to the table's middle
+ * ("Your turn", the action in play) is placed against it.
+ */
+export function centerOnScreen(layout: Pick<TableLayout, 'plane' | 'perspective' | 'tilt' | 'viewport' | 'center'>): {
+  l: number;
+  t: number;
+  r: number;
+  b: number;
+} {
+  const { x, y, w, h } = layout.center;
+  const corners = [
+    { x, y },
+    { x: x + w, y },
+    { x, y: y + h },
+    { x: x + w, y: y + h },
+  ].map((p) => project(layout, p));
+  const xs = corners.map((c) => c.x);
+  const ys = corners.map((c) => c.y);
+  return { l: Math.min(...xs), t: Math.min(...ys), r: Math.max(...xs), b: Math.max(...ys) };
+}
+
 /** Is plane point `p` (percent) on the felt, `inset` px inside the rim? */
 export function onFelt(layout: Pick<TableLayout, 'plane' | 'radius'>, p: PlanePoint, inset = 0): boolean {
   const { w, h } = layout.plane;
@@ -141,17 +163,29 @@ export function onFelt(layout: Pick<TableLayout, 'plane' | 'radius'>, p: PlanePo
   return Math.hypot(x - cx, y - cy) <= r;
 }
 
+/** Open felt between the piles and the tables above and below them, in table-card widths. */
+const PILES_GAP = 1;
+
 /** The zones on a plane `plane` px big, with the center piles `piles` px big. */
 function zonesFor(mode: LayoutMode, players: number, plane: Size, piles: Size, seatHalf: Size): { seats: SeatSlot[]; center: PlaneRect } {
   const pctX = (px: number) => round1((px / plane.w) * 100);
   const pctY = (px: number) => round1((px / plane.h) * 100);
   const ringW = pctX(piles.w);
   const ringH = pctY(piles.h);
-  const center = { x: round1(50 - ringW / 2), y: round1(50 - ringH / 2), w: ringW, h: ringH };
   const farTop = mode === 'portrait' ? 7 : 6;
-  const farBottom = round1(center.y - 1);
-  const nearTop = round1(center.y + center.h + 1);
-  const nearH = round1((mode === 'portrait' ? 94 : 95) - nearTop);
+  const nearEnd = mode === 'portrait' ? 94 : 95;
+  // The same open felt on both sides of the piles: the far tables face the piles (tabletop.css), as mine do.
+  // The piles move up by that felt, so my zone keeps its place clear of my hand; the far zone gives the room,
+  // down to a card's height. The far side is smaller on screen (the tilt's perspective), so it gets a little
+  // more felt, to look the same.
+  const cardW = piles.w / 2.8;
+  const cardH = pctY(Math.ceil(cardW * 1.4)) + 0.3;
+  const FAR = 1.18;
+  const gap = Math.max(1, Math.min(pctY(Math.round(cardW * PILES_GAP)), (51 - ringH / 2 - farTop - cardH) / (FAR + 1)));
+  const center = { x: round1(50 - ringW / 2), y: round1(50 - ringH / 2 - (gap - 1)), w: ringW, h: ringH };
+  const farBottom = round1(center.y - gap * FAR);
+  const nearTop = round1(center.y + center.h + gap);
+  const nearH = round1(nearEnd - nearTop);
   const farH = round1(farBottom - farTop);
   // Seats sit outside the plane at its sides (desktop, landscape) or above it (portrait).
   const outX = pctX(seatHalf.w + 8);
