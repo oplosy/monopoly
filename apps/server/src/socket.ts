@@ -26,6 +26,8 @@ function handleConnection(socket: IoSocket, rooms: RoomManager, config: Config):
   let session: Session | null = null;
   const conn: Connection = {
     roomState: (state) => socket.emit('room:state', state),
+    chatMessage: (message) => socket.emit('chat:message', message),
+    chatHistory: (messages) => socket.emit('chat:history', messages),
     gameState: (payload) => socket.emit('game:state', payload),
     replaced: () => {
       session = null;

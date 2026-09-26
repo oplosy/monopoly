@@ -3,8 +3,8 @@ import {
   type GameEvent, type GameState, type Intent,
 } from '@deal-city/engine';
 import {
-  AVATAR_COUNT, MAX_SEATS, MIN_PLAYERS,
-  type Ack, type Deadlines, type GameStatePayload, type RoomState, type RoomStatus,
+  AVATAR_COUNT, CHAT_HISTORY, CHAT_MAX_LENGTH, MAX_SEATS, MIN_PLAYERS,
+  type Ack, type ChatMessage, type Deadlines, type GameStatePayload, type RoomState, type RoomStatus,
 } from '@deal-city/protocol';
 import { defaultAvatar } from './avatar';
 import type { Config } from './config';
@@ -18,6 +18,10 @@ export interface Connection {
   gameState(payload: GameStatePayload): void;
   /** Another connection took over this seat. */
   replaced(): void;
+  /** A new chat line in the room. */
+  chatMessage(message: ChatMessage): void;
+  /** The room's recent chat, when this connection takes its seat. */
+  chatHistory(messages: ChatMessage[]): void;
 }
 
 export interface RoomDeps {
@@ -71,6 +75,8 @@ export class Room {
   private turnDeadline: number | null = null;
   private turnTimer: Timer | null = null;
   private responses = new Map<string, ResponseClock>();
+  private chatLog: ChatMessage[] = [];
+  private nextChatId = 1;
 
   constructor(
     readonly code: string,
@@ -101,6 +107,7 @@ export class Room {
     seat.conn = conn;
     this.idleSince = null;
     this.broadcastRoom();
+    conn.chatHistory(this.chatLog);
     if (this.game) conn.gameState(this.payloadFor(playerId, []));
     return true;
   }
@@ -163,6 +170,19 @@ export class Room {
       seat.avatar = avatar;
       this.broadcastRoom();
     }
+    return { ok: true };
+  }
+
+  /** A chat line from a seated player: trimmed, 1 to CHAT_MAX_LENGTH characters, sent to the whole room. */
+  chat(playerId: string, raw: string): Ack {
+    const seat = this.seat(playerId);
+    if (!seat) return { ok: false, error: 'noSession' };
+    const text = raw.trim();
+    if (text.length === 0) return { ok: false, error: 'badRequest' };
+    if ([...text].length > CHAT_MAX_LENGTH) return { ok: false, error: 'tooLong' };
+    const message: ChatMessage = { id: this.nextChatId++, from: playerId, name: seat.nickname, text, at: Date.now() };
+    this.chatLog = [...this.chatLog, message].slice(-CHAT_HISTORY);
+    for (const s of this.seats) s.conn?.chatMessage(message);
     return { ok: true };
   }
 
