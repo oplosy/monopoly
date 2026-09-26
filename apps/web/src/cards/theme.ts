@@ -5,6 +5,7 @@ export const INK = '#1B1B1F';
 export const MUTED = '#6B6760';
 export const FONT_DISPLAY = "'Bricolage Grotesque', 'Arial Narrow', system-ui, sans-serif";
 export const FONT_NUM = "'IBM Plex Mono', ui-monospace, monospace";
+export const FONT_TITLE = "'Kode Mono', ui-monospace, monospace";
 
 /** Money card tints per denomination: panel fill and the darker ink used for its pattern and numerals. */
 export const MONEY_TINTS: Record<number, { fill: string; ink: string }> = {
@@ -31,13 +32,26 @@ export const ACTION_FAMILY: Record<ActionKind, ActionFamily> = {
   hotel: 'build',
 };
 
-export const FAMILY_COLORS: Record<ActionFamily, { band: string; tint: string }> = {
-  steal: { band: '#B3261E', tint: '#F6D9D6' },
-  collect: { band: '#2E7D4F', tint: '#D6EEDD' },
-  defend: { band: '#1F4E9A', tint: '#D5E1F5' },
-  boost: { band: '#C77700', tint: '#FBE7C2' },
-  build: { band: '#0F766E', tint: '#CFEDEA' },
+/** Each action family's color: the whole card is painted in it (spec 2026-09-26-card-type-legibility D2, D5). */
+export const FAMILY_COLORS: Record<ActionFamily, string> = {
+  steal: '#B3261E',
+  collect: '#2E7D4F',
+  defend: '#1F4E9A',
+  boost: '#AB6600',
+  build: '#0F766E',
 };
+
+/** Rent cards are painted graphite. */
+export const RENT_COLOR = '#2A2A33';
+
+/** `from` moved a fraction `t` of the way to `to`, as #RRGGBB. */
+export function mixHex(from: string, to: string, t: number): string {
+  const channel = (hex: string, i: number) => parseInt(hex.slice(i, i + 2), 16);
+  return `#${[1, 3, 5]
+    .map((i) => Math.round(channel(from, i) + (channel(to, i) - channel(from, i)) * t).toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase()}`;
+}
 
 function luminance(hex: string): number {
   const channel = (i: number) => {

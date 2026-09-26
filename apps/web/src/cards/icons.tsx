@@ -10,6 +10,23 @@ export interface IconProps {
   color: string;
 }
 
+/** An icon's box in the medallion, before its own scale. */
+export const ICON_SIZE = 84;
+
+/** Per-icon scale, so that all ten read at one size in the medallion (spec 2026-09-26-card-type-legibility D6). */
+export const ICON_SCALE: Record<ActionKind, number> = {
+  dealBreaker: 1,
+  justSayNo: 1,
+  slyDeal: 1,
+  forcedDeal: 1,
+  debtCollector: 1,
+  birthday: 1.15,
+  passGo: 1,
+  house: 1,
+  hotel: 1.15,
+  doubleRent: 1,
+};
+
 /** Each icon is drawn in a 100x100 box with currentColor; PAPER marks cut-out details. */
 function frame(kind: ActionKind, { x, y, size, color }: IconProps, children: ReactNode) {
   return (

@@ -6,7 +6,7 @@ import { CardFace, type CardFaceProps } from '../src/cards/CardFace';
 import { MoneyFace } from '../src/cards/faces/MoneyFace';
 import { slicePath } from '../src/cards/faces/RentFace';
 import { cardLabel } from '../src/cards/labels';
-import { EFFECT_WRAP, NAME_WRAP, RENT_WRAP, TITLE_WRAP, wrapLines } from '../src/cards/text';
+import { NAME_WRAP, RULE_WRAP, TITLE_WRAP, wrapLines } from '../src/cards/text';
 import { MONEY_TINTS } from '../src/cards/theme';
 
 /** React escapes attribute text; mirror it to compare labels. */
@@ -32,6 +32,20 @@ describe('CardFace basics', () => {
     const ids = [...html.matchAll(/<clipPath id="([^"]+)"/g)].map((m) => m[1]);
     expect(ids).toHaveLength(2);
     expect(new Set(ids).size).toBe(2);
+  });
+
+  it('gives each play card its own gradient', () => {
+    const html = renderToStaticMarkup(
+      <>
+        <CardFace id="act-slyDeal-1" />
+        <CardFace id="act-passGo-1" />
+        <CardFace id="act-house-1" />
+      </>,
+    );
+    const ids = [...html.matchAll(/<linearGradient id="([^"]+)"/g)].map((m) => m[1]);
+    expect(ids).toHaveLength(3);
+    expect(new Set(ids).size).toBe(3);
+    for (const id of ids) expect(html).toContain(`fill="url(#${id})"`);
   });
 
   it('throws on unknown card ids', () => {
@@ -127,6 +141,16 @@ describe('RentFace', () => {
     expect(render({ id: 'rent-any-1' })).toContain('One player of your choice');
   });
 
+  it('keeps every slice in the spinning wheel and the hub still, on a graphite card', () => {
+    const html = render({ id: 'rent-any-1' });
+    const wheel = /<g class="rent-wheel">(.*?)<\/g>/.exec(html)?.[1] ?? '';
+    expect(wheel.match(/data-slice=/g)).toHaveLength(10);
+    expect(wheel).not.toContain('>M<');
+    expect(html).toContain('>M<');
+    expect(html).toContain('>RENT<');
+    expect(html).toContain('stop-color="#505058"');
+  });
+
   it('builds pie slices with the right arc flags', () => {
     expect(slicePath(0, 0, 10, 0, Math.PI / 2)).toBe('M0 0 L10 0 A10 10 0 0 1 0 10 Z');
     expect(slicePath(0, 0, 10, 0, (3 * Math.PI) / 2)).toContain('A10 10 0 1 1');
@@ -134,13 +158,22 @@ describe('RentFace', () => {
 });
 
 describe('ActionFace', () => {
-  it('draws every action with its title, icon and effect text', () => {
+  it('draws every action with its value, name on top, icon and rule, and no ACTION label', () => {
     for (const kind of Object.keys(ACTIONS) as ActionKind[]) {
       const html = render({ id: `act-${kind}-1` });
       expect(html).toContain(`data-icon="${kind}"`);
-      for (const line of wrapLines(ACTIONS[kind].name, TITLE_WRAP)) expect(html).toContain(esc(line));
+      for (const line of wrapLines(ACTIONS[kind].name.toUpperCase(), TITLE_WRAP)) expect(html).toContain(`>${esc(line)}<`);
+      for (const line of wrapLines(ACTIONS[kind].text, RULE_WRAP)) expect(html).toContain(`>${esc(line)}<`);
       expect(html).toContain(`>${ACTIONS[kind].value}M<`);
+      expect(html).not.toContain('>ACTION<');
     }
+  });
+
+  it('paints the whole card in its family color, with no paper body', () => {
+    const html = render({ id: 'act-slyDeal-1' });
+    expect(html).toContain('stop-color="#C14D47"');
+    expect(html).toContain('stop-color="#8C1E17"');
+    expect(html).toContain('<rect width="250" height="350" fill="url(#');
   });
 });
 
@@ -181,17 +214,17 @@ describe('the whole deck', () => {
     };
     for (const names of Object.values(PROPERTY_NAMES)) for (const n of names) fits(n, NAME_WRAP, 2);
     for (const a of Object.values(ACTIONS)) {
-      fits(a.name, TITLE_WRAP, 2);
-      fits(a.text, EFFECT_WRAP, 4);
+      fits(a.name.toUpperCase(), TITLE_WRAP, 2);
+      fits(a.text, RULE_WRAP, 4);
     }
-    for (const c of CARDS) if (c.type === 'rent') fits(rentRuleText(c), RENT_WRAP, 4);
+    for (const c of CARDS) if (c.type === 'rent') fits(rentRuleText(c), RULE_WRAP, 4);
   });
 
   it('prints the engine rule text on rent cards', () => {
     for (const c of CARDS) {
       if (c.type !== 'rent') continue;
       const html = render({ id: c.id });
-      for (const line of wrapLines(rentRuleText(c), RENT_WRAP)) expect(html, c.id).toContain(esc(line));
+      for (const line of wrapLines(rentRuleText(c), RULE_WRAP)) expect(html, c.id).toContain(esc(line));
     }
   });
 });

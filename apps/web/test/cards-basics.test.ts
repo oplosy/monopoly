@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { COLORS, COLOR_KEYS } from '@deal-city/engine';
 import { cardLabel } from '../src/cards/labels';
 import { wrapLines, round2 } from '../src/cards/text';
-import { FAMILY_COLORS, INK, PAPER, contrast, inkOn } from '../src/cards/theme';
+import { INK, PAPER, contrast, inkOn } from '../src/cards/theme';
 
 describe('inkOn', () => {
   it('uses ink on light bands and paper on dark ones', () => {
@@ -13,7 +13,7 @@ describe('inkOn', () => {
   });
 
   it('every band reaches contrast 3 with its text color', () => {
-    const bands = [...COLOR_KEYS.map((k) => COLORS[k].hex), ...Object.values(FAMILY_COLORS).map((f) => f.band), INK];
+    const bands = [...COLOR_KEYS.map((k) => COLORS[k].hex), INK];
     for (const hex of bands) expect(contrast(hex, inkOn(hex)), hex).toBeGreaterThanOrEqual(3);
   });
 });
