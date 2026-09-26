@@ -75,8 +75,8 @@ export function placeBeside(
 
 /**
  * Where the action in play stands, around the deck and the discard pile (`piles`): right of them, level with
- * their foot; else left of them; else above them; else over them, its foot level with theirs (it is going
- * there). The first place in view that covers none of `seats` and none of `avoid` (tables, my hand, the HUD)
+ * their foot or with their top; else left of them, the same way; else above them; else over them, its foot level
+ * with theirs (it is going there). The first place in view that covers none of `seats` and none of `avoid` (tables, my hand, the HUD)
  * wins; if none is clear, the one that covers least of the seats, then least of the rest: a seat says who is
  * playing, so on a tiny table the action would rather lie over the edge of a table card. With `current` (where
  * it stands now), it keeps that side while the action lasts unless another place covers clearly less: the stage
@@ -93,9 +93,14 @@ export function placeStage(
 ): { left: number; top: number } {
   const midX = Math.round((piles.left + piles.right) / 2 - size.width / 2);
   const foot = Math.round(piles.bottom - size.height);
+  const head = Math.round(piles.top);
+  const right = Math.round(piles.right + gap);
+  const left = Math.round(piles.left - gap - size.width);
   const places = [
-    { left: Math.round(piles.right + gap), top: foot },
-    { left: Math.round(piles.left - gap - size.width), top: foot },
+    { left: right, top: foot },
+    { left: right, top: head },
+    { left, top: foot },
+    { left, top: head },
     { left: midX, top: Math.round(piles.top - gap - size.height) },
     { left: midX, top: foot },
   ].map((p) => ({
