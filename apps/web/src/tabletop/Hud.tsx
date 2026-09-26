@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router';
 import { SoundControl } from '../audio/SoundControl';
 import { MotionControl } from '../motion/MotionControl';
 import { LeaveButton } from '../pages/LeaveButton';
+import { useHasVoice, useVoice, useVoiceApi } from '../voice/context';
 
 function Gear() {
   return (
@@ -22,6 +23,9 @@ export function Hud({ code, logOpen, onToggleLog }: { code: string; logOpen: boo
   // In the animation lab, leaving restarts the scenario (lab-socket.ts): the page stays.
   const inLab = useLocation().pathname.startsWith('/lab');
   const [open, setOpen] = useState(false);
+  const hasVoice = useHasVoice();
+  const voiceApi = useVoiceApi();
+  const voiceVolume = useVoice((s) => s.volume);
   const menu = useRef<HTMLElement>(null);
   const gear = useRef<HTMLButtonElement>(null);
 
@@ -82,6 +86,23 @@ export function Hud({ code, logOpen, onToggleLog }: { code: string; logOpen: boo
             </span>
             <MotionControl />
           </div>
+          {hasVoice && (
+            <div className="hud-row">
+              <span className="hud-label" aria-hidden="true">
+                Voice chat
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={Math.round(voiceVolume * 100)}
+                aria-label="Voice volume"
+                aria-valuetext={`${Math.round(voiceVolume * 100)}%`}
+                onChange={(e) => voiceApi.getState().setVolume(Number(e.target.value) / 100)}
+              />
+            </div>
+          )}
           <button type="button" className="hud-item" aria-expanded={logOpen} onClick={openLog}>
             Game log
           </button>

@@ -1,0 +1,92 @@
+/* Voice chat (spec 2026-09-26-chat-and-voice §4). The button matches the chat button beside it. */
+.voice-controls { position: relative; display: inline-flex; align-items: flex-end; gap: 2px; }
+.table-voice { position: absolute; top: 12px; left: calc(12px + 52px + 10px); z-index: 20; pointer-events: auto; }
+.voice-button {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid #3b2410;
+  background: var(--wood-dark);
+  color: var(--gold);
+  box-shadow: 0 4px 0 #3b2410, 0 8px 16px rgb(0 0 0 / 0.35);
+  touch-action: none;
+  user-select: none;
+}
+.voice-button svg { width: 24px; height: 24px; }
+.voice-button.is-live { border-color: #3ddc84; color: #bff5d4; }
+.voice-button:disabled { opacity: 0.6; }
+.voice-button:focus-visible, .voice-more:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.voice-more {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid #3b2410;
+  background: var(--gold);
+  color: #3b2410;
+  font-size: 11px;
+  line-height: 1;
+}
+.voice-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 30;
+  display: grid;
+  gap: 0.4rem;
+  min-width: 11rem;
+  padding: 0.6rem 0.7rem;
+  border: 3px solid #3b2410;
+  border-radius: 14px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 4px 0 #3b2410, 0 10px 22px rgb(0 0 0 / 0.35);
+  font-size: 0.9rem;
+}
+.voice-menu label { display: flex; gap: 0.4rem; align-items: center; }
+.voice-leave { border-radius: 999px; padding: 0.3rem 0.8rem; color: #b3261e; }
+/* At the seat (stage px): a headset mark, a crossed mic while the mic is off, the talking ring, my mute switch. */
+.voice-mark {
+  position: absolute;
+  left: -10px;
+  bottom: -6px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #3b2410;
+  background: var(--paper);
+  color: #3b2410;
+}
+.voice-mark svg { width: 18px; height: 18px; }
+.seat.is-talking .avatar-frame { box-shadow: 0 0 0 4px #3ddc84, 0 0 20px 6px rgb(61 220 132 / 0.75); animation: voice-pulse 0.9s ease-in-out infinite alternate; }
+@keyframes voice-pulse { to { box-shadow: 0 0 0 6px #3ddc84, 0 0 28px 10px rgb(61 220 132 / 0.55); } }
+:root[data-motion='off'] .seat.is-talking .avatar-frame { animation: none; }
+.voice-mute {
+  position: absolute;
+  top: -8px;
+  right: -12px;
+  z-index: 3;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid #3b2410;
+  background: var(--paper);
+  color: #3b2410;
+  display: grid;
+  place-items: center;
+}
+.voice-mute[aria-pressed='true'] { background: #d93a2b; color: #fff; }
+.voice-mute svg { width: 18px; height: 18px; }
+.lobby-chat-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.lobby-chat-head .voice-button { width: 44px; height: 44px; box-shadow: 0 3px 0 #3b2410; }
+.lobby-chat-head .voice-menu { left: auto; right: 0; }

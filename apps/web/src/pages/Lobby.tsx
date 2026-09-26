@@ -5,6 +5,8 @@ import { useNavigate, useSearchParams } from 'react-router';
 import { Avatar } from '../avatars/Avatar';
 import { AvatarPicker } from '../avatars/AvatarPicker';
 import { ChatThread } from '../chat/ChatThread';
+import { useHasVoice } from '../voice/context';
+import { VoiceButton } from '../voice/VoiceButton';
 import { TableScene } from '../scene/TableScene';
 import { seatPlan } from '../scene/geometry';
 import { tableLayout } from '../scene/layout';
@@ -30,6 +32,7 @@ export function Lobby({ room }: { room: RoomState }) {
   const chat = useGameStore((s) => s.chat);
   const sendChat = useGameStore((s) => s.sendChat);
   const markChatRead = useGameStore((s) => s.markChatRead);
+  const hasVoice = useHasVoice();
   // The lobby's thread is always open: every line in it is read.
   // Keyed on the newest line, not the count, which stops at 50.
   const newestLine = chat.at(-1)?.id;
@@ -96,7 +99,10 @@ export function Lobby({ room }: { room: RoomState }) {
           </h2>
           {session && <AvatarPicker seats={room.seats} me={me} onPick={(avatar) => void setAvatar(avatar)} />}
           <section className="lobby-chat" aria-label="Chat">
-            <h2>Chat</h2>
+            <div className="lobby-chat-head">
+              <h2>Chat</h2>
+              {hasVoice && <VoiceButton />}
+            </div>
             <ChatThread messages={chat} me={me} onSend={sendChat} />
           </section>
           {isHost ? (
