@@ -42,7 +42,11 @@ export function ChatThread({ messages, me, onSend, autoFocus = false }: Props) {
       <ol ref={list} className="chat-lines" aria-label="Messages">
         {messages.map((m) => (
           <li key={m.id} className={m.from === me ? 'is-mine' : undefined}>
-            <span className="chat-name">{m.name}: </span>
+            {/* The colon keeps "Name: text" for screen readers and copying; the bubble shows the name as a label. */}
+            <span className="chat-name">
+              {m.name}
+              <span className="chat-colon">: </span>
+            </span>
             <span className="chat-text">{m.text}</span>
           </li>
         ))}
