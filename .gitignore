@@ -6,3 +6,6 @@ coverage/
 playwright-report/
 test-results/
 .superpowers/
+
+# The owner's reference images: kept locally, never committed.
+for_table/
