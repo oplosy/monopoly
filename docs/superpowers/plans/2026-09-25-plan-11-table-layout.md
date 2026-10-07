@@ -1,5 +1,7 @@
 # Plan 11: The Table Layout Model and Sizes — Implementation Plan
 
+> **Status: completed and merged to `main`.** Every step below is ticked as done; the per-task commits, tests and rulings live in the git history (the git-ignored `.superpowers/sdd/` ledger was the working record).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Size and place everything on the game table from one pure layout model, so the cards meet the spec §5.3 targets at every viewport and nothing covers the play.
@@ -147,7 +149,7 @@
   - the types `LayoutMode = 'desktop' | 'portrait' | 'landscape'`, `Size { w; h }`, `PlaneRect { x; y; w; h }` (plane percent), `SeatSlot { angle; zone: PlaneRect; ui: PlanePoint }`, and `TableLayout`, with the fields `mode`, `compact`, `viewport: Size`, `hand: Size & { rest }`, `handReserve`, `card: Size`, `cardFloor`, `plane: Size & { cx; cy }`, `radius`, `tilt`, `perspective`, `avatar`, `seats: SeatSlot[]` (mine first) and `center: PlaneRect`
   - the constants `TILT = 22` and `CARD_RATIO = 1.4`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `apps/web/test/layout.test.ts`:
 
@@ -341,12 +343,12 @@ describe('handFan', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm --filter @deal-city/web exec vitest run test/layout.test.ts`
 Expected: FAIL. The module `../src/scene/layout` does not exist.
 
-- [ ] **Step 3: Write the model**
+- [x] **Step 3: Write the model**
 
 `apps/web/src/scene/layout.ts`:
 
@@ -591,7 +593,7 @@ export function handFan(layout: Pick<TableLayout, 'hand' | 'handReserve' | 'view
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web exec vitest run test/layout.test.ts`
 Expected: PASS, all tests. The sweep checks more than 5 000 layouts in well under a second.
@@ -603,7 +605,7 @@ The prototype of this model passed every one of these checks on 2026-09-25. If a
 
 Never loosen a test threshold that comes from the spec.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/scene/layout.ts apps/web/test/layout.test.ts
@@ -625,7 +627,7 @@ git commit -m "feat: add the table layout model" -m "Co-Authored-By: Claude Opus
   - zone, `cardW` and `floorW` are in plane px;
   - `cascade`, `gap` and `bankStep` are in card widths.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `apps/web/test/tableau-fit.test.ts`:
 
@@ -670,12 +672,12 @@ describe('fitTableau', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm --filter @deal-city/web exec vitest run test/tableau-fit.test.ts`
 Expected: FAIL. `../src/scene/tableau-fit` does not exist.
 
-- [ ] **Step 3: Write `fitTableau`**
+- [x] **Step 3: Write `fitTableau`**
 
 `apps/web/src/scene/tableau-fit.ts`:
 
@@ -744,12 +746,12 @@ export function fitTableau(
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web exec vitest run test/tableau-fit.test.ts`
 Expected: PASS, 6 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/scene/tableau-fit.ts apps/web/test/tableau-fit.test.ts
@@ -789,7 +791,7 @@ Tableaus sit in their zone rects, but keep their old inner layout until Task 4.
   - `Tableau`'s prop `zone: PlaneRect` (replaces `at`);
   - `CenterPiles`'s prop `at: PlaneRect`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `apps/web/test/layout-style.test.ts`:
 
@@ -936,7 +938,7 @@ In `apps/web/test/geometry.test.ts`:
   });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm --filter @deal-city/web exec vitest run test/layout-style.test.ts test/viewport.test.tsx test/tabletop.test.tsx test/scene-css.test.ts test/geometry.test.ts`
 Expected: FAIL.
@@ -945,7 +947,7 @@ Expected: FAIL.
 - The scene CSS still has `--plane` and `translateY`.
 - geometry fails on the removed import.
 
-- [ ] **Step 3: Write the hooks and the style**
+- [x] **Step 3: Write the hooks and the style**
 
 `apps/web/src/scene/use-viewport.ts`:
 
@@ -1021,7 +1023,7 @@ export function layoutStyle(L: TableLayout): CSSProperties {
 }
 ```
 
-- [ ] **Step 4: Put the plane on the model**
+- [x] **Step 4: Put the plane on the model**
 
 `apps/web/src/scene/scene.css`: replace everything from `.scene {` to the end of the file with:
 
@@ -1114,7 +1116,7 @@ export function seatLayout(playerCount: number): SeatSpot[] {
 }
 ```
 
-- [ ] **Step 5: Lay the table out in `Tabletop`**
+- [x] **Step 5: Lay the table out in `Tabletop`**
 
 In `apps/web/src/tabletop/Tabletop.tsx`:
 - replace the import `import { MY_SEAT_UI, seatPlan } from '../scene/geometry';` with `import { seatPlan } from '../scene/geometry';`;
@@ -1172,7 +1174,7 @@ Replace the `<TableScene>…</TableScene>` children with:
             </TableScene>
 ```
 
-- [ ] **Step 6: Put tableaus and piles in their rects**
+- [x] **Step 6: Put tableaus and piles in their rects**
 
 `apps/web/src/tabletop/Tableau.tsx`:
 - import `type PlaneRect` from `'../scene/layout'`, and drop `type PlanePoint` from the geometry import (keep `discardJitter`);
@@ -1220,7 +1222,7 @@ Replace the `<TableScene>…</TableScene>` children with:
 
 `apps/web/src/scene/scene.css` no longer sets `--card-w`. The table gets it from `.tabletop`'s style.
 
-- [ ] **Step 7: Run the tests to verify they pass**
+- [x] **Step 7: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web exec vitest run`
 Expected: PASS, the whole web suite.
@@ -1230,14 +1232,14 @@ Any old test that pinned a removed size (`MY_SEAT_UI`, `-4%`) is updated to read
 Then run: `pnpm typecheck && pnpm lint`
 Expected: clean.
 
-- [ ] **Step 8: Run the e2e specs that do not check fit**
+- [x] **Step 8: Run the e2e specs that do not check fit**
 
 Run: `pnpm e2e -- smoke.spec.ts game.spec.ts table.spec.ts motion.spec.ts sound.spec.ts gallery.spec.ts bundle.spec.ts fallback.spec.ts`
 Expected: PASS.
 - `table.spec`'s lobby check ("every chair shows in full") is the lobby's fit. If a chair is clipped, tune only `--plane-cy` or the height in `.lobby-table`, and write a ruling.
 - `mobile.spec` may be red until Task 6 (Decision 12).
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add apps/web/src/scene apps/web/src/tabletop apps/web/src/pages/pages.css apps/web/test
@@ -1262,7 +1264,7 @@ git commit -m "feat: lay the table out from the layout model" -m "Co-Authored-By
   - `data-rows="1|2"`;
   - `data-overflow` when its cards spill over the zone.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `apps/web/test/tabletop.test.tsx`:
 - add `import { fitTableau } from '../src/scene/tableau-fit';`;
@@ -1302,12 +1304,12 @@ In `apps/web/test/scene-css.test.ts`, add:
   });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm --filter @deal-city/web exec vitest run test/tabletop.test.tsx test/card-actions.test.tsx test/scene-css.test.ts`
 Expected: FAIL. No `--card-w` or `--cascade` on the sections yet, and the CSS still has the fixed margins.
 
-- [ ] **Step 3: Apply the fit in `Tableau`**
+- [x] **Step 3: Apply the fit in `Tableau`**
 
 In `apps/web/src/tabletop/Tableau.tsx`, add:
 
@@ -1346,7 +1348,7 @@ Give the section `data-rows={fit?.rows ?? 1}` and `data-overflow={fit?.overflow 
       style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.w}%`, height: `${zone.h}%`, ...fitStyle } as CSSProperties}
 ```
 
-- [ ] **Step 4: Lay the tableau by the fit in CSS**
+- [x] **Step 4: Lay the tableau by the fit in CSS**
 
 In `apps/web/src/tabletop/tabletop.css`, replace the rules from `.tableau {` through `.bank-pile > .table-card + .table-card { … }` as follows. Keep `.tableau-empty`, `.group-stack.is-complete`, `.group-stack.is-target`, `.set-stamp`, `.group-pick`, `.bank-total` and the `.bank-empty, .pile-empty` rules as they are.
 
@@ -1390,7 +1392,7 @@ Delete:
 
 `.bank-total` now sits over the pile's top edge: change its `top: 0;` to `top: -0.7em;`.
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web exec vitest run`, then `pnpm typecheck && pnpm lint`
 Expected: PASS and clean.
@@ -1400,7 +1402,7 @@ Expected: PASS.
 - `motion.spec`'s flights land on real card anchors, so they must still land within 1 px.
 - A drag test that picks a group needs its `data-drop` on the section, which is unchanged.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/src/tabletop apps/web/test
@@ -1422,7 +1424,7 @@ git commit -m "feat: fit each tableau into its zone, overlapping before shrinkin
   - `.hand-fan` carries `--step` and, when scrolling, the class `is-scrolling`;
   - hand cards are `normal`, `playable` or `target`, never `dim`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `apps/web/test/resolve.test.ts`:
 - in the test that starts `expect(card).toMatchObject({ tone: 'normal', pressed: false });` (my own turn, a playable card), change `'normal'` to `'playable'`;
@@ -1492,7 +1494,7 @@ In `apps/web/test/scene-css.test.ts`, add:
 
 (`rule()` matches a selector exactly, as written in the file. The hover rule's selector is two lines, `.hand-fan > li:hover,` then `.hand-fan > li:focus-within`. If the stylesheet formats it differently, match that exact text.)
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm --filter @deal-city/web exec vitest run test/resolve.test.ts test/card-actions.test.tsx test/tabletop.test.tsx test/scene-css.test.ts`
 Expected: FAIL.
@@ -1500,7 +1502,7 @@ Expected: FAIL.
 - There is no `is-scrolling` class.
 - There is no `scale(1.05)`.
 
-- [ ] **Step 3: The `playable` tone**
+- [x] **Step 3: The `playable` tone**
 
 `apps/web/src/tabletop/interaction.ts`: `export type CardTone = 'normal' | 'dim' | 'target' | 'selectable' | 'playable';`
 
@@ -1510,7 +1512,7 @@ In `apps/web/src/tabletop/resolve.ts`:
 - in the respond/counter branch: `card: (zone, id) => (zone === 'hand' ? { tone: answers.has(id) ? 'target' : 'normal' } : { tone: 'normal' }),`;
 - update the doc comment above `resolveInteraction` to say that hand cards are never dimmed and that playable ones are marked (spec §5.5).
 
-- [ ] **Step 4: The fan from the layout**
+- [x] **Step 4: The fan from the layout**
 
 `apps/web/src/tabletop/HandFan.tsx`:
 
@@ -1591,7 +1593,7 @@ Keep the two neighbour rules (`li:hover ~ li` and `li:has(~ li:hover)`) as they 
 .hand-fan .table-card.tone-playable { box-shadow: 0 0 0 2px var(--gold), 0 6px 14px rgb(0 0 0 / 0.4); }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web exec vitest run`, then `pnpm typecheck && pnpm lint`
 Expected: PASS and clean.
@@ -1601,7 +1603,7 @@ Expected: PASS and clean.
 Run: `pnpm e2e -- smoke.spec.ts game.spec.ts table.spec.ts motion.spec.ts sound.spec.ts gallery.spec.ts bundle.spec.ts fallback.spec.ts`
 Expected: PASS. `motion.spec`'s grab-point and missed-drop tests (±2 px, within 1 px) cover the fan's new spacing.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/src/tabletop apps/web/test
@@ -1623,7 +1625,7 @@ git commit -m "feat: fan my hand by the layout and mark the cards I can play" -m
   - `tableLayout(…, { tray })` (Task 1), already wired in Task 3.
 - Produces: no CSS size rule for the table remains inside a width or height media query.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 In `apps/web/test/scene-css.test.ts`, add:
 
@@ -1667,7 +1669,7 @@ In `apps/web/test/decisions.test.tsx`, add `import { tableLayout } from '../src/
   });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm --filter @deal-city/web exec vitest run test/scene-css.test.ts test/decisions.test.tsx`
 Expected:
@@ -1676,7 +1678,7 @@ Expected:
 
 Write in the ledger that this test was already green.
 
-- [ ] **Step 3: Seats and the flat UI read the model**
+- [x] **Step 3: Seats and the flat UI read the model**
 
 In `apps/web/src/tabletop/tabletop.css`:
 - `.seat`: delete `--avatar: clamp(48px, 5vw, 72px);`, and make the edge rule `--seat-edge: calc(var(--avatar, 64px) / 2 + 10px);`;
@@ -1691,7 +1693,7 @@ In `apps/web/src/tabletop/tabletop.css`:
 - the action in play is a card: `.pending-cards .card-svg { width: calc(var(--card-w) * 1.1); … }`. Keep its `height`, `rotate` and `filter`;
 - in the landscape block, delete `.pending-cards .card-svg { width: 48px; }`.
 
-- [ ] **Step 4: Trays, End turn and the hand's lift read the model**
+- [x] **Step 4: Trays, End turn and the hand's lift read the model**
 
 In `apps/web/src/tabletop/tabletop.css`:
 - `.tray { … bottom: calc(var(--hand-h) - var(--hand-rest) + 12px); … }` (was `var(--hand-w) * 1.15`);
@@ -1709,7 +1711,7 @@ In `apps/web/src/tabletop/tabletop.css`:
 }
 ```
 
-- [ ] **Step 5: Turn the phone media queries into mode selectors**
+- [x] **Step 5: Turn the phone media queries into mode selectors**
 
 In `apps/web/src/tabletop/tabletop.css`, rewrite the two blocks. Every rule inside keeps its declarations, except where noted below.
 
@@ -1725,12 +1727,12 @@ In `apps/web/src/tabletop/tabletop.css`, rewrite the two blocks. Every rule insi
 
 `@media (max-height: 340px) and (orientation: landscape)` and `@media (max-width: 359px)` stay media queries. They only tighten controls. Inside them, prefix the tray rules with `.tabletop[data-layout='landscape'] ` and `.tabletop[data-layout='portrait'][data-compact] ` respectively, so they cannot leak into the other mode.
 
-- [ ] **Step 6: Run the unit gates**
+- [x] **Step 6: Run the unit gates**
 
 Run: `pnpm --filter @deal-city/web exec vitest run`, then `pnpm typecheck && pnpm lint`
 Expected: PASS and clean.
 
-- [ ] **Step 7: Run the whole e2e suite and fit what it finds**
+- [x] **Step 7: Run the whole e2e suite and fit what it finds**
 
 Run: `pnpm e2e`
 Expected: PASS, all specs including `mobile.spec` (Decision 12: it must be green here).
@@ -1743,7 +1745,7 @@ For each `mobile.spec` failure:
 
 Never loosen a `mobile.spec` check.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add apps/web/src apps/web/test
@@ -1765,7 +1767,7 @@ If Step 7 changed fit values, commit them separately first, one concern each; fo
   - the accessible names `list "Your hand, …"`, `region "Your area" / "<Name>'s area" / "Table center"`, `group "Your seat…" / "<Name>'s seat…"` and `navigation "Game menu"`;
   - `.bank-empty` (a card-sized, unrotated placeholder in every empty bank).
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 `apps/e2e/tests/layout.spec.ts`:
 
@@ -1870,7 +1872,7 @@ for (const t of TARGETS) {
 }
 ```
 
-- [ ] **Step 2: Watch it catch a wrong size**
+- [x] **Step 2: Watch it catch a wrong size**
 
 Make a temporary edit in `apps/web/src/scene/layout.ts`: `desktop: { …, table: 0.3, … }`.
 
@@ -1879,14 +1881,14 @@ Expected: FAIL on "my (near) table card" (≈59 < 84).
 
 Revert the edit (`git checkout apps/web/src/scene/layout.ts`) and write in the ledger that the test failed for the right reason.
 
-- [ ] **Step 3: Run it for real**
+- [x] **Step 3: Run it for real**
 
 Run: `pnpm e2e -- layout.spec.ts`
 Expected: PASS, 12 tests.
 
 A failure here is a real fit problem. Fix the model (Task 6 Step 7's rules), write a ruling, and re-run `test/layout.test.ts` and the whole e2e suite.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/e2e/tests/layout.spec.ts
@@ -1900,12 +1902,12 @@ git commit -m "test: check the card size targets and the no-overlap rule in Chro
 **Files:**
 - Modify: `docs/superpowers/specs/2026-09-25-table-layout-design.md` (§5, adding "As built (Plan 11)"), and the ledger
 
-- [ ] **Step 1: All gates**
+- [x] **Step 1: All gates**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint && pnpm build && pnpm e2e`
 Expected: all green. Write the counts in the ledger (engine, protocol, server, web, e2e).
 
-- [ ] **Step 2: Show the user**
+- [x] **Step 2: Show the user**
 
 This step uses a scratch script in the session's scratchpad, never committed. It is like the Plan 10 check `look.cjs`: Playwright with `channel: 'chrome'`, run against the dev servers (`preview_start` "server" and "web").
 
@@ -1915,7 +1917,7 @@ This step uses a scratch script in the session's scratchpad, never committed. It
 - Send the screenshots to the user (`SendUserFile`) with a short Turkish summary.
 - Wait for the user's word before Step 5 (the PR). Their visual notes become rulings or fixes, each test-first.
 
-- [ ] **Step 3: Sync the spec**
+- [x] **Step 3: Sync the spec**
 
 In `docs/superpowers/specs/2026-09-25-table-layout-design.md`, add **"As built (Plan 11)"** under §5. It covers:
 - the model's rules (`RULES` per mode, perspective 2 × h, the stadium, zones, seats beside or above the plane);
@@ -1931,7 +1933,7 @@ Remove the "Fit values (Plan 10)" and "Fit limits left for Plan 11" bullets from
 
 Commit: `docs: record Plan 11 as built in the layout spec`.
 
-- [ ] **Step 4: Final review**
+- [x] **Step 4: Final review**
 
 Run the review package:
 
@@ -1949,7 +1951,7 @@ Re-grade the findings by their effect on a player.
 
 Then run all the gates again.
 
-- [ ] **Step 5: Push and open the PR (after the user's word in Step 2)**
+- [x] **Step 5: Push and open the PR (after the user's word in Step 2)**
 
 ```bash
 git push -u origin feat/table-layout

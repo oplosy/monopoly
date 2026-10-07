@@ -1,5 +1,7 @@
 # Deal City — Plan 3: SVG Card Art System Implementation Plan
 
+> **Status: completed and merged to `main`.** Every step below is ticked as done; the per-task commits, tests and rulings live in the git history (the git-ignored `.superpowers/sdd/` ledger was the working record).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Scaffold `apps/web` (Vite + React) and build the code-generated SVG card system: one `<CardFace id>` component for all 106 cards, a `<CardBack>`, ten original action icons, and a `/gallery` page to review every card visually.
@@ -90,12 +92,12 @@ apps/web/
   - `round2(n): number`
   - `cardLabel(id): string`
 
-- [ ] **Step 1: Create the feature branch**
+- [x] **Step 1: Create the feature branch**
 
 Run: `git switch -c feat/card-art`
 Expected: `Switched to a new branch 'feat/card-art'`.
 
-- [ ] **Step 2: Write the app scaffold and install dependencies**
+- [x] **Step 2: Write the app scaffold and install dependencies**
 
 `apps/web/package.json`:
 ```json
@@ -236,7 +238,7 @@ pnpm --filter @deal-city/web add -D typescript@^5 vite @vitejs/plugin-react vite
 ```
 Expected: both succeed.
 
-- [ ] **Step 3: Write the failing utility tests**
+- [x] **Step 3: Write the failing utility tests**
 
 `apps/web/test/cards-basics.test.ts`:
 ```ts
@@ -291,12 +293,12 @@ describe('cardLabel', () => {
 });
 ```
 
-- [ ] **Step 4: Run the tests and confirm they fail**
+- [x] **Step 4: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/web test`
 Expected: FAIL. The modules `../src/cards/labels`, `text` and `theme` cannot be found.
 
-- [ ] **Step 5: Implement `theme.ts`, `text.ts` and `labels.ts`**
+- [x] **Step 5: Implement `theme.ts`, `text.ts` and `labels.ts`**
 
 `apps/web/src/cards/theme.ts`:
 ```ts
@@ -411,12 +413,12 @@ export function cardLabel(id: string): string {
 }
 ```
 
-- [ ] **Step 6: Run the tests and confirm they pass**
+- [x] **Step 6: Run the tests and confirm they pass**
 
 Run: `pnpm --filter @deal-city/web test; pnpm --filter @deal-city/web typecheck`
 Expected: 6 tests pass and there are no type errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A
@@ -445,7 +447,7 @@ git commit -m "feat(web): scaffold web app with card theme, text and label utili
   - `CardFace({ id, activeColor?, className? })`
   - `interface FaceProps<T> { card; label; className? }`
 
-- [ ] **Step 1: Write the failing face tests**
+- [x] **Step 1: Write the failing face tests**
 
 `apps/web/test/card-faces.test.tsx`:
 ```tsx
@@ -514,12 +516,12 @@ describe('PropertyFace', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests and confirm they fail**
+- [x] **Step 2: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/web test card-faces`
 Expected: FAIL. The module `../src/cards/CardFace` cannot be found.
 
-- [ ] **Step 3: Implement `parts.tsx`**
+- [x] **Step 3: Implement `parts.tsx`**
 
 `apps/web/src/cards/parts.tsx`:
 ```tsx
@@ -637,7 +639,7 @@ export function RentLadder({ color, x, y, width, rowHeight, fontSize = 15 }: { c
 }
 ```
 
-- [ ] **Step 4: Implement the money and property faces and the dispatcher**
+- [x] **Step 4: Implement the money and property faces and the dispatcher**
 
 `apps/web/src/cards/faces/MoneyFace.tsx`:
 ```tsx
@@ -732,12 +734,12 @@ export function CardFace({ id, className }: CardFaceProps) {
 }
 ```
 
-- [ ] **Step 5: Run the tests and confirm they pass**
+- [x] **Step 5: Run the tests and confirm they pass**
 
 Run: `pnpm --filter @deal-city/web test; pnpm --filter @deal-city/web typecheck`
 Expected: all tests pass and there are no type errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A
@@ -761,7 +763,7 @@ git commit -m "feat(web): add card primitives, money and property faces"
   - `slicePath(cx, cy, r, a0, a1): string`
   - `CardFace`, now also handling `wild` and `rent`
 
-- [ ] **Step 1: Write the failing tests** (append the `describe` blocks to `card-faces.test.tsx`, and move the new `import` lines up with the existing imports at the top of the file)
+- [x] **Step 1: Write the failing tests** (append the `describe` blocks to `card-faces.test.tsx`, and move the new `import` lines up with the existing imports at the top of the file)
 
 ```tsx
 import { slicePath } from '../src/cards/faces/RentFace';
@@ -809,12 +811,12 @@ describe('RentFace', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests and confirm they fail**
+- [x] **Step 2: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/web test card-faces`
 Expected: FAIL. The module `../src/cards/faces/RentFace` cannot be found, and the wild and rent renders throw "not drawn yet".
 
-- [ ] **Step 3: Implement `WildFace.tsx`**
+- [x] **Step 3: Implement `WildFace.tsx`**
 
 `apps/web/src/cards/faces/WildFace.tsx`:
 ```tsx
@@ -907,7 +909,7 @@ export function WildFace(props: WildProps) {
 }
 ```
 
-- [ ] **Step 4: Implement `RentFace.tsx` and extend the dispatcher**
+- [x] **Step 4: Implement `RentFace.tsx` and extend the dispatcher**
 
 `apps/web/src/cards/faces/RentFace.tsx`:
 ```tsx
@@ -985,12 +987,12 @@ export function CardFace({ id, activeColor, className }: CardFaceProps) {
 }
 ```
 
-- [ ] **Step 5: Run the tests and confirm they pass**
+- [x] **Step 5: Run the tests and confirm they pass**
 
 Run: `pnpm --filter @deal-city/web test; pnpm --filter @deal-city/web typecheck`
 Expected: all tests pass and there are no type errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A
@@ -1015,7 +1017,7 @@ git commit -m "feat(web): add wildcard and rent faces"
   - `CardFace`, now covering all 106 cards
   - Line budgets: `TITLE_WRAP = 13`, `EFFECT_WRAP = 28`, `NAME_WRAP = 14`, exported from `text.ts`
 
-- [ ] **Step 1: Write the failing tests** (append the `describe` blocks to `card-faces.test.tsx`, and move the new `import` lines up with the existing imports at the top of the file)
+- [x] **Step 1: Write the failing tests** (append the `describe` blocks to `card-faces.test.tsx`, and move the new `import` lines up with the existing imports at the top of the file)
 
 ```tsx
 import { ACTIONS, CARDS, PROPERTY_NAMES, type ActionKind } from '@deal-city/engine';
@@ -1061,12 +1063,12 @@ describe('the whole deck', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests and confirm they fail**
+- [x] **Step 2: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/web test card-faces`
 Expected: FAIL. `../src/cards/CardBack` cannot be found, `TITLE_WRAP` is undefined, and action cards throw "not drawn yet".
 
-- [ ] **Step 3: Add the line budgets to `text.ts` and update `PropertyFace` to use `NAME_WRAP`**
+- [x] **Step 3: Add the line budgets to `text.ts` and update `PropertyFace` to use `NAME_WRAP`**
 
 Append to `apps/web/src/cards/text.ts`:
 ```ts
@@ -1080,7 +1082,7 @@ In `apps/web/src/cards/faces/PropertyFace.tsx`, make two changes:
 - Change the import from `import { wrapLines } from '../text';` to `import { NAME_WRAP, wrapLines } from '../text';`.
 - Change `wrapLines(card.name, 14)` to `wrapLines(card.name, NAME_WRAP)`.
 
-- [ ] **Step 4: Implement `icons.tsx`**
+- [x] **Step 4: Implement `icons.tsx`**
 
 `apps/web/src/cards/icons.tsx`:
 ```tsx
@@ -1216,7 +1218,7 @@ export const ACTION_ICONS: Record<ActionKind, (p: IconProps) => ReactNode> = {
 };
 ```
 
-- [ ] **Step 5: Implement `ActionFace.tsx`, `CardBack.tsx` and the final dispatcher**
+- [x] **Step 5: Implement `ActionFace.tsx`, `CardBack.tsx` and the final dispatcher**
 
 `apps/web/src/cards/faces/ActionFace.tsx`:
 ```tsx
@@ -1321,14 +1323,14 @@ export function CardFace({ id, activeColor, className }: CardFaceProps) {
 }
 ```
 
-- [ ] **Step 6: Run the tests and confirm they pass**
+- [x] **Step 6: Run the tests and confirm they pass**
 
 Run: `pnpm --filter @deal-city/web test; pnpm --filter @deal-city/web typecheck`
 Expected: all tests pass and there are no type errors.
 
 If "all generated text fits its line budget" fails for one text, shorten nothing in the engine. Instead, raise that budget by 1–2 characters and re-check the gallery (Task 5) for overflow, then ledger a ruling.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A
@@ -1347,7 +1349,7 @@ git commit -m "feat(web): add action icons, action face and card back"
 - Consumes: `CardFace`, `CardBack`, `CARDS`
 - Produces: the `/gallery` route (a pathname check). Plan 4 replaces it with React Router and keeps `Gallery` as its page component.
 
-- [ ] **Step 1: Implement the gallery and route it**
+- [x] **Step 1: Implement the gallery and route it**
 
 `apps/web/src/cards/Gallery.tsx`:
 ```tsx
@@ -1417,7 +1419,7 @@ createRoot(document.getElementById('root')!).render(
 );
 ```
 
-- [ ] **Step 2: Add the dev-server launch config**
+- [x] **Step 2: Add the dev-server launch config**
 
 `.claude/launch.json`:
 ```json
@@ -1434,12 +1436,12 @@ createRoot(document.getElementById('root')!).render(
 }
 ```
 
-- [ ] **Step 3: Build and run the gates**
+- [x] **Step 3: Build and run the gates**
 
 Run: `pnpm --filter @deal-city/web build; pnpm lint; pnpm typecheck; pnpm test`
 Expected: Vite builds `apps/web/dist`. Lint, typecheck and the tests for all four packages pass.
 
-- [ ] **Step 4: Visual review in the browser pane**
+- [x] **Step 4: Visual review in the browser pane**
 
 - Start the `web` preview (`preview_start` with name `web`) and open `http://localhost:5173/gallery`.
 - Take full-width screenshots of the sheet, and zoom into one card of each type.
@@ -1455,7 +1457,7 @@ Expected: Vite builds `apps/web/dist`. Lint, typecheck and the tests for all fou
 - Changes limited to coordinates, font sizes and colors inside `apps/web/src/cards/` are review polish. Re-run `pnpm --filter @deal-city/web test` after each change.
 - Anything larger, such as changing a line budget or restructuring a face, needs a ledger ruling.
 
-- [ ] **Step 5: Update spec §5**
+- [x] **Step 5: Update spec §5**
 
 In `docs/superpowers/specs/2026-09-24-deal-city-design.md` §5, make these edits:
 - In the icons table, change the Sly Deal row from `| Sly Deal | Reaching hand |` to `| Sly Deal | Bandit mask |`.
@@ -1465,7 +1467,7 @@ In `docs/superpowers/specs/2026-09-24-deal-city-design.md` §5, make these edits
 **Review.** `/gallery` renders all 106 cards plus the card back and sample wildcard orientations. It is reviewed in the browser during development; Plan 5 adds a Playwright screenshot of it.
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A

@@ -1,5 +1,7 @@
 # Plan 12: Animation Polish Implementation Plan
 
+> **Status: completed and merged to `main`.** Every step below is ticked as done; the per-task commits, tests and rulings live in the git history (the git-ignored `.superpowers/sdd/` ledger was the working record).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Every animation of the table plays well at Plan 11's sizes and the 22° angle. The user reviews each animation and approves it.
@@ -145,7 +147,7 @@
   - the route `/lab?s=<scenario id>`.
   - Task 5 uses `/lab?s=their-turn`. Task 6 uses every scenario.
 
-- [ ] **Step 1: Write the failing tests** in `apps/web/test/lab.test.ts`
+- [x] **Step 1: Write the failing tests** in `apps/web/test/lab.test.ts`
 
 ```ts
 import { applyIntent } from '@deal-city/engine';
@@ -224,12 +226,12 @@ describe('createLabSocket', () => {
 
 (`g3` is Bob's green set in the `nope` scenario: my groups are built first. Step 3's `nope` scenario gives me two groups, so Bob's first group is `g3`.)
 
-- [ ] **Step 2: Run the tests to watch them fail**
+- [x] **Step 2: Run the tests to watch them fail**
 
 Run: `cd apps/web && npx vitest run test/lab.test.ts`
 Expected: FAIL: "Cannot find module '../src/lab/lab-socket'".
 
-- [ ] **Step 3: Write the scenarios** (`apps/web/src/lab/scenarios.ts`)
+- [x] **Step 3: Write the scenarios** (`apps/web/src/lab/scenarios.ts`)
 
 ```ts
 import { groupIdOf, type StateSpec } from '@deal-city/engine/testing';
@@ -440,7 +442,7 @@ export function scenarioById(id: string | null): Scenario {
 
 If the engine refuses a move in the scenario test, fix the scenario's cards, not the test. For example, if the Deal Breaker move cannot target a set that is not complete, give "you" a complete set. Ledger the change.
 
-- [ ] **Step 4: Write the lab socket** (`apps/web/src/lab/lab-socket.ts`)
+- [x] **Step 4: Write the lab socket** (`apps/web/src/lab/lab-socket.ts`)
 
 ```ts
 import { applyIntent, autoIntent, removePlayer, viewFor, waitingOn, type GameEvent, type GameState, type Intent } from '@deal-city/engine';
@@ -599,12 +601,12 @@ export function createLabSocket(scenario: Scenario, now: () => number = Date.now
 }
 ```
 
-- [ ] **Step 5: Run the tests**
+- [x] **Step 5: Run the tests**
 
 Run: `cd apps/web && npx vitest run test/lab.test.ts`
 Expected: PASS, with 7 scenario cases and 4 more tests. If a scenario case fails, fix the scenario's data as described in Step 3.
 
-- [ ] **Step 6: Write the page, the route and the styles**
+- [x] **Step 6: Write the page, the route and the styles**
 
 `apps/web/src/lab/Lab.tsx`:
 
@@ -769,7 +771,7 @@ In `packages/engine/src/testing.ts`, change line 1 to:
 /** State builders shared by engine, server and web tests, and by the web app's animation lab (/lab). */
 ```
 
-- [ ] **Step 7: Check it in the browser**
+- [x] **Step 7: Check it in the browser**
 
 The dev servers run on 5173 and 3000. Open `http://localhost:5173/lab?s=turn` with Playwright (`channel: 'chrome'`, a throwaway script in the scratchpad) and take a screenshot:
 - the table shows;
@@ -778,7 +780,7 @@ The dev servers run on 5173 and 3000. Open `http://localhost:5173/lab?s=turn` wi
 
 Fix what is wrong.
 
-- [ ] **Step 8: Run the web suite, typecheck and lint, then commit**
+- [x] **Step 8: Run the web suite, typecheck and lint, then commit**
 
 Run: `cd apps/web && npx vitest run && cd ../.. && pnpm typecheck && pnpm lint`
 Expected: all green.
@@ -807,7 +809,7 @@ git commit -m "feat: add an animation lab that plays the table without a server"
   - `sceneLength(scene, length?)`.
 - The default `length` is `(f) => STYLE_MS[f.style]`, so existing callers keep working.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `apps/web/test/timing.test.ts`. Extend the import to `import { BUDGET_MS, flightMs, MIN_FLIGHT_MS, REF_PX, schedule, STYLE_MS } from '../src/motion/timing';`.
 
@@ -848,12 +850,12 @@ Append to `apps/web/test/stage.test.ts`, inside `describe('createStage')`:
 
 Also add `flightMs` to that file's import from `../src/motion/timing`.
 
-- [ ] **Step 2: Run them to watch them fail**
+- [x] **Step 2: Run them to watch them fail**
 
 Run: `cd apps/web && npx vitest run test/timing.test.ts test/stage.test.ts`
 Expected: FAIL: `flightMs` is not exported, and schedule ignores the third argument.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `timing.ts`, add below `STYLE_MS`:
 
@@ -912,14 +914,14 @@ In `stage.ts`'s `startNext`, measure the ends first and schedule with them. Repl
 - The `fromLive` branch still measures when it leaves.
 - Import `flightMs` and `STYLE_MS` from `./timing`.
 
-- [ ] **Step 4: Run the motion tests**
+- [x] **Step 4: Run the motion tests**
 
 Run: `cd apps/web && npx vitest run test/timing.test.ts test/stage.test.ts test/scene-cues.test.ts test/tabletop-motion.test.tsx`
 Expected: PASS.
 
 An existing test may pin `duration: STYLE_MS.x` while its fake poses sit at the same spot, so its distance is 0 and its length is now ×0.75. Update such an assertion to `flightMs(style, distance)` for that test's poses, and ledger it as a Ruling (the expectation moved with the spec, not the behaviour under test).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/motion/timing.ts apps/web/src/motion/stage.ts apps/web/test/timing.test.ts apps/web/test/stage.test.ts
@@ -951,7 +953,7 @@ git commit -m "feat: scale flight lengths with the distance they travel"
   - `FlightPath.tilt?: number`;
   - `StageDeps.tilt?(): number` and `StageDeps.land?(key: string, tilt: number): void`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `apps/web/test/settle.test.ts`: append the following, and extend the import with `landCard, landingTilt, LAND_MS`.
 
@@ -1012,12 +1014,12 @@ it('lands a tilted flight turned by its tilt', () => {
   });
 ```
 
-- [ ] **Step 2: Run them to watch them fail**
+- [x] **Step 2: Run them to watch them fail**
 
 Run: `cd apps/web && npx vitest run test/settle.test.ts test/keyframes.test.ts test/stage.test.ts`
 Expected: FAIL: the new exports are missing, and `tilt` is not on the clone.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `settle.ts`, appended:
 
@@ -1091,14 +1093,14 @@ The `float` leg `offset: 0.85` also gets `turn: tilt`.
 
 Import `landCard` and `landingTilt` from `./settle`.
 
-- [ ] **Step 4: Run the motion tests**
+- [x] **Step 4: Run the motion tests**
 
 Run: `cd apps/web && npx vitest run test/settle.test.ts test/keyframes.test.ts test/stage.test.ts test/flight-layer.test.tsx test/motion-stage.test.tsx test/tabletop-motion.test.tsx`
 Expected: PASS.
 
 A test that compares a clone to an exact object without `tilt` gets `tilt: 0`. That is a Ruling only if the test's meaning changes.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/motion apps/web/test/settle.test.ts apps/web/test/keyframes.test.ts apps/web/test/stage.test.ts
@@ -1128,7 +1130,7 @@ git commit -m "feat: settle landing cards from a small random tilt"
   - `StageDeps.shake?(px: number): void`;
   - `shakeKeyframes(px: number): Keyframe[]`, `SHAKE_MS = 380` and `shakeScene(el: HTMLElement, px: number): void`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `timing.test.ts`: append, and add `SHAKE_PX` to the import.
 
@@ -1194,12 +1196,12 @@ it('shakes no further than its strength and comes back to rest', () => {
 - move the snap check to the float or slam case instead;
 - ledger it.
 
-- [ ] **Step 2: Run them to watch them fail**
+- [x] **Step 2: Run them to watch them fail**
 
 Run: `cd apps/web && npx vitest run test/timing.test.ts test/settle.test.ts test/stage.test.ts`
 Expected: FAIL: `SHAKE_PX`, `shakes` and `shake.ts` are missing.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 `timing.ts`:
 
@@ -1284,12 +1286,12 @@ export function shakeScene(el: HTMLElement, px: number): void {
 .stage-shake { position: relative; }
 ```
 
-- [ ] **Step 4: Run the web suite**
+- [x] **Step 4: Run the web suite**
 
 Run: `cd apps/web && npx vitest run`
 Expected: PASS. If `motion-css.test.ts` objects to the new rule, it has no `animation`, so it should not. If it does, read the test's rule and follow it.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/motion apps/web/test/timing.test.ts apps/web/test/settle.test.ts apps/web/test/stage.test.ts
@@ -1306,7 +1308,7 @@ The turn ring is a circle as tall as the center (1.62 card widths), but the two 
 - Create: `apps/e2e/tests/lab.spec.ts`
 - Modify: `apps/web/src/tabletop/tabletop.css` (`.turn-ring`)
 
-- [ ] **Step 1: Write the failing e2e test**
+- [x] **Step 1: Write the failing e2e test**
 
 ```ts
 import { expect, test, type Page } from '@playwright/test';
@@ -1333,7 +1335,7 @@ for (const size of [{ width: 1440, height: 900 }, { width: 375, height: 812 }]) 
 }
 ```
 
-- [ ] **Step 2: Run it to watch it fail**
+- [x] **Step 2: Run it to watch it fail**
 
 Run: `pnpm --filter @deal-city/e2e exec playwright test tests/lab.spec.ts`. Use the e2e package's own script name if it differs; check `apps/e2e/package.json`.
 Expected: FAIL on "wedge over the deck" or "wedge over the discard pile", at least at 1440×900.
@@ -1342,7 +1344,7 @@ If both pass, the bug does not show at these sizes. In that case:
 - set the active seat to Cleo (`turn: 'cleo'` in a copy of the scenario, `their-turn-cleo`);
 - if it still passes, ledger that the minor did not reproduce, delete the test, and skip Step 3.
 
-- [ ] **Step 3: Fix the ring**
+- [x] **Step 3: Fix the ring**
 
 In `tabletop.css`, the ring becomes a circle around both piles, centered on the center box:
 
@@ -1371,7 +1373,7 @@ Run the test again. If the larger ring runs into seats or tableau zones at a §5
 
 Ledger the choice.
 
-- [ ] **Step 4: Run the e2e layout and lab specs, then commit**
+- [x] **Step 4: Run the e2e layout and lab specs, then commit**
 
 Run: `pnpm e2e -- tests/lab.spec.ts tests/layout.spec.ts`
 Expected: PASS.
@@ -1394,7 +1396,7 @@ This task follows spec §6.3: every animation is reviewed at the new sizes and t
 - Create, never committed: `apps/e2e/tests/zz-review.spec.ts`.
 - Modify: whatever the findings touch.
 
-- [ ] **Step 1: Write the recorder** (scratch)
+- [x] **Step 1: Write the recorder** (scratch)
 
 `apps/e2e/tests/zz-review.spec.ts` records a CDP screencast of a scenario. It builds a contact sheet in the page itself, so no new dependency is needed, and saves it to `test-results/review/<scenario>-<width>.png`.
 
@@ -1446,7 +1448,7 @@ Before relying on `playFromHand(page, card, option)`, read its signature and the
 Run it with the e2e config, so the production build is served on port 3100:
 `pnpm --filter @deal-city/e2e exec playwright test tests/zz-review.spec.ts`
 
-- [ ] **Step 2: Audit the sheets yourself first**
+- [x] **Step 2: Audit the sheets yourself first**
 
 Read every sheet (Read tool on the PNG). Note each glitch:
 - a jump at the hand-off from clone to card;
@@ -1458,7 +1460,7 @@ Read every sheet (Read tool on the PNG). Note each glitch:
 - an overlap with the HUD or the hand;
 - anything cut off at 375 px.
 
-- [ ] **Step 3: Show the user**
+- [x] **Step 3: Show the user**
 
 Send the round's sheets with `SendUserFile`, and give the lab link for watching live: `http://localhost:5173/lab?s=<scenario>`. The dev servers must be running, and the web server restarted if needed.
 
@@ -1469,7 +1471,7 @@ Write a short Turkish note:
 
 Wait for the answer.
 
-- [ ] **Step 4: Fix, then re-record**
+- [x] **Step 4: Fix, then re-record**
 
 - A **behaviour bug** (wrong face, flash, jump, wrong timing logic) gets a failing test first, in the unit test file of the code at fault (`stage.test.ts`, `planner.test.ts`, `keyframes.test.ts` or `tabletop-motion.test.tsx`), then the fix. Each fix is its own commit: `fix: <what>`.
 - A **tuning** change gets no new test (Decision 6). This covers `STYLE_MS`, `REF_PX` and the clamp, `SHAKE_PX`, `LAND_MS`, `EFFECT_MS` and easing. Commit it as `style: tune <what>`, and update any existing test that pins the old number.
@@ -1477,7 +1479,7 @@ Wait for the answer.
 
 Ledger each finding as fixed, tuned or declined (a Ruling, with the user's word when they declined). Then go to the next round.
 
-- [ ] **Step 5: Remove the recorder**
+- [x] **Step 5: Remove the recorder**
 
 Delete `apps/e2e/tests/zz-review.spec.ts` and `test-results/review`. `git status` must show neither.
 
@@ -1488,7 +1490,7 @@ Delete `apps/e2e/tests/zz-review.spec.ts` and `test-results/review`. `git status
 **Files:**
 - Modify: `docs/superpowers/specs/2026-09-25-table-layout-design.md`: add **As built (Plan 12)** after §6.3.
 
-- [ ] **Step 1: Write the as-built text**
+- [x] **Step 1: Write the as-built text**
 
 Cover:
 - the lab (`/lab`, its scenarios, and the fact that it ships as a lazy chunk and runs no server);
@@ -1498,12 +1500,12 @@ Cover:
 
 Commit it as `docs: record Plan 12 as built in the layout spec`.
 
-- [ ] **Step 2: The gates**
+- [x] **Step 2: The gates**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint && pnpm build && pnpm e2e`
 Expected: all green. The drag unit test "leans with the pointer only while animations are on" can flake under full parallel load. If it fails, re-run it alone; it must pass. Mention it in the PR if it flaked.
 
-- [ ] **Step 3: The final review**
+- [x] **Step 3: The final review**
 
 Dispatch one fresh reviewer on the most capable model (the executing-plans skill's Final Review), with:
 - this plan;
@@ -1513,7 +1515,7 @@ Dispatch one fresh reviewer on the most capable model (the executing-plans skill
 
 Critical and Important findings get one fix pass, test-first. Minor findings go under "Deferred minors".
 
-- [ ] **Step 4: Push and open the PR** (`feat/table-feel` → `main`)
+- [x] **Step 4: Push and open the PR** (`feat/table-feel` → `main`)
 
 The PR body includes:
 - what changed;
@@ -1524,7 +1526,7 @@ The PR body includes:
 
 Do not merge: the user merges when they ask.
 
-- [ ] **Step 5: Report to the user in Turkish**
+- [x] **Step 5: Report to the user in Turkish**
 
 Keep it short:
 - what was done;
