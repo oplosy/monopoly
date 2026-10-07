@@ -1,5 +1,7 @@
 # Plan 14: voice chat — implementation plan
 
+> **Status: completed and merged to `main`.** Every step below is ticked as done; the per-task commits, tests and rulings live in the git history (the git-ignored `.superpowers/sdd/` ledger was the working record).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. In this repo plans run **natively** (CLAUDE.md): one session does every task, test-first, then one fresh reviewer on the most capable model reviews the branch.
 
 **Goal:** Players in a room can talk to each other by voice, in the lobby and at the table: browser to browser, with a Cloudflare TURN relay when a network blocks a direct path.
@@ -100,7 +102,7 @@
     - `'voice:signal'` (`VoiceSignalPayload`, `Ack`);
   - server event: `'voice:signal': (payload: { from: string; data: SignalData }) => void`.
 
-- [ ] **Step 1: Write the failing test.** Append to `packages/protocol/test/protocol.test.ts`, adding `VoiceMicSchema, VoiceSignalSchema` to its import from `../src/index`:
+- [x] **Step 1: Write the failing test.** Append to `packages/protocol/test/protocol.test.ts`, adding `VoiceMicSchema, VoiceSignalSchema` to its import from `../src/index`:
 
 ```ts
 describe('voice schemas', () => {
@@ -122,11 +124,11 @@ describe('voice schemas', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails.**
+- [x] **Step 2: Run it to verify it fails.**
 Run: `cd packages/protocol && npx vitest run`
 Expected: FAIL. `VoiceMicSchema` is not exported.
 
-- [ ] **Step 3: Implement.** In `index.ts`, after `ChatSendSchema`:
+- [x] **Step 3: Implement.** In `index.ts`, after `ChatSendSchema`:
 
 ```ts
 export const VoiceMicSchema = z.object({ on: z.boolean() });
@@ -185,11 +187,11 @@ Add to `ServerToClientEvents`:
 
 In `apps/web/test/fixtures.ts` (`roomOf`) and `apps/web/src/lab/lab-socket.ts` (line 55), add `voice: 'off'` to each seat literal. Then run `npx tsc -b` in `apps/web` and add `voice: 'off'` wherever else a `SeatInfo` literal fails to compile.
 
-- [ ] **Step 4: Run it to verify it passes.**
+- [x] **Step 4: Run it to verify it passes.**
 Run: `cd packages/protocol && npx vitest run && npx tsc --noEmit -p . && cd ../../apps/web && npx tsc -b`
 Expected: PASS. The server does not compile yet, because `roomState()` lacks `voice`; Task 2 adds it.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add packages/protocol apps/web/test/fixtures.ts apps/web/src/lab/lab-socket.ts
@@ -213,7 +215,7 @@ git commit -m "feat: add voice chat types, schemas and events to the protocol"
   - `Room.hasSeat(playerId): boolean`;
   - `fakeConn()` also records `signals: { from: string; data: SignalData }[]`.
 
-- [ ] **Step 1: Write the failing test.** Create `apps/server/test/room-voice.test.ts`:
+- [x] **Step 1: Write the failing test.** Create `apps/server/test/room-voice.test.ts`:
 
 ```ts
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -288,11 +290,11 @@ describe('Room voice', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails.**
+- [x] **Step 2: Run it to verify it fails.**
 Run: `cd apps/server && npx vitest run test/room-voice.test.ts`
 Expected: FAIL. `room.voiceJoin is not a function`, and there is no `voice` in the room state.
 
-- [ ] **Step 3: Implement.** In `room.ts`:
+- [x] **Step 3: Implement.** In `room.ts`:
 - import `type SignalData, type VoiceState` from `@deal-city/protocol`;
 - add to `Connection`: `/** A WebRTC signal from another player in voice. */ voiceSignal(payload: { from: string; data: SignalData }): void;`;
 - add `voice: VoiceState;` to the `Seat` interface, and `voice: 'off'` to the seat literal in `join()`;
@@ -368,11 +370,11 @@ In `test/fakes.ts`:
 
 In `room-manager.test.ts`, add `voiceSignal: () => undefined,` to `noop`. In `socket.ts`, add to `conn`: `voiceSignal: (payload) => socket.emit('voice:signal', payload),`.
 
-- [ ] **Step 4: Run it to verify it passes.**
+- [x] **Step 4: Run it to verify it passes.**
 Run: `cd apps/server && npx vitest run && npx tsc --noEmit -p .`
 Expected: PASS. If `room-lobby.test.ts` compares whole seats with `toEqual`, add `voice: 'off'` to its expected seats.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/server
@@ -395,7 +397,7 @@ git commit -m "feat: track voice state per seat and relay signals between player
   - `createIceServers(opts: IceOptions): () => Promise<IceServer[]>`, where `IceOptions` is `{ keyId: string | null; token: string | null; fetch?: typeof fetch; now?: () => number; log?: (message: string) => void }`;
   - `STUN_FALLBACK: IceServer[]`.
 
-- [ ] **Step 1: Write the failing tests.** Create `apps/server/test/turn.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `apps/server/test/turn.test.ts`:
 
 ```ts
 import { describe, expect, it, vi } from 'vitest';
@@ -486,11 +488,11 @@ In `test/basics.test.ts`'s `loadConfig` describe, add:
   });
 ```
 
-- [ ] **Step 2: Run them to verify they fail.**
+- [x] **Step 2: Run them to verify they fail.**
 Run: `cd apps/server && npx vitest run test/turn.test.ts test/basics.test.ts`
 Expected: FAIL. `../src/turn` does not exist, and `turnKeyId` is undefined.
 
-- [ ] **Step 3: Implement.** In `config.ts`, add to `Config`:
+- [x] **Step 3: Implement.** In `config.ts`, add to `Config`:
 
 ```ts
   /** Cloudflare Realtime TURN key: with its API token, voice chat gets a relay for strict networks. Server-side only. */
@@ -576,11 +578,11 @@ In `README.md`'s environment table, after `MAX_ROOMS`, add:
 | `CF_TURN_API_TOKEN` | | That key's API token. Both stay on the server; without them voice uses STUN only |
 ```
 
-- [ ] **Step 4: Run them to verify they pass.**
+- [x] **Step 4: Run them to verify they pass.**
 Run: `cd apps/server && npx vitest run && npx tsc --noEmit -p .`
 Expected: PASS.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/server README.md
@@ -599,7 +601,7 @@ git commit -m "feat: fetch Cloudflare TURN credentials for voice, with a STUN fa
 - Consumes: `Room.voice*` and `Room.hasSeat` (Task 2); `createIceServers` (Task 3); the schemas (Task 1).
 - Produces: `registerSockets(io, rooms, config, iceServers: () => Promise<IceServer[]>)`.
 
-- [ ] **Step 1: Write the failing test.** In `server.integration.test.ts`, inside its `describe`, after the chat tests:
+- [x] **Step 1: Write the failing test.** In `server.integration.test.ts`, inside its `describe`, after the chat tests:
 
 ```ts
   it('joins voice with ICE servers, then relays signals between players in voice', async () => {
@@ -648,11 +650,11 @@ git commit -m "feat: fetch Cloudflare TURN credentials for voice, with a STUN fa
   });
 ```
 
-- [ ] **Step 2: Run it to verify it fails.**
+- [x] **Step 2: Run it to verify it fails.**
 Run: `cd apps/server && npx vitest run test/server.integration.test.ts`
 Expected: FAIL. The voice events time out without an ack.
 
-- [ ] **Step 3: Implement.** In `socket.ts`:
+- [x] **Step 3: Implement.** In `socket.ts`:
 - import `VoiceMicSchema`, `VoiceSignalSchema` and `type IceServer`;
 - change the signatures to `registerSockets(io, rooms, config, iceServers: () => Promise<IceServer[]>)` and `handleConnection(socket, rooms, config, iceServers)`, passing it through;
 - in `handleConnection`, add `const allowVoice = createRateLimiter(30);` (a burst of ICE candidates is normal);
@@ -697,11 +699,11 @@ Register after `chat:send`:
 - import `createIceServers` from `./turn`;
 - change the call to `registerSockets(io, rooms, config, createIceServers({ keyId: config.turnKeyId, token: config.turnApiToken }));`.
 
-- [ ] **Step 4: Run it to verify it passes.**
+- [x] **Step 4: Run it to verify it passes.**
 Run: `cd apps/server && npx vitest run && npx tsc --noEmit -p .`
 Expected: PASS.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/server
@@ -725,7 +727,7 @@ git commit -m "feat: accept voice join, leave, mic and signal events on the sock
   - `Peer = { handle(data: SignalData): Promise<void>; setTrack(track: MediaStreamTrack | null): Promise<void>; close(): void }`;
   - `test/fake-rtc.ts` exports `FakePc`, `fakeTrack()`, `flush()`.
 
-- [ ] **Step 1: Write the fake and the failing test.** Create `apps/web/test/fake-rtc.ts`:
+- [x] **Step 1: Write the fake and the failing test.** Create `apps/web/test/fake-rtc.ts`:
 
 ```ts
 import { vi } from 'vitest';
@@ -854,11 +856,11 @@ describe('createPeer', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails.**
+- [x] **Step 2: Run it to verify it fails.**
 Run: `cd apps/web && npx vitest run test/voice-peer.test.ts`
 Expected: FAIL. `../src/voice/peer` is not found.
 
-- [ ] **Step 3: Implement.** Create `apps/web/src/voice/peer.ts`:
+- [x] **Step 3: Implement.** Create `apps/web/src/voice/peer.ts`:
 
 ```ts
 import type { SignalData } from '@deal-city/protocol';
@@ -951,11 +953,11 @@ export function createPeer({ pc, polite, send, onTrack, onState, onFailed }: Pee
 
 The fake's `addIceCandidate(undefined)` records `undefined` for the end-of-candidates signal, which is what the test expects.
 
-- [ ] **Step 4: Run it to verify it passes.**
+- [x] **Step 4: Run it to verify it passes.**
 Run: `cd apps/web && npx vitest run test/voice-peer.test.ts && npx tsc -b && npx eslint src/voice test/fake-rtc.ts`
 Expected: PASS.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/web/src/voice/peer.ts apps/web/test/fake-rtc.ts apps/web/test/voice-peer.test.ts
@@ -978,7 +980,7 @@ git commit -m "feat: add a voice peer connection with perfect negotiation"
   - `interface VoicePrefs { load(): VoiceSettings; save(s: VoiceSettings): void; rejoinCode(): string | null; setRejoinCode(code: string | null): void }`;
   - `browserVoicePrefs(): VoicePrefs` and `memoryVoicePrefs(initial?: Partial<VoiceSettings>, rejoin?: string | null): VoicePrefs`.
 
-- [ ] **Step 1: Write the failing test.** Create `apps/web/test/voice-bits.test.ts`:
+- [x] **Step 1: Write the failing test.** Create `apps/web/test/voice-bits.test.ts`:
 
 ```ts
 // @vitest-environment jsdom
@@ -1027,11 +1029,11 @@ describe('voice settings', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails.**
+- [x] **Step 2: Run it to verify it fails.**
 Run: `cd apps/web && npx vitest run test/voice-bits.test.ts`
 Expected: FAIL. The modules are missing.
 
-- [ ] **Step 3: Implement.** Create `src/voice/talking.ts`:
+- [x] **Step 3: Implement.** Create `src/voice/talking.ts`:
 
 ```ts
 /** RMS level (0 to 1) above which a voice counts as talking; room noise after noise suppression stays below it. */
@@ -1132,11 +1134,11 @@ export function memoryVoicePrefs(initial: Partial<VoiceSettings> = {}, rejoin: s
 }
 ```
 
-- [ ] **Step 4: Run it to verify it passes.**
+- [x] **Step 4: Run it to verify it passes.**
 Run: `cd apps/web && npx vitest run test/voice-bits.test.ts && npx tsc -b && npx eslint src/voice`
 Expected: PASS.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/web/src/voice apps/web/test/voice-bits.test.ts
@@ -1163,7 +1165,7 @@ git commit -m "feat: detect talking from audio levels and remember voice setting
     - actions: `join(opts?: { auto?: boolean }): Promise<void>`, `leave(): void`, `hangUp(): void`, `setMic(on: boolean): Promise<void>`, `talk(down: boolean): void`, `setPushToTalk(on: boolean): void`, `setVolume(v: number): void`, `mute(playerId: string, on: boolean): void`, `sync(code: string, me: string, seats: readonly SeatInfo[]): void`, `online(): void`, `offline(): void`;
   - `createVoiceStore(deps: VoiceDeps): VoiceStore`, where `type VoiceStore = StoreApi<VoiceState>`.
 
-- [ ] **Step 1: Write the failing test.** Create `apps/web/test/voice-store.test.ts`:
+- [x] **Step 1: Write the failing test.** Create `apps/web/test/voice-store.test.ts`:
 
 ```ts
 import type { Ack, IceServer, SeatInfo, SignalData, VoiceState as SeatVoice } from '@deal-city/protocol';
@@ -1377,11 +1379,11 @@ describe('voice store', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails.**
+- [x] **Step 2: Run it to verify it fails.**
 Run: `cd apps/web && npx vitest run test/voice-store.test.ts`
 Expected: FAIL. `../src/voice/voice-store` is not found.
 
-- [ ] **Step 3: Implement.** Create `apps/web/src/voice/voice-store.ts`:
+- [x] **Step 3: Implement.** Create `apps/web/src/voice/voice-store.ts`:
 
 ```ts
 import type { Ack, IceServer, SeatInfo, SignalData } from '@deal-city/protocol';
@@ -1697,11 +1699,11 @@ export function createVoiceStore(deps: VoiceDeps): VoiceStore {
 }
 ```
 
-- [ ] **Step 4: Run it to verify it passes.**
+- [x] **Step 4: Run it to verify it passes.**
 Run: `cd apps/web && npx vitest run test/voice-store.test.ts && npx tsc -b && npx eslint src/voice test/voice-store.test.ts`
 Expected: PASS. If the "shows who is talking" test finds `p1` missing, check that `room.me` is set by `sync` before `join()`, as the test does.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/web/src/voice/voice-store.ts apps/web/test/voice-store.test.ts
@@ -1729,7 +1731,7 @@ git commit -m "feat: add the voice store: mic, peers, playback, talking, push-to
   - `usePushToTalk(): void`;
   - `RenderOptions.voice?: VoiceStore` in `test/dom.tsx`.
 
-- [ ] **Step 1: Write the failing test.** Create `apps/web/test/voice-glue.test.tsx`:
+- [x] **Step 1: Write the failing test.** Create `apps/web/test/voice-glue.test.tsx`:
 
 ```tsx
 // @vitest-environment jsdom
@@ -1805,11 +1807,11 @@ describe('usePushToTalk', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails.**
+- [x] **Step 2: Run it to verify it fails.**
 Run: `cd apps/web && npx vitest run test/voice-glue.test.tsx`
 Expected: FAIL. The modules are missing.
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
 
 `src/voice/channel.ts`:
 
@@ -1999,11 +2001,11 @@ In `test/dom.tsx`:
 - add `voice?: VoiceStore` to `RenderOptions`;
 - in `mount`, wrap `<RouterProvider>` in `<VoiceProvider store={opts.voice}>` when `opts.voice` is set.
 
-- [ ] **Step 4: Run it to verify it passes.**
+- [x] **Step 4: Run it to verify it passes.**
 Run: `cd apps/web && npx vitest run test/voice-glue.test.tsx test/pages.test.tsx && npx tsc -b && npx eslint src/voice src/pages src/main.tsx`
 Expected: PASS. `pages.test.tsx` still passes: the room page's `useVoiceRoom` reads the idle store.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/web
@@ -2029,7 +2031,7 @@ git commit -m "feat: wire voice to the socket, the browser and the room page"
     - a "Voice options" button opening a group named "Voice options", which holds a "Leave voice" button and a "Push-to-talk" checkbox; right click or a 500 ms press on the mic opens it too.
   - `Seat` takes `voice?: SeatVoice`, where `SeatVoice = { state: VoiceState; talking: boolean; link?: RTCPeerConnectionState; muted?: boolean; onMute?: () => void }`.
 
-- [ ] **Step 1: Write the failing test.** Create `apps/web/test/voice-ui.test.tsx`:
+- [x] **Step 1: Write the failing test.** Create `apps/web/test/voice-ui.test.tsx`:
 
 ```tsx
 // @vitest-environment jsdom
@@ -2152,11 +2154,11 @@ describe('voice in the lobby', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails.**
+- [x] **Step 2: Run it to verify it fails.**
 Run: `cd apps/web && npx vitest run test/voice-ui.test.tsx`
 Expected: FAIL. There is no "Join voice" button.
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
 
 `src/voice/VoiceButton.tsx`:
 
@@ -2479,11 +2481,11 @@ In `Lobby.tsx`:
 
 - add `const hasVoice = useHasVoice();`, and import `VoiceButton` and `useHasVoice`.
 
-- [ ] **Step 4: Run it to verify it passes.**
+- [x] **Step 4: Run it to verify it passes.**
 Run: `cd apps/web && npx vitest run test/voice-ui.test.tsx test/tabletop.test.tsx test/table-pieces.test.tsx test/pages.test.tsx test/chat.test.tsx && npx tsc -b && npx eslint src/voice src/tabletop src/pages`
 Expected: PASS. In "sets the voice volume", the range input moves by `step` 5 on ArrowLeft, from 100 to 95. If jsdom does not move a range input with the keyboard, use `fireEvent.change(slider, { target: { value: '95' } })` instead.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/web
@@ -2499,7 +2501,7 @@ git commit -m "feat: voice button, seat voice marks and mute, voice volume setti
 - Create: `apps/e2e/tests/voice.spec.ts`
 - Modify: `docs/superpowers/specs/2026-09-26-chat-and-voice-design.md` (§4: record this plan's rulings in one short "As built" list)
 
-- [ ] **Step 1: Write the e2e test.** In `playwright.config.ts`, add to `use`:
+- [x] **Step 1: Write the e2e test.** In `playwright.config.ts`, add to `use`:
 
 ```ts
     // Voice chat: a fake microphone (a beeping tone), the permission prompt answered yes, and audio allowed to play.
@@ -2545,11 +2547,11 @@ test('two players talk: both join voice, connect, hear each other, and see the m
 });
 ```
 
-- [ ] **Step 2: Build and run it.**
+- [x] **Step 2: Build and run it.**
 Run: `pnpm --filter @deal-city/web build && cd apps/e2e && npx playwright test tests/voice.spec.ts`
 Expected: PASS. Chrome's fake microphone beeps about once a second, so the ring flickers; `toHaveClass` polls until it catches it. If the ring never lights, check that the remote track reaches the analyser. Chrome feeds a remote WebRTC stream to Web Audio only while an `<audio>` element also plays it; `media.ts` does both. Then check that the `AudioContext` is running.
 
-- [ ] **Step 3: Update the spec.** Under §4, add a short "As built (Plan 14)" list with the plan's rulings:
+- [x] **Step 3: Update the spec.** Under §4, add a short "As built (Plan 14)" list with the plan's rulings:
 - the ack before the broadcast;
 - the mic kept as a disabled track;
 - the Voice options caret;
@@ -2557,11 +2559,11 @@ Expected: PASS. Chrome's fake microphone beeps about once a second, so the ring 
 - voice marks at the table only;
 - one rebuild per join.
 
-- [ ] **Step 4: Run the full gates** (once, at the end of the branch).
+- [x] **Step 4: Run the full gates** (once, at the end of the branch).
 Run: `pnpm test && pnpm typecheck && pnpm lint && pnpm build && pnpm e2e`
 Expected: everything passes.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/e2e docs/superpowers/specs/2026-09-26-chat-and-voice-design.md

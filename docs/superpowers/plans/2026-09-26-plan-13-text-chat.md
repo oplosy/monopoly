@@ -1,5 +1,7 @@
 # Plan 13: in-room text chat — implementation plan
 
+> **Status: completed and merged to `main`.** Every step below is ticked as done; the per-task commits, tests and rulings live in the git history (the git-ignored `.superpowers/sdd/` ledger was the working record).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. In this repo plans run **natively** (CLAUDE.md): one session does every task, test-first, then one fresh reviewer on the most capable model reviews the branch.
 
 **Goal:** Players in a room can send each other plain text messages, in the lobby and at the table, for as long as the room lives.
@@ -83,7 +85,7 @@
   - `ServerToClientEvents['chat:message']: (message: ChatMessage) => void`;
   - `ServerToClientEvents['chat:history']: (messages: ChatMessage[]) => void`.
 
-- [ ] **Step 1: Write the failing test.** Append to the protocol test file:
+- [x] **Step 1: Write the failing test.** Append to the protocol test file:
 
 ```ts
 import { CHAT_HISTORY, CHAT_MAX_LENGTH, ChatSendSchema } from '../src/index';
@@ -107,11 +109,11 @@ describe('ChatSendSchema', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails.**
+- [x] **Step 2: Run it to verify it fails.**
 Run: `cd packages/protocol && npx vitest run`
 Expected: FAIL. `ChatSendSchema` is not exported.
 
-- [ ] **Step 3: Implement.** In `constants.ts` append:
+- [x] **Step 3: Implement.** In `constants.ts` append:
 
 ```ts
 /** Chat: the longest message, in characters after trimming, and how many messages a room keeps. */
@@ -148,11 +150,11 @@ Add `'chat:send': (payload: ChatSendPayload, ack: (res: Ack) => void) => void;` 
   'chat:history': (messages: ChatMessage[]) => void;
 ```
 
-- [ ] **Step 4: Run it to verify it passes.**
+- [x] **Step 4: Run it to verify it passes.**
 Run: `cd packages/protocol && npx vitest run && npx tsc --noEmit -p .`
 Expected: PASS, no type errors.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add packages/protocol
@@ -176,7 +178,7 @@ git commit -m "feat: add chat events and limits to the protocol"
   - `Room.chat(playerId: string, text: string): Ack`;
   - `fakeConn()` records `chats: ChatMessage[]` and `histories: ChatMessage[][]`.
 
-- [ ] **Step 1: Write the failing test.** Create `apps/server/test/room-chat.test.ts`:
+- [x] **Step 1: Write the failing test.** Create `apps/server/test/room-chat.test.ts`:
 
 ```ts
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -261,11 +263,11 @@ describe('Room chat', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails.**
+- [x] **Step 2: Run it to verify it fails.**
 Run: `cd apps/server && npx vitest run test/room-chat.test.ts`
 Expected: FAIL. `room.chat is not a function`, and `chats` / `histories` are undefined.
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
 
 In `test/fakes.ts`:
 - import `ChatMessage` from `@deal-city/protocol`;
@@ -308,11 +310,11 @@ In `src/socket.ts`, add to `conn` (the handler comes in Task 3):
     chatHistory: (messages) => socket.emit('chat:history', messages),
 ```
 
-- [ ] **Step 4: Run it to verify it passes.**
+- [x] **Step 4: Run it to verify it passes.**
 Run: `cd apps/server && npx vitest run && npx tsc --noEmit -p .`
 Expected: PASS (all server tests), no type errors.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/server
@@ -332,7 +334,7 @@ git commit -m "feat: keep and broadcast a room's chat on the server"
 - Consumes: `Room.chat` (Task 2), `ChatSendSchema` (Task 1).
 - Produces: `createChatLimiter(now?: () => number): () => boolean`. It allows 1 per second and 5 per 10 seconds.
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 In `test/basics.test.ts`, next to the existing rate limiter tests (import `createChatLimiter` from `../src/rate-limit`):
 
@@ -379,11 +381,11 @@ In `test/server.integration.test.ts`, inside its `describe`, after "requires a s
   });
 ```
 
-- [ ] **Step 2: Run them to verify they fail.**
+- [x] **Step 2: Run them to verify they fail.**
 Run: `cd apps/server && npx vitest run test/basics.test.ts test/server.integration.test.ts`
 Expected: FAIL. `createChatLimiter` is not exported, and `chat:send` gets no ack (the test times out).
 
-- [ ] **Step 3: Implement.** Append to `rate-limit.ts`:
+- [x] **Step 3: Implement.** Append to `rate-limit.ts`:
 
 ```ts
 /** Chat's own limit, apart from the game's: one line a second and five in ten seconds, per connection. */
@@ -406,11 +408,11 @@ In `socket.ts`:
   );
 ```
 
-- [ ] **Step 4: Run them to verify they pass.**
+- [x] **Step 4: Run them to verify they pass.**
 Run: `cd apps/server && npx vitest run && npx tsc --noEmit -p .`
 Expected: PASS.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/server
@@ -433,7 +435,7 @@ git commit -m "feat: accept chat lines over the socket, with their own limit"
   - `sendChat(text: string): Promise<Ack>`;
   - `markChatRead(): void`.
 
-- [ ] **Step 1: Write the failing test.** Add to `test/game-store.test.ts`, using its existing setup. Read the top of the file first: it builds a store over a `FakeSocket` with `memoryStorage`. Use the same helper it uses (e.g. `setup()`) and an already-seated session. If there is no such helper, build one exactly as its first test does.
+- [x] **Step 1: Write the failing test.** Add to `test/game-store.test.ts`, using its existing setup. Read the top of the file first: it builds a store over a `FakeSocket` with `memoryStorage`. Use the same helper it uses (e.g. `setup()`) and an already-seated session. If there is no such helper, build one exactly as its first test does.
 
 ```ts
 describe('chat', () => {
@@ -482,11 +484,11 @@ describe('chat', () => {
 
 `seated(playerId)` is a small local helper. It creates the store and the socket the way the file's other tests do, calls `socket.connect()`, and resolves `joinRoom('ABCDEF', 'Ann')` with the fake socket replying `{ ok: true, code: 'ABCDEF', playerId, token: 'a'.repeat(32) }` to `room:join`. Define it at the top of this `describe` if the file has no equivalent.
 
-- [ ] **Step 2: Run it to verify it fails.**
+- [x] **Step 2: Run it to verify it fails.**
 Run: `cd apps/web && npx vitest run test/game-store.test.ts`
 Expected: FAIL. `sendChat` is not a function, and `chat` is undefined.
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
 
 In `game-store.ts`:
 - import `type ChatMessage` with the other protocol types, and `CHAT_HISTORY` from `@deal-city/protocol/constants`;
@@ -529,11 +531,11 @@ Listeners, next to the others:
 
 Add the `tooLong` line to `errors.ts`, under the room and request errors.
 
-- [ ] **Step 4: Run it to verify it passes.**
+- [x] **Step 4: Run it to verify it passes.**
 Run: `cd apps/web && npx vitest run test/game-store.test.ts && npx tsc -b`
 Expected: PASS.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/web/src/store apps/web/src/ui/errors.ts apps/web/test/game-store.test.ts
@@ -555,7 +557,7 @@ git commit -m "feat: keep the room's chat in the client store"
   - `messages: readonly ChatMessage[]`, `me: string`, `onSend(text: string): Promise<Ack>`.
   - It renders `<ol aria-label="Messages">`, whose items read `"<name>: <text>"`, and a form with `<input aria-label="Message">` and a `Send` button.
 
-- [ ] **Step 1: Write the failing test.** Create `apps/web/test/chat.test.tsx`:
+- [x] **Step 1: Write the failing test.** Create `apps/web/test/chat.test.tsx`:
 
 ```tsx
 // @vitest-environment jsdom
@@ -611,11 +613,11 @@ describe('ChatThread', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails.**
+- [x] **Step 2: Run it to verify it fails.**
 Run: `cd apps/web && npx vitest run test/chat.test.tsx`
 Expected: FAIL. The module `../src/chat/ChatThread` is not found.
 
-- [ ] **Step 3: Implement.** Create `src/chat/ChatThread.tsx`:
+- [x] **Step 3: Implement.** Create `src/chat/ChatThread.tsx`:
 
 ```tsx
 import type { Ack, ChatMessage } from '@deal-city/protocol';
@@ -704,11 +706,11 @@ Create `src/chat/chat.css`:
 .chat-form button { border-radius: 999px; padding: 0.4rem 0.9rem; }
 ```
 
-- [ ] **Step 4: Run it to verify it passes.**
+- [x] **Step 4: Run it to verify it passes.**
 Run: `cd apps/web && npx vitest run test/chat.test.tsx && npx tsc -b && npx eslint src/chat`
 Expected: PASS.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/web/src/chat apps/web/test/chat.test.tsx
@@ -734,7 +736,7 @@ git commit -m "feat: add the chat thread: its lines and a box to send from"
   - `useChatBubbles(messages, me, open): Record<string, string>`, the line each seat shows (by player id), each for `CHAT_BUBBLE_MS = 3000`;
   - `Seat` takes `bubble?: string`.
 
-- [ ] **Step 1: Write the failing tests.** Add to `apps/web/test/chat.test.tsx`:
+- [x] **Step 1: Write the failing tests.** Add to `apps/web/test/chat.test.tsx`:
 
 ```tsx
 import { act, renderHook } from '@testing-library/react';
@@ -810,11 +812,11 @@ describe('the chat', () => {
 
 (`readCss` and `rule` are already imported in that file; use them directly and drop the aliases if the linter objects to a duplicate import.)
 
-- [ ] **Step 2: Run them to verify they fail.**
+- [x] **Step 2: Run them to verify they fail.**
 Run: `cd apps/web && npx vitest run test/chat.test.tsx test/scene-css.test.ts`
 Expected: FAIL. The modules `ChatButton` and `bubbles` are missing, and there is no Chat button.
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
 
 `src/chat/ChatButton.tsx`:
 
@@ -1043,11 +1045,11 @@ In `tabletop.css`, the UI layer's `pointer-events` rule already lists `.hud`; th
 
 In `scene.css`, change `.calib-panel`'s `right` to `calc(12px + 2 * 52px + 20px)`.
 
-- [ ] **Step 4: Run them to verify they pass.**
+- [x] **Step 4: Run them to verify they pass.**
 Run: `cd apps/web && npx vitest run test/chat.test.tsx test/scene-css.test.ts test/tabletop.test.tsx && npx tsc -b && npx eslint src/chat src/tabletop`
 Expected: PASS.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/web
@@ -1065,7 +1067,7 @@ git commit -m "feat: chat at the table: corner button, side sheet, seat bubbles"
 **Interfaces:**
 - Consumes: `ChatThread` (Task 5); the store's `chat`, `sendChat` and `markChatRead`.
 
-- [ ] **Step 1: Write the failing test.** Add to `apps/web/test/pages.test.tsx`, using the file's existing lobby rendering helper (the one that renders `/room/ABCDEF` with a room in `lobby` status and a seated session). Read the file for its name and use it unchanged:
+- [x] **Step 1: Write the failing test.** Add to `apps/web/test/pages.test.tsx`, using the file's existing lobby rendering helper (the one that renders `/room/ABCDEF` with a room in `lobby` status and a seated session). Read the file for its name and use it unchanged:
 
 ```tsx
 it('chats in the lobby, the thread always open and read', async () => {
@@ -1079,11 +1081,11 @@ it('chats in the lobby, the thread always open and read', async () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails.**
+- [x] **Step 2: Run it to verify it fails.**
 Run: `cd apps/web && npx vitest run test/pages.test.tsx`
 Expected: FAIL. There is no region named "Chat".
 
-- [ ] **Step 3: Implement.** In `Lobby.tsx`:
+- [x] **Step 3: Implement.** In `Lobby.tsx`:
 - read `chat`, `sendChat` and `markChatRead` from the store;
 - add `useEffect(() => markChatRead(), [markChatRead, chat.length]);`;
 - inside the `lobby-panel` section, after the Players `h2` block and before the Start/Waiting block, render:
@@ -1102,11 +1104,11 @@ In `pages.css`:
 .lobby-chat .chat-lines { max-height: 11rem; background: #fffdf7; border: 2px solid var(--ink); border-radius: 12px; padding: 0.5rem 0.7rem; }
 ```
 
-- [ ] **Step 4: Run it to verify it passes.**
+- [x] **Step 4: Run it to verify it passes.**
 Run: `cd apps/web && npx vitest run test/pages.test.tsx && npx tsc -b && npx eslint src/pages`
 Expected: PASS.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/web
@@ -1121,7 +1123,7 @@ git commit -m "feat: chat in the lobby"
 - Create: `apps/e2e/tests/chat.spec.ts`
 - Modify: `docs/superpowers/specs/2026-09-26-chat-and-voice-design.md` (§3.2: `ChatMessage` gains `name`; add the ruling)
 
-- [ ] **Step 1: Write the e2e test.** Create `apps/e2e/tests/chat.spec.ts`:
+- [x] **Step 1: Write the e2e test.** Create `apps/e2e/tests/chat.spec.ts`:
 
 ```ts
 import { expect, test } from '@playwright/test';
@@ -1155,19 +1157,19 @@ test('two players chat in the lobby, and the chat carries on at the table', asyn
 });
 ```
 
-- [ ] **Step 2: Build and run it.**
+- [x] **Step 2: Build and run it.**
 Run: `pnpm --filter @deal-city/web build && cd apps/e2e && npx playwright test tests/chat.spec.ts`
 Expected: PASS. If the unread count differs because the lobby line was read in the lobby, keep `'Chat, 1 unread'`: the lobby marks lines read, so only "good luck" is unread.
 
-- [ ] **Step 3: Update the spec.**
+- [x] **Step 3: Update the spec.**
 - In §3.2, change the `ChatMessage` shape to `{ id: number; from: string; name: string; text: string; at: number }`.
 - Add to it: "`name` is the sender's nickname when they sent it, so history lines keep a name after their sender leaves."
 
-- [ ] **Step 4: Run the full gates** (once, at the end of the branch).
+- [x] **Step 4: Run the full gates** (once, at the end of the branch).
 Run: `pnpm test && pnpm typecheck && pnpm lint && pnpm build && pnpm e2e`
 Expected: everything passes.
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```bash
 git add apps/e2e/tests/chat.spec.ts docs/superpowers/specs/2026-09-26-chat-and-voice-design.md

@@ -1,5 +1,7 @@
 # Deal City — Plan 2: Protocol and Game Server Implementation Plan
 
+> **Status: completed and merged to `main`.** Every step below is ticked as done; the per-task commits, tests and rulings live in the git history (the git-ignored `.superpowers/sdd/` ledger was the working record).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build `@deal-city/protocol` (zod-validated socket messages) and `@deal-city/server` (Fastify + Socket.IO). The server hosts 2–3-player rooms, runs `@deal-city/engine` authoritatively, enforces turn and response timers, and lets players reconnect.
@@ -86,12 +88,12 @@ apps/server/
 **Interfaces:**
 - Produces: `@deal-city/engine/testing`, which exports `makeState(spec: StateSpec): GameState`, `step(s, playerId, intent): GameState`, `allCards(s): string[]`, `groupIdOf(s, playerId, index): string`, `player(s, id): Player`, and the types `StateSpec`, `PlayerSpec`, `GroupSpec`. Server tests (Tasks 4–5) build crafted game states with it.
 
-- [ ] **Step 1: Create the feature branch**
+- [x] **Step 1: Create the feature branch**
 
 Run: `git switch -c feat/server`
 Expected: `Switched to a new branch 'feat/server'`. The branch is created from `feat/spec`, which contains the merged engine.
 
-- [ ] **Step 2: Move the helpers into `src/testing.ts`**
+- [x] **Step 2: Move the helpers into `src/testing.ts`**
 
 `packages/engine/src/testing.ts`:
 ```ts
@@ -199,12 +201,12 @@ In `packages/engine/package.json`, change `exports` to:
 "exports": { ".": "./src/index.ts", "./testing": "./src/testing.ts" },
 ```
 
-- [ ] **Step 3: Confirm the refactor keeps the suite green**
+- [x] **Step 3: Confirm the refactor keeps the suite green**
 
 Run: `pnpm --filter @deal-city/engine test; pnpm --filter @deal-city/engine typecheck`
 Expected: 90 tests pass and there are no type errors. This is a pure move, so the existing tests are the safety net.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A
@@ -229,7 +231,7 @@ git commit -m "refactor(engine): expose test-state builders as @deal-city/engine
   - Socket.IO event maps: `ClientToServerEvents`, `ServerToClientEvents`
   - Constants: `MAX_SEATS = 3`, `MIN_PLAYERS = 2`
 
-- [ ] **Step 1: Write the package files and install dependencies**
+- [x] **Step 1: Write the package files and install dependencies**
 
 `packages/protocol/package.json`:
 ```json
@@ -262,7 +264,7 @@ pnpm --filter @deal-city/protocol add -D typescript@^5 vitest @types/node
 ```
 Expected: both succeed. zod resolves to v4.
 
-- [ ] **Step 2: Write the failing protocol tests**
+- [x] **Step 2: Write the failing protocol tests**
 
 `packages/protocol/test/protocol.test.ts`:
 ```ts
@@ -322,12 +324,12 @@ describe('payload schemas', () => {
 });
 ```
 
-- [ ] **Step 3: Run the tests and confirm they fail**
+- [x] **Step 3: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/protocol test`
 Expected: FAIL. The file `../src/index` cannot be found.
 
-- [ ] **Step 4: Implement `src/index.ts`**
+- [x] **Step 4: Implement `src/index.ts`**
 
 `packages/protocol/src/index.ts`:
 ```ts
@@ -436,12 +438,12 @@ export interface ServerToClientEvents {
 }
 ```
 
-- [ ] **Step 5: Run the tests and confirm they pass**
+- [x] **Step 5: Run the tests and confirm they pass**
 
 Run: `pnpm --filter @deal-city/protocol test; pnpm --filter @deal-city/protocol typecheck`
 Expected: 5 tests pass and there are no type errors. The parity checks compile.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A
@@ -465,7 +467,7 @@ git commit -m "feat(protocol): add zod-validated socket protocol"
   - `sanitizeNickname(raw): string | null`
   - `createRateLimiter(limit, windowMs?, now?): () => boolean`
 
-- [ ] **Step 1: Write the package files and install dependencies**
+- [x] **Step 1: Write the package files and install dependencies**
 
 `apps/server/package.json`:
 ```json
@@ -514,7 +516,7 @@ pnpm --filter @deal-city/server add -D typescript@^5 vitest @types/node tsx tsup
 ```
 Expected: both succeed.
 
-- [ ] **Step 2: Write the failing basics tests**
+- [x] **Step 2: Write the failing basics tests**
 
 `apps/server/test/basics.test.ts`:
 ```ts
@@ -582,12 +584,12 @@ describe('createRateLimiter', () => {
 });
 ```
 
-- [ ] **Step 3: Run the tests and confirm they fail**
+- [x] **Step 3: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/server test`
 Expected: FAIL. The module `../src/config` cannot be found.
 
-- [ ] **Step 4: Implement the four modules**
+- [x] **Step 4: Implement the four modules**
 
 `apps/server/src/config.ts`:
 ```ts
@@ -673,12 +675,12 @@ export function createRateLimiter(limit: number, windowMs = 1000, now: () => num
 }
 ```
 
-- [ ] **Step 5: Run the tests and confirm they pass**
+- [x] **Step 5: Run the tests and confirm they pass**
 
 Run: `pnpm --filter @deal-city/server test; pnpm --filter @deal-city/server typecheck`
 Expected: 9 tests pass and there are no type errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A
@@ -718,7 +720,7 @@ git commit -m "feat(server): add config, ids, nickname sanitizing and rate limit
       - `deadlines(): Deadlines`
       - `dispose(): void`
 
-- [ ] **Step 1: Write the fake connection and the failing lobby tests**
+- [x] **Step 1: Write the fake connection and the failing lobby tests**
 
 `apps/server/test/fakes.ts` (kept out of `*.test.ts` files so importing it doesn't re-register tests):
 ```ts
@@ -837,7 +839,7 @@ describe('Room lobby', () => {
 });
 ```
 
-- [ ] **Step 2: Write the failing game and timer tests**
+- [x] **Step 2: Write the failing game and timer tests**
 
 `apps/server/test/room-game.test.ts`:
 ```ts
@@ -982,12 +984,12 @@ describe('Room game flow', () => {
 });
 ```
 
-- [ ] **Step 3: Run the tests and confirm they fail**
+- [x] **Step 3: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/server test room`
 Expected: FAIL. The module `../src/room` cannot be found.
 
-- [ ] **Step 4: Implement `room.ts`**
+- [x] **Step 4: Implement `room.ts`**
 
 `apps/server/src/room.ts`:
 ```ts
@@ -1275,7 +1277,7 @@ export class Room {
 }
 ```
 
-- [ ] **Step 5: Run the tests and confirm they pass**
+- [x] **Step 5: Run the tests and confirm they pass**
 
 Run: `pnpm --filter @deal-city/server test; pnpm --filter @deal-city/server typecheck`
 Expected: all lobby and game tests pass and there are no type errors.
@@ -1285,7 +1287,7 @@ If "pauses the turn clock" fails, log `room.deadlines()` after each `advanceTime
 - At t=10 s Debt Collector pauses the turn clock with 50 s left, and P2's response clock starts, ending at t=30 s.
 - At t=30 s P2 auto-accepts and auto-pays, and the turn clock resumes, ending at t=80 s.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A
@@ -1311,7 +1313,7 @@ git commit -m "feat(server): add Room with lobby, timers, auto-actions and recon
   - `size`
   - `dispose()`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `apps/server/test/room-manager.test.ts`:
 ```ts
@@ -1364,12 +1366,12 @@ describe('RoomManager', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests and confirm they fail**
+- [x] **Step 2: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/server test room-manager`
 Expected: FAIL. The module `../src/room-manager` cannot be found.
 
-- [ ] **Step 3: Implement `room-manager.ts`**
+- [x] **Step 3: Implement `room-manager.ts`**
 
 `apps/server/src/room-manager.ts`:
 ```ts
@@ -1436,12 +1438,12 @@ export class RoomManager {
 }
 ```
 
-- [ ] **Step 4: Run the tests and confirm they pass**
+- [x] **Step 4: Run the tests and confirm they pass**
 
 Run: `pnpm --filter @deal-city/server test; pnpm --filter @deal-city/server typecheck`
 Expected: all server tests pass and there are no type errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A
@@ -1464,7 +1466,7 @@ git commit -m "feat(server): add RoomManager with token index and idle sweep"
   - `buildServer(config, deps?): Promise<{ app: FastifyInstance; io; rooms: RoomManager }>`
   - `apps/server/src/main.ts`, the process entry point. Plan 5's Docker image runs `node apps/server/dist/main.js`.
 
-- [ ] **Step 1: Write the failing integration tests**
+- [x] **Step 1: Write the failing integration tests**
 
 `apps/server/test/server.integration.test.ts`:
 ```ts
@@ -1609,12 +1611,12 @@ describe('server', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests and confirm they fail**
+- [x] **Step 2: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/server test integration`
 Expected: FAIL. The module `../src/app` cannot be found.
 
-- [ ] **Step 3: Implement `socket.ts`**
+- [x] **Step 3: Implement `socket.ts`**
 
 `apps/server/src/socket.ts`:
 ```ts
@@ -1737,7 +1739,7 @@ function handleConnection(socket: IoSocket, rooms: RoomManager, config: Config):
 }
 ```
 
-- [ ] **Step 4: Implement `app.ts` and `main.ts`**
+- [x] **Step 4: Implement `app.ts` and `main.ts`**
 
 `apps/server/src/app.ts`:
 ```ts
@@ -1799,14 +1801,14 @@ await app.listen({ port: config.port, host: '0.0.0.0' });
 console.log(`Deal City server listening on :${config.port}`);
 ```
 
-- [ ] **Step 5: Run the tests and confirm they pass**
+- [x] **Step 5: Run the tests and confirm they pass**
 
 Run: `pnpm --filter @deal-city/server test; pnpm --filter @deal-city/server typecheck`
 Expected: all server tests pass, including the 7 integration tests, and there are no type errors.
 - If an integration test hangs, check that `afterEach` disconnects the clients before `app.close()`.
 - The "resumes a seat" test waits with `waitRoom(a, predicate)` because earlier `room:state` broadcasts can still be in flight when the listener is registered.
 
-- [ ] **Step 6: Build and smoke-test the bundle**
+- [x] **Step 6: Build and smoke-test the bundle**
 
 Run:
 ```bash
@@ -1815,7 +1817,7 @@ pnpm --filter @deal-city/server build
 ```
 Expected: the build writes `apps/server/dist/main.js`, and curl prints `{"ok":true}`. The server exits on its own after 10 seconds.
 
-- [ ] **Step 7: Update the spec's protocol section**
+- [x] **Step 7: Update the spec's protocol section**
 
 In `docs/superpowers/specs/2026-09-24-deal-city-design.md` §4.2, make three edits:
 - Replace the `game:state` row so its payload reads `{view, deadlines: {turnEndsAt, responseEndsAt}, events}`.
@@ -1827,12 +1829,12 @@ In `docs/superpowers/specs/2026-09-24-deal-city-design.md` §4.2, make three edi
 - Every client→server event is acknowledged with `{ ok: true, ... }` or `{ ok: false, error }`. Server error codes: `badRequest`, `rateLimited`, `internal`, `badNickname`, `roomNotFound`, `roomFull`, `gameInProgress`, `sessionNotFound`, `noSession`, `alreadyInRoom`, `notHost`, `notEnoughPlayers`, `notPlaying`, `notFinished`, `staleVersion`, plus every engine rule error code.
 ```
 
-- [ ] **Step 8: Run the full quality gate**
+- [x] **Step 8: Run the full quality gate**
 
 Run: `pnpm lint; pnpm typecheck; pnpm test`
 Expected: all three pass across engine, protocol and server.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add -A

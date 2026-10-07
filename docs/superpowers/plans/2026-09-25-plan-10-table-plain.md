@@ -1,5 +1,7 @@
 # Plan 10: Plain Table, 22° Camera, Motion Switch, Drag Fix Implementation Plan
 
+> **Status: completed and merged to `main`.** Every step below is ticked as done; the per-task commits, tests and rulings live in the git history (the git-ignored `.superpowers/sdd/` ledger was the working record).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Strip the picnic scene to a plain navy background and a felt table at a 22° tilt, make animations run by default with an in-game switch, and make a dragged card stay exactly where it was grabbed.
@@ -83,7 +85,7 @@
   - `reduceMotion()` in `test/motion.ts` now switches the setting off (its callers are unchanged);
   - new `osAsksLessMotion(): { restore(): void }` stubs `matchMedia` as the old helper did.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `apps/web/test/motion-setting.test.ts`:
 ```ts
@@ -175,12 +177,12 @@ Add to `apps/web/test/mode.test.ts` (and import `osAsksLessMotion` and `setMotio
   });
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- motion-setting mode`
 Expected: FAIL: `../src/motion/setting` cannot be resolved.
 
-- [ ] **Step 3: Implement the setting**
+- [x] **Step 3: Implement the setting**
 
 Create `apps/web/src/motion/setting.ts`:
 ```ts
@@ -272,17 +274,17 @@ In `apps/web/src/pages/Shell.tsx`, import `useMotionSetting`, add `const motion 
       <MotionConfig reducedMotion={motion === 'on' ? 'never' : 'always'}>
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test -- motion-setting mode`
 Expected: PASS.
 
-- [ ] **Step 5: Run the web suite, typecheck and lint**
+- [x] **Step 5: Run the web suite, typecheck and lint**
 
 Run: `pnpm --filter @deal-city/web test && pnpm typecheck && pnpm lint`
 Expected: PASS. Tests that called `reduceMotion()` now switch the setting off: they keep their meaning. If one of them relied on `matchMedia` itself (not through `motionMode`), use `osAsksLessMotion()` there and ledger it. `git grep -n "prefers-reduced-motion" apps/web/src -- '*.ts' '*.tsx'` must print nothing.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/src/motion/setting.ts apps/web/src/motion/mode.ts apps/web/src/main.tsx apps/web/src/pages/Shell.tsx apps/web/test/motion.ts apps/web/test/motion-setting.test.ts apps/web/test/mode.test.ts
@@ -305,7 +307,7 @@ git commit -m "feat: add an in-game motion setting, on by default" -m "Co-Author
   - tokens `--bg`, `--felt-1`, `--felt-2` and `--rim` in `index.css`;
   - `test/css.ts`: `readCss(url: URL): string`, `rule(text, selector): string` and `rules(text): { selector: string; body: string }[]` (every style rule, including those inside `@media`, excluding `@keyframes` and `@property`).
 
-- [ ] **Step 1: Add the CSS test helpers**
+- [x] **Step 1: Add the CSS test helpers**
 
 Create `apps/web/test/css.ts`:
 ```ts
@@ -348,7 +350,7 @@ export function rule(text: string, selector: string): string {
 }
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `apps/web/test/scene-css.test.ts`:
 ```ts
@@ -396,12 +398,12 @@ describe('TableScene', () => {
 ```
 In `apps/web/test/geometry.test.ts`, delete the `describe('propLayout', …)` block, and remove `propLayout` from its import.
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- scene-css scene.test geometry`
 Expected: FAIL. The scene test cannot resolve `TableScene`, and the CSS tests find a 55° tilt and grass.
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 Rename the file with `git mv apps/web/src/scene/PicnicScene.tsx apps/web/src/scene/TableScene.tsx`, then replace its content with:
 ```tsx
@@ -509,12 +511,12 @@ Delete `apps/web/src/scenery/props.tsx`. In `apps/web/src/scene/geometry.ts`, de
 
 In `apps/web/src/pages/pages.css`, change `.lobby-table, .lobby-table .scene { --plane: min(62vw, 70vh); }` to `min(56vw, 58vh)`. These are starting values; Step 6 checks them.
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test && pnpm typecheck && pnpm lint`
 Expected: PASS. `git grep -n "PicnicScene\|scenery/props\|propLayout" apps/web apps/e2e` prints nothing.
 
-- [ ] **Step 6: Check the fit end to end**
+- [x] **Step 6: Check the fit end to end**
 
 Run: `pnpm e2e`
 Expected: PASS. `mobile.spec.ts` guards the overlaps: the narrator and the HUD, trays and seats, touch targets.
@@ -525,7 +527,7 @@ If an overlap test fails, fix the fit in CSS, never the test:
 
 Ledger each value as a ruling. Plan 11 replaces these numbers with the layout model.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A apps/web/src/scene apps/web/src/scenery apps/web/src/index.css apps/web/src/pages apps/web/src/tabletop/Tabletop.tsx apps/web/src/tabletop/tabletop.css apps/web/src/cards/Gallery.tsx apps/web/test/css.ts apps/web/test/scene-css.test.ts apps/web/test/scene.test.tsx apps/web/test/geometry.test.ts apps/e2e/tests/gallery.spec.ts
@@ -544,7 +546,7 @@ git commit -m "feat: lay a plain felt table at a 22° tilt" -m "Co-Authored-By: 
 - Consumes: `readCss`, `rules` (Task 2); `<html data-motion>` (Task 1).
 - Produces: every motion rule prefixed `:root[data-motion='on']` (was `no-preference`) or `:root[data-motion='off']` (was `reduce`); `@keyframes` at the top level.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Replace `apps/web/test/motion-css.test.ts` with:
 ```ts
@@ -601,12 +603,12 @@ describe('motion.css', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- motion-css`
 Expected: FAIL. Stylesheets still contain `prefers-reduced-motion`, and the animations are not prefixed.
 
-- [ ] **Step 3: Rewrite the blocks with a script**
+- [x] **Step 3: Rewrite the blocks with a script**
 
 Write this to the scratchpad as `motion_css.py` (it is not committed):
 ```python
@@ -683,12 +685,12 @@ git grep -n "prefers-reduced-motion" apps/web/src
 ```
 Expected: one `ok` line per file, and no grep output. Read the diff (`git diff --stat`, then skim `git diff apps/web/src/motion/motion.css`). Every former block must now be prefixed rules with its keyframes hoisted. Fix any rule body that the move left oddly indented; the tests do not care about indentation.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test && pnpm typecheck && pnpm lint && pnpm build`
 Expected: PASS. The build shows the stylesheets still parse.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/motion/motion.css apps/web/src/tabletop/tabletop.css apps/web/src/avatars/avatars.css apps/web/src/scene/scene.css apps/web/test/motion-css.test.ts
@@ -710,7 +712,7 @@ git commit -m "refactor: key motion styles on the in-game switch, not the OS" -m
   - `<MotionControl />`: a button named "Animations" with `aria-pressed`, in the "Game menu" nav right after `SoundControl`;
   - `newPlayer(browser, baseURL, opts?: { motion?: 'on' | 'off' })` in `players.ts`.
 
-- [ ] **Step 1: Write the failing unit tests**
+- [x] **Step 1: Write the failing unit tests**
 
 Create `apps/web/test/motion-control.test.tsx`:
 ```tsx
@@ -749,12 +751,12 @@ describe('the Animations switch', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- motion-control`
 Expected: FAIL: `../src/motion/MotionControl` cannot be resolved.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `apps/web/src/motion/MotionControl.tsx`:
 ```tsx
@@ -782,12 +784,12 @@ export function MotionControl() {
 ```
 In `apps/web/src/tabletop/Hud.tsx`, import it and render `<MotionControl />` right after `<SoundControl />`. In `apps/web/src/tabletop/tabletop.css`, add `.motion-toggle` to every selector list that styles `.sound-toggle`, so it looks and sizes the same, including the 44 px touch-target rule (`git grep -n "sound-toggle" apps/web/src` lists them).
 
-- [ ] **Step 4: Run the unit tests to verify they pass**
+- [x] **Step 4: Run the unit tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test -- motion-control && pnpm typecheck && pnpm lint`
 Expected: PASS.
 
-- [ ] **Step 5: Let e2e players choose motion, and move calm tables off the OS setting**
+- [x] **Step 5: Let e2e players choose motion, and move calm tables off the OS setting**
 
 In `apps/e2e/tests/players.ts`, replace `newPlayer` with:
 ```ts
@@ -805,7 +807,7 @@ In `apps/e2e/tests/table.spec.ts`:
 
 In `apps/e2e/tests/sound.spec.ts`, change `listener`'s last parameter to `motion: 'on' | 'off'`. Create its context with `browser.newContext({ baseURL })`, and add `if (motion === 'off') await context.addInitScript(() => localStorage.setItem('dealcity.motion', 'off'));` before `addInitScript(countSounds)`. Pass `'off'` where it passed `'reduce'` and `'on'` where it passed `'no-preference'`. Change the test title's "also when they ask for less motion" to "also with animations switched off".
 
-- [ ] **Step 6: Write the failing e2e tests**
+- [x] **Step 6: Write the failing e2e tests**
 
 Add to `apps/e2e/tests/motion.spec.ts`:
 ```ts
@@ -848,12 +850,12 @@ test('every page carries the motion setting from the first paint', async ({ page
 });
 ```
 
-- [ ] **Step 7: Run the e2e suite**
+- [x] **Step 7: Run the e2e suite**
 
 Run: `pnpm e2e`
 Expected: PASS, with the 2 new tests. First check that they can fail: comment out `applyMotion();` in `main.tsx` and run `pnpm --filter @deal-city/e2e e2e -- motion -g "first paint"`. The test must fail. Restore the line.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add apps/web/src/motion/MotionControl.tsx apps/web/src/tabletop/Hud.tsx apps/web/src/tabletop/tabletop.css apps/web/test/motion-control.test.tsx apps/e2e/tests/players.ts apps/e2e/tests/table.spec.ts apps/e2e/tests/sound.spec.ts apps/e2e/tests/motion.spec.ts
@@ -874,7 +876,7 @@ git commit -m "feat: switch animations on or off from the HUD" -m "Co-Authored-B
   - `DragState` gains `grab: { x: number; y: number }`, the grabbed point as fractions of the card (0–1);
   - the ghost's style carries `--gx` and `--gy`.
 
-- [ ] **Step 1: Write the failing unit tests**
+- [x] **Step 1: Write the failing unit tests**
 
 Add to `apps/web/test/drag.test.tsx` (import `reduceMotion` from `./motion`):
 ```tsx
@@ -932,12 +934,12 @@ Add to `apps/web/test/drag.test.tsx` (import `reduceMotion` from `./motion`):
 ```
 Put them inside `describe('drag and drop', …)`, after the existing tests. `release`, `under`, `mouse`, `dragAway`, `handCard` and `tableWith` are the file's own helpers.
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- drag`
 Expected: FAIL. There are no `--gx` or `--gy`, the spring lags behind 200 px, and the ghost returns to the card's center rather than the grabbed point.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `apps/web/src/tabletop/drag.tsx`:
 - Add `grab: { x: number; y: number }` to `DragState`, with the doc comment "Where the card was grabbed, as fractions of its box (0–1)".
@@ -997,12 +999,12 @@ export function DragGhost({ drag }: { drag: DragApi }) {
 ```
   (A card is 5:7, so its height is 1.4 × its width.)
 
-- [ ] **Step 4: Run the unit tests to verify they pass**
+- [x] **Step 4: Run the unit tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test -- drag && pnpm typecheck && pnpm lint`
 Expected: PASS, including the older drag tests. A held drop still flies from the drop point, and a miss still goes home.
 
-- [ ] **Step 5: Write the e2e check**
+- [x] **Step 5: Write the e2e check**
 
 Add to `apps/e2e/tests/motion.spec.ts`:
 ```ts
@@ -1034,12 +1036,12 @@ test('a dragged card stays under the pointer where it was grabbed', async ({ bro
 });
 ```
 
-- [ ] **Step 6: Run the e2e suite**
+- [x] **Step 6: Run the e2e suite**
 
 Run: `pnpm e2e`
 Expected: PASS. Confirm the new test can fail: stash only `drag.tsx` and `motion.css` (`git stash push apps/web/src/tabletop/drag.tsx apps/web/src/motion/motion.css`), run `pnpm --filter @deal-city/e2e e2e -- motion -g "grabbed"`, see it fail, then `git stash pop`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/web/src/tabletop/drag.tsx apps/web/src/motion/motion.css apps/web/test/drag.test.tsx apps/e2e/tests/motion.spec.ts
@@ -1053,7 +1055,7 @@ git commit -m "fix: keep a dragged card where it was grabbed, with no lag" -m "C
 **Files:**
 - Modify: `docs/superpowers/specs/2026-09-25-table-layout-design.md` (as built), and CSS only for review findings
 
-- [ ] **Step 1: Screenshots**
+- [x] **Step 1: Screenshots**
 
 Write a throwaway spec outside the committed tests (as in Plan 9's review: `apps/e2e/tests/zz-visual.spec.ts`, deleted afterwards). At 1440×900, 1280×720, 768×1024, 375×812 and 812×375, it saves:
 - the home page;
@@ -1068,7 +1070,7 @@ At 1440×900 it also records a CDP screencast of a turn (draw, bank, end turn), 
 
 Fix fit issues in CSS (ledger each).
 
-- [ ] **Step 2: Show the user**
+- [x] **Step 2: Show the user**
 
 Send the 1440×900 and 375×812 table shots and two flight frames with SendUserFile, with a short Turkish note:
 - the sizes are still the old ones until Plan 11;
@@ -1076,7 +1078,7 @@ Send the 1440×900 and 375×812 table shots and two flight frames with SendUserF
 
 Wait for their answer and apply what they ask.
 
-- [ ] **Step 3: Sync the spec**
+- [x] **Step 3: Sync the spec**
 
 In `docs/superpowers/specs/2026-09-25-table-layout-design.md`, add an **As built (Plan 10)** paragraph after §4 and after §6.2:
 - the plane fit values;
@@ -1087,12 +1089,12 @@ In `docs/superpowers/specs/2026-09-25-table-layout-design.md`, add an **As built
 
 Commit it as `docs: record Plan 10 as built in the layout spec`.
 
-- [ ] **Step 4: Gates**
+- [x] **Step 4: Gates**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint && pnpm build && pnpm e2e`
 Expected: PASS.
 
-- [ ] **Step 5: Final review**
+- [x] **Step 5: Final review**
 
 Per superpowers:executing-plans, dispatch one fresh reviewer on the most capable model with:
 - the review package (`$(git merge-base main HEAD)..HEAD`);
@@ -1102,7 +1104,7 @@ Per superpowers:executing-plans, dispatch one fresh reviewer on the most capable
 
 Fix Critical and Important findings test-first in one pass; ledger the Minors.
 
-- [ ] **Step 6: Push and open the PR**
+- [x] **Step 6: Push and open the PR**
 
 ```bash
 git push -u origin feat/table-plain

@@ -1,5 +1,7 @@
 # Deal City — Plan 1: Monorepo and Rules Engine Implementation Plan
 
+> **Status: completed and merged to `main`.** Every step below is ticked as done; the per-task commits, tests and rulings live in the git history (the git-ignored `.superpowers/sdd/` ledger was the working record).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the pnpm monorepo skeleton and `@deal-city/engine`: a pure, deterministic and fully tested TypeScript rules engine for Deal City (Monopoly Deal rules).
@@ -121,12 +123,12 @@ packages/engine/
   - `type ActionKind`, `ACTIONS`
   - `type CardDef`, `CARDS: readonly CardDef[]`, `CARD_BY_ID: ReadonlyMap<string, CardDef>`
 
-- [ ] **Step 1: Create the feature branch**
+- [x] **Step 1: Create the feature branch**
 
 Run: `git switch -c feat/engine`
 Expected: `Switched to a new branch 'feat/engine'`. The branch comes from `feat/spec`, which holds the spec and this plan.
 
-- [ ] **Step 2: Write root config files**
+- [x] **Step 2: Write root config files**
 
 `package.json`:
 ```json
@@ -205,7 +207,7 @@ test-results/
 * text=auto eol=lf
 ```
 
-- [ ] **Step 3: Write the engine package files**
+- [x] **Step 3: Write the engine package files**
 
 `packages/engine/package.json`:
 ```json
@@ -231,7 +233,7 @@ test-results/
 }
 ```
 
-- [ ] **Step 4: Install dev dependencies**
+- [x] **Step 4: Install dev dependencies**
 
 Run:
 ```bash
@@ -240,7 +242,7 @@ pnpm --filter @deal-city/engine add -D typescript vitest @types/node
 ```
 Expected: both commands succeed and `pnpm-lock.yaml` is created.
 
-- [ ] **Step 5: Write the failing deck test**
+- [x] **Step 5: Write the failing deck test**
 
 `packages/engine/test/cards.test.ts`:
 ```ts
@@ -309,12 +311,12 @@ describe('deck composition', () => {
 });
 ```
 
-- [ ] **Step 6: Run the test and confirm it fails**
+- [x] **Step 6: Run the test and confirm it fails**
 
 Run: `pnpm --filter @deal-city/engine test`
 Expected: FAIL. The module `../src/cards` cannot be resolved.
 
-- [ ] **Step 7: Implement `cards.ts`**
+- [x] **Step 7: Implement `cards.ts`**
 
 `packages/engine/src/cards.ts`:
 ```ts
@@ -434,12 +436,12 @@ export const CARDS: readonly CardDef[] = buildDeck();
 export const CARD_BY_ID: ReadonlyMap<string, CardDef> = new Map(CARDS.map((c) => [c.id, c]));
 ```
 
-- [ ] **Step 8: Run the tests and typecheck, and confirm they pass**
+- [x] **Step 8: Run the tests and typecheck, and confirm they pass**
 
 Run: `pnpm --filter @deal-city/engine test; pnpm --filter @deal-city/engine typecheck`
 Expected: 8 tests pass, and `tsc` reports no errors.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add -A
@@ -475,7 +477,7 @@ git commit -m "feat(engine): scaffold monorepo and add card catalogue"
   - `hasWon(p)`
   - Test helpers: `makeState(spec)`, `step(state, pid, intent)`, `allCards(state)`, `groupIdOf(state, pid, index)`
 
-- [ ] **Step 1: Write `errors.ts` and `types.ts` (type-only, no tests needed)**
+- [x] **Step 1: Write `errors.ts` and `types.ts` (type-only, no tests needed)**
 
 `packages/engine/src/errors.ts`:
 ```ts
@@ -591,7 +593,7 @@ export interface Ctx {
 }
 ```
 
-- [ ] **Step 2: Write the test helpers**
+- [x] **Step 2: Write the test helpers**
 
 `packages/engine/test/helpers.ts`:
 ```ts
@@ -682,7 +684,7 @@ export function player(s: GameState, id: string) {
 export type { Intent };
 ```
 
-- [ ] **Step 3: Write the failing sets and RNG tests**
+- [x] **Step 3: Write the failing sets and RNG tests**
 
 `packages/engine/test/sets.test.ts`:
 ```ts
@@ -765,12 +767,12 @@ describe('hasWon', () => {
 });
 ```
 
-- [ ] **Step 4: Run the tests and confirm they fail**
+- [x] **Step 4: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/engine test`
 Expected: FAIL. The modules `../src/rng` and `../src/sets` cannot be resolved.
 
-- [ ] **Step 5: Implement `rng.ts` and `sets.ts`**
+- [x] **Step 5: Implement `rng.ts` and `sets.ts`**
 
 `packages/engine/src/rng.ts`:
 ```ts
@@ -864,12 +866,12 @@ export function hasWon(p: Player): boolean {
 }
 ```
 
-- [ ] **Step 6: Run the tests and typecheck, and confirm they pass**
+- [x] **Step 6: Run the tests and typecheck, and confirm they pass**
 
 Run: `pnpm --filter @deal-city/engine test; pnpm --filter @deal-city/engine typecheck`
 Expected: all tests pass, and there are no type errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A
@@ -913,7 +915,7 @@ git commit -m "feat(engine): add core types, seeded rng and set/rent rules"
   - `type ApplyResult`
   - Handler naming convention for later tasks: `handle<IntentName>(ctx, playerId, intent)`, registered in `HANDLERS` in `apply.ts`.
 
-- [ ] **Step 1: Write the failing turn tests**
+- [x] **Step 1: Write the failing turn tests**
 
 Add `step` to `packages/engine/test/helpers.ts`. Put the new import next to the others and replace the last two lines (the `// step is added…` comment and `export type { Intent };`):
 ```ts
@@ -1079,12 +1081,12 @@ describe('winning', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests and confirm they fail**
+- [x] **Step 2: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/engine test`
 Expected: FAIL. The modules `../src/apply` and `../src/setup` cannot be resolved.
 
-- [ ] **Step 3: Implement `clone.ts`, `zones.ts` and `draw.ts`**
+- [x] **Step 3: Implement `clone.ts`, `zones.ts` and `draw.ts`**
 
 `packages/engine/src/clone.ts`:
 ```ts
@@ -1218,7 +1220,7 @@ export function draw(ctx: Ctx, p: Player, n: number): void {
 }
 ```
 
-- [ ] **Step 4: Implement `play.ts`, `turn.ts`, `setup.ts` and `apply.ts`**
+- [x] **Step 4: Implement `play.ts`, `turn.ts`, `setup.ts` and `apply.ts`**
 
 `packages/engine/src/play.ts`:
 ```ts
@@ -1446,12 +1448,12 @@ export function applyIntent(state: GameState, playerId: string, intent: Intent):
 }
 ```
 
-- [ ] **Step 5: Run the tests and typecheck, and confirm they pass**
+- [x] **Step 5: Run the tests and typecheck, and confirm they pass**
 
 Run: `pnpm --filter @deal-city/engine test; pnpm --filter @deal-city/engine typecheck`
 Expected: all tests in `turn.test.ts`, `sets.test.ts` and `cards.test.ts` pass, and there are no type errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A
@@ -1475,7 +1477,7 @@ git commit -m "feat(engine): add turn flow, basic plays and applyIntent"
   - `autoPayment(p, amount): string[]`
   - `transferPayment(ctx, payer, receiver, cards): void`
 
-- [ ] **Step 1: Write the failing payment tests**
+- [x] **Step 1: Write the failing payment tests**
 
 `packages/engine/test/payment.test.ts`:
 ```ts
@@ -1564,12 +1566,12 @@ describe('transferPayment', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests and confirm they fail**
+- [x] **Step 2: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/engine test payment`
 Expected: FAIL. The module `../src/payment` cannot be resolved.
 
-- [ ] **Step 3: Implement `payment.ts`**
+- [x] **Step 3: Implement `payment.ts`**
 
 `packages/engine/src/payment.ts`:
 ```ts
@@ -1666,12 +1668,12 @@ export function transferPayment(ctx: Ctx, payer: Player, receiver: Player, cards
 }
 ```
 
-- [ ] **Step 4: Run the tests and confirm they pass**
+- [x] **Step 4: Run the tests and confirm they pass**
 
 Run: `pnpm --filter @deal-city/engine test; pnpm --filter @deal-city/engine typecheck`
 Expected: all tests pass, and there are no type errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A
@@ -1697,7 +1699,7 @@ git commit -m "feat(engine): add payment validation, auto-payment and transfer"
     - `handlePlayDebtCollector`, `handlePlayBirthday`, `handlePlayRent`
   - `applyEffect(ctx, pending, targetId)`: a stub that Task 6 fills in for steal actions
 
-- [ ] **Step 1: Write the failing money-action tests**
+- [x] **Step 1: Write the failing money-action tests**
 
 `packages/engine/test/money-actions.test.ts`:
 ```ts
@@ -1832,7 +1834,7 @@ export function waitingOnForTest(s: GameState): string[] {
 }
 ```
 
-- [ ] **Step 2: Write the failing Just Say No tests**
+- [x] **Step 2: Write the failing Just Say No tests**
 
 `packages/engine/test/just-say-no.test.ts`:
 ```ts
@@ -1936,12 +1938,12 @@ describe('Just Say No', () => {
 });
 ```
 
-- [ ] **Step 3: Run the tests and confirm they fail**
+- [x] **Step 3: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/engine test`
 Expected: FAIL. `playDebtCollector` and the other new intents return `unknownIntent`.
 
-- [ ] **Step 4: Implement `respond.ts`**
+- [x] **Step 4: Implement `respond.ts`**
 
 `packages/engine/src/respond.ts`:
 ```ts
@@ -2065,7 +2067,7 @@ import type { Ctx, Pending } from './types';
 export function applyEffect(_ctx: Ctx, _pending: Pending, _targetId: string): void {}
 ```
 
-- [ ] **Step 5: Implement the money handlers in `actions.ts`**
+- [x] **Step 5: Implement the money handlers in `actions.ts`**
 
 `packages/engine/src/actions.ts`:
 ```ts
@@ -2136,7 +2138,7 @@ export function handlePlayRent(ctx: Ctx, playerId: string, intent: IntentOf<'pla
 }
 ```
 
-- [ ] **Step 6: Register the handlers in `apply.ts`**
+- [x] **Step 6: Register the handlers in `apply.ts`**
 
 In `packages/engine/src/apply.ts`, add these imports:
 ```ts
@@ -2161,12 +2163,12 @@ const HANDLERS: HandlerMap = {
 };
 ```
 
-- [ ] **Step 7: Run the tests and confirm they pass**
+- [x] **Step 7: Run the tests and confirm they pass**
 
 Run: `pnpm --filter @deal-city/engine test; pnpm --filter @deal-city/engine typecheck`
 Expected: all tests pass, and there are no type errors. If ESLint later flags the unused `_ctx` parameters in `effects.ts`, they go away in Task 6.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A
@@ -2189,7 +2191,7 @@ git commit -m "feat(engine): add pending actions, money actions, rent and Just S
   - `applyEffect(ctx, pending, targetId)` for `slyDeal`, `forcedDeal` and `dealBreaker`
   - Handlers: `handlePlaySlyDeal`, `handlePlayForcedDeal`, `handlePlayDealBreaker`, `handlePlayHouse`, `handlePlayHotel`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `packages/engine/test/steal-build.test.ts`:
 ```ts
@@ -2322,12 +2324,12 @@ describe('win only on own turn', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests and confirm they fail**
+- [x] **Step 2: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/engine test steal-build`
 Expected: FAIL with `unknownIntent`.
 
-- [ ] **Step 3: Implement `effects.ts`**
+- [x] **Step 3: Implement `effects.ts`**
 
 Replace `packages/engine/src/effects.ts`:
 ```ts
@@ -2378,7 +2380,7 @@ export function applyEffect(ctx: Ctx, pending: Pending, targetId: string): void 
 }
 ```
 
-- [ ] **Step 4: Add the handlers to `actions.ts`**
+- [x] **Step 4: Add the handlers to `actions.ts`**
 
 Change the imports at the top of `packages/engine/src/actions.ts` to:
 ```ts
@@ -2458,7 +2460,7 @@ export function handlePlayHotel(ctx: Ctx, playerId: string, intent: IntentOf<'pl
 }
 ```
 
-- [ ] **Step 5: Register the handlers in `apply.ts`**
+- [x] **Step 5: Register the handlers in `apply.ts`**
 
 Change the `./actions` import to:
 ```ts
@@ -2476,12 +2478,12 @@ Then add these entries to `HANDLERS`:
   playHotel: handlePlayHotel,
 ```
 
-- [ ] **Step 6: Run the tests and confirm they pass**
+- [x] **Step 6: Run the tests and confirm they pass**
 
 Run: `pnpm --filter @deal-city/engine test; pnpm --filter @deal-city/engine typecheck`
 Expected: all tests pass, and there are no type errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A
@@ -2507,7 +2509,7 @@ git commit -m "feat(engine): add steal actions, houses and hotels"
   - `autoIntent(state, playerId): Intent | null`
   - `removePlayer(state, playerId): { state: GameState; events: GameEvent[] }`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `packages/engine/test/view-legal-auto.test.ts`:
 ```ts
@@ -2609,12 +2611,12 @@ describe('removePlayer', () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests and confirm they fail**
+- [x] **Step 2: Run the tests and confirm they fail**
 
 Run: `pnpm --filter @deal-city/engine test view-legal-auto`
 Expected: FAIL. The modules `../src/auto`, `../src/legal` and `../src/view` cannot be resolved.
 
-- [ ] **Step 3: Implement `view.ts`**
+- [x] **Step 3: Implement `view.ts`**
 
 `packages/engine/src/view.ts`:
 ```ts
@@ -2661,7 +2663,7 @@ export function viewFor(s: GameState, playerId: string): GameView {
 }
 ```
 
-- [ ] **Step 4: Implement `legal.ts`**
+- [x] **Step 4: Implement `legal.ts`**
 
 `packages/engine/src/legal.ts`:
 ```ts
@@ -2780,7 +2782,7 @@ export function legalIntents(s: GameState, playerId: string): Intent[] {
 }
 ```
 
-- [ ] **Step 5: Implement `auto.ts`**
+- [x] **Step 5: Implement `auto.ts`**
 
 `packages/engine/src/auto.ts`:
 ```ts
@@ -2852,12 +2854,12 @@ export function removePlayer(state: GameState, playerId: string): { state: GameS
 }
 ```
 
-- [ ] **Step 6: Run the tests and confirm they pass**
+- [x] **Step 6: Run the tests and confirm they pass**
 
 Run: `pnpm --filter @deal-city/engine test; pnpm --filter @deal-city/engine typecheck`
 Expected: all tests pass, and there are no type errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A
@@ -2877,7 +2879,7 @@ git commit -m "feat(engine): add player views, legal intents, auto actions and p
 - Consumes: everything above
 - Produces: the public API `@deal-city/engine` that Plans 2 and 4 import (see `index.ts` below)
 
-- [ ] **Step 1: Write the fuzz test**
+- [x] **Step 1: Write the fuzz test**
 
 `packages/engine/test/fuzz.test.ts`:
 ```ts
@@ -2953,14 +2955,14 @@ describe('fuzz: random bots', () => {
 });
 ```
 
-- [ ] **Step 2: Run the fuzz test**
+- [x] **Step 2: Run the fuzz test**
 
 Run: `pnpm --filter @deal-city/engine test fuzz`
 Expected: PASS.
 - If an invariant fails, the error names the seed. Reproduce it with `createGame(..., seed)` in a focused unit test, fix the engine, and add that unit test to the matching test file before continuing.
 - If the finish rate is below 0.9, look at why the unfinished games didn't end, for example by logging `state.turn` every 500 steps for one failing seed. Fix the bot's ordering only if the engine is correct.
 
-- [ ] **Step 3: Write the public API**
+- [x] **Step 3: Write the public API**
 
 `packages/engine/src/index.ts`:
 ```ts
@@ -2977,7 +2979,7 @@ export { bestRent, cardColors, getCard, groupRent, hasWon, isAnyWild, isComplete
 export { HAND_LIMIT, PLAYS_PER_TURN } from './turn';
 ```
 
-- [ ] **Step 4: Align the spec's fuzz wording**
+- [x] **Step 4: Align the spec's fuzz wording**
 
 In `docs/superpowers/specs/2026-09-24-deal-city-design.md` §6, replace this bullet:
 `- every game finishes within a step cap. If it doesn't, the test fails with the seed.`
@@ -2986,14 +2988,14 @@ with:
 
 Random bots don't always reach 3 sets, but getting stuck is always a bug.
 
-- [ ] **Step 5: Run the full quality gate**
+- [x] **Step 5: Run the full quality gate**
 
 Run: `pnpm lint; pnpm typecheck; pnpm test`
 Expected: ESLint reports no errors, `tsc` reports no errors, and all engine tests pass.
 - Fix any lint findings. Unused parameters: prefix them with `_` or remove them. Non-null assertions are allowed by the recommended config.
 - Commit only when all three pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A

@@ -1,5 +1,7 @@
 # Deal City — Plan 7: Motion Implementation Plan
 
+> **Status: completed and merged to `main`.** Every step below is ticked as done; the per-task commits, tests and rulings live in the git history (the git-ignored `.superpowers/sdd/` ledger was the working record).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make every move on the picnic table felt: cards fly from where they were to where they go, in event order, without the UI ever falling behind the game. Add the peak moments, drag and drop, confetti and a full reduced-motion mode.
@@ -137,14 +139,14 @@ docs/superpowers/specs/2026-09-24-table-redesign-design.md   sync               
   - `TableCard` gains `rotation?: number` (degrees, rendered as `data-rot`).
   - Test helpers: `stubAnimations(): { calls: AnimateCall[]; restore(): void }`, `reduceMotion(): { restore(): void }`.
 
-- [ ] **Step 1: Check the branch and start the ledger**
+- [x] **Step 1: Check the branch and start the ledger**
 
 Run: `git status --short --branch`
 Expected: `## feat/table-motion` (the branch that holds this plan) and no changes apart from the untracked `for_table/`.
 
 Start the executing-plans workspace and ledger (git-ignored). Its first line names this plan.
 
-- [ ] **Step 2: Write the test helpers**
+- [x] **Step 2: Write the test helpers**
 
 Create `apps/web/test/motion.ts`:
 ```ts
@@ -194,7 +196,7 @@ export function reduceMotion(): { restore(): void } {
 }
 ```
 
-- [ ] **Step 3: Write the failing tests for the mode and poses**
+- [x] **Step 3: Write the failing tests for the mode and poses**
 
 Create `apps/web/test/mode.test.ts`:
 ```ts
@@ -265,12 +267,12 @@ describe('poseOf', () => {
 });
 ```
 
-- [ ] **Step 4: Run them to verify they fail**
+- [x] **Step 4: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- mode pose`
 Expected: FAIL. The modules `../src/motion/mode` and `../src/motion/pose` do not exist.
 
-- [ ] **Step 5: Implement the mode and poses**
+- [x] **Step 5: Implement the mode and poses**
 
 Create `apps/web/src/motion/mode.ts`:
 ```ts
@@ -337,12 +339,12 @@ export function poseOf(el: Element): Pose {
 }
 ```
 
-- [ ] **Step 6: Run them to verify they pass**
+- [x] **Step 6: Run them to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test -- mode pose`
 Expected: PASS (7 tests).
 
-- [ ] **Step 7: Write the failing registry and anchor tests**
+- [x] **Step 7: Write the failing registry and anchor tests**
 
 Create `apps/web/test/anchors.test.tsx`:
 ```tsx
@@ -446,12 +448,12 @@ describe('anchors on the table', () => {
 });
 ```
 
-- [ ] **Step 8: Run them to verify they fail**
+- [x] **Step 8: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- anchors`
 Expected: FAIL. `../src/motion/anchor-context` and `../src/motion/anchors` do not exist.
 
-- [ ] **Step 9: Implement the registry and its React binding**
+- [x] **Step 9: Implement the registry and its React binding**
 
 Create `apps/web/src/motion/anchors.ts`:
 ```ts
@@ -538,7 +540,7 @@ export function useAnchor<T extends HTMLElement>(key: string): RefCallback<T> {
 }
 ```
 
-- [ ] **Step 10: Register the table's anchors**
+- [x] **Step 10: Register the table's anchors**
 
 `apps/web/src/tabletop/TableCard.tsx`, whole file:
 ```tsx
@@ -683,17 +685,17 @@ function BackFan({ count, anchor }: { count: number; anchor: string }) {
 }
 ```
 
-- [ ] **Step 11: Run the tests to verify they pass**
+- [x] **Step 11: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test -- anchors mode pose`
 Expected: PASS (13 tests).
 
-- [ ] **Step 12: Run the web suite and typecheck**
+- [x] **Step 12: Run the web suite and typecheck**
 
 Run: `pnpm --filter @deal-city/web test && pnpm --filter @deal-city/web typecheck`
 Expected: PASS. The Plan 6 tests are unaffected, because anchors are no-ops without a provider.
 
-- [ ] **Step 13: Commit**
+- [x] **Step 13: Commit**
 
 ```bash
 git add apps/web/src/motion apps/web/src/tabletop apps/web/test/motion.ts apps/web/test/mode.test.ts apps/web/test/pose.test.ts apps/web/test/anchors.test.tsx
@@ -723,7 +725,7 @@ The planner's rules (spec §6.2, §6.3, §7.2):
 - **`reveals`** is the key hidden until the flight lands. **`leaves`** and **`enters`** are counter keys (`deck`, `hand:<player>`) that still count the card until it leaves, or only count it once it lands.
 - **Set completion is derived.** Any set complete in `next` but not in `prev` (keyed by owner and group) gets a `setComplete` scene after the events. `gameOver` is staged last: the winner's complete sets fly from the table (`fromLive`) to `win:<id>`, with confetti.
 
-- [ ] **Step 1: Write the failing planner tests**
+- [x] **Step 1: Write the failing planner tests**
 
 Create `apps/web/test/planner.test.ts`:
 ```ts
@@ -975,12 +977,12 @@ describe('planBatch', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- planner`
 Expected: FAIL. `../src/motion/planner` does not exist.
 
-- [ ] **Step 3: Write the scene types**
+- [x] **Step 3: Write the scene types**
 
 Create `apps/web/src/motion/scenes.ts`:
 ```ts
@@ -1050,7 +1052,7 @@ export function effectSlot(e: Effect): string {
 }
 ```
 
-- [ ] **Step 4: Write the planner**
+- [x] **Step 4: Write the planner**
 
 Create `apps/web/src/motion/planner.ts`:
 ```ts
@@ -1282,12 +1284,12 @@ export function planBatch(prev: GameView, next: GameView, events: readonly GameE
 }
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test -- planner`
 Expected: PASS (17 tests). If an engine transition inside a test fails with a rule error, the test's setup is wrong, not the planner. Fix the setup (cards, turn, phase) against the engine rules and ledger it.
 
-- [ ] **Step 6: Typecheck and commit**
+- [x] **Step 6: Typecheck and commit**
 
 Run: `pnpm --filter @deal-city/web typecheck`
 Expected: PASS.
@@ -1318,7 +1320,7 @@ git commit -m "feat: plan flight scenes from each game state change" -m "Co-Auth
   - `poseTransform(p: Pose, t?: { lift?; grow?; turn? }): string`; `between(a: Pose, b: Pose, k?): Pose`; `readable(center: Pose, viewportWidth: number): Pose`.
   - `flightKeyframes(path: { from: Pose; to: Pose; style: FlightStyle; center: Pose | null; viewportWidth: number }): Keyframe[]`; `REVEAL_KEYFRAMES: Keyframe[]`.
 
-- [ ] **Step 1: Write the failing timing tests**
+- [x] **Step 1: Write the failing timing tests**
 
 Create `apps/web/test/timing.test.ts`:
 ```ts
@@ -1372,7 +1374,7 @@ describe('schedule', () => {
 });
 ```
 
-- [ ] **Step 2: Write the failing keyframe tests**
+- [x] **Step 2: Write the failing keyframe tests**
 
 Create `apps/web/test/keyframes.test.ts`:
 ```ts
@@ -1435,12 +1437,12 @@ describe('REVEAL_KEYFRAMES', () => {
 });
 ```
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- timing keyframes`
 Expected: FAIL. The modules do not exist.
 
-- [ ] **Step 4: Implement the timing**
+- [x] **Step 4: Implement the timing**
 
 Create `apps/web/src/motion/timing.ts`:
 ```ts
@@ -1521,7 +1523,7 @@ export function schedule(scenes: readonly Scene[], waiting: number): Timeline {
 }
 ```
 
-- [ ] **Step 5: Implement the flight paths**
+- [x] **Step 5: Implement the flight paths**
 
 Create `apps/web/src/motion/keyframes.ts`:
 ```ts
@@ -1623,12 +1625,12 @@ export const REVEAL_KEYFRAMES: Keyframe[] = [
 ];
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test -- timing keyframes`
 Expected: PASS (14 tests).
 
-- [ ] **Step 7: Typecheck and commit**
+- [x] **Step 7: Typecheck and commit**
 
 Run: `pnpm --filter @deal-city/web typecheck`
 Expected: PASS.
@@ -1664,7 +1666,7 @@ How the stage works (spec §7.2, §7.3):
 - **A batch starts** with `schedule(scenes, waiting.length)`. Every clone is created at once, at its "before" pose (it waits there during its delay, so a departing card never blinks out); `fromLive` clones are created when they leave. Timers move the counters as flights leave, reveal each card and drop its clone as it lands, and run the effects. The next batch starts when the last flight lands.
 - **Queue rules:** more than `MAX_WAITING` batches waiting → the oldest waiting ones are dropped, and their cards simply appear; at most `MAX_CLONES` clones; `snap()` ends everything now.
 
-- [ ] **Step 1: Write the failing stage tests**
+- [x] **Step 1: Write the failing stage tests**
 
 Create `apps/web/test/stage.test.ts`:
 ```ts
@@ -1912,7 +1914,7 @@ describe('createStage', () => {
 });
 ```
 
-- [ ] **Step 2: Write the failing settle tests**
+- [x] **Step 2: Write the failing settle tests**
 
 Create `apps/web/test/settle.test.ts`:
 ```ts
@@ -1971,12 +1973,12 @@ describe('settleCards', () => {
 });
 ```
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- stage settle`
 Expected: FAIL. `../src/motion/stage` and `../src/motion/settle` do not exist.
 
-- [ ] **Step 4: Implement the stage**
+- [x] **Step 4: Implement the stage**
 
 Create `apps/web/src/motion/stage.ts`:
 ```ts
@@ -2258,7 +2260,7 @@ export function createStage(deps: StageDeps, initial: GameStatePayload | null): 
 }
 ```
 
-- [ ] **Step 5: Implement gliding**
+- [x] **Step 5: Implement gliding**
 
 Create `apps/web/src/motion/settle.ts`:
 ```ts
@@ -2302,12 +2304,12 @@ export function settleCards(registry: AnchorRegistry, before: ReadonlyMap<string
 }
 ```
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [x] **Step 6: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test -- stage settle`
 Expected: PASS (18 tests).
 
-- [ ] **Step 7: Typecheck and commit**
+- [x] **Step 7: Typecheck and commit**
 
 Run: `pnpm --filter @deal-city/web typecheck`
 Expected: PASS.
@@ -2336,7 +2338,7 @@ git commit -m "feat: queue and play flight scenes over the latest table" -m "Co-
   - `motion.css` with the flight-layer rules. Task 6 imports it from `Tabletop.tsx`, after `tabletop.css`.
   - Test helper `staticStage(patch?: Partial<StageState>): Stage`.
 
-- [ ] **Step 1: Add the static stage helper**
+- [x] **Step 1: Add the static stage helper**
 
 Append to `apps/web/test/motion.ts`:
 ```ts
@@ -2350,7 +2352,7 @@ export function staticStage(patch: Partial<StageState> = {}): Stage {
 ```
 Move the new `import type` line up to the file's other imports.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `apps/web/test/flight-layer.test.tsx`:
 ```tsx
@@ -2502,12 +2504,12 @@ describe('MotionStage', () => {
 });
 ```
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- flight-layer motion-stage`
 Expected: FAIL. `FlightLayer`, `MotionStage` and `stage-context` do not exist.
 
-- [ ] **Step 4: Expose the store to the choreographer**
+- [x] **Step 4: Expose the store to the choreographer**
 
 In `apps/web/src/store/context.tsx`, add:
 ```ts
@@ -2519,7 +2521,7 @@ export function useGameStoreApi(): GameStore {
 }
 ```
 
-- [ ] **Step 5: Write the stage context and hooks**
+- [x] **Step 5: Write the stage context and hooks**
 
 Create `apps/web/src/motion/stage-context.tsx`:
 ```tsx
@@ -2592,7 +2594,7 @@ export function useCountUp(value: number): number {
 }
 ```
 
-- [ ] **Step 6: Write the flight layer and its styles**
+- [x] **Step 6: Write the flight layer and its styles**
 
 Create `apps/web/src/motion/FlightLayer.tsx`:
 ```tsx
@@ -2680,7 +2682,7 @@ Create `apps/web/src/motion/motion.css`:
 .face-reveal .flight-back { transform: rotateY(180deg); }
 ```
 
-- [ ] **Step 7: Write the motion stage**
+- [x] **Step 7: Write the motion stage**
 
 Create `apps/web/src/motion/MotionStage.tsx`:
 ```tsx
@@ -2731,12 +2733,12 @@ export function MotionStage({ children }: { children: ReactNode }) {
 }
 ```
 
-- [ ] **Step 8: Run the tests to verify they pass**
+- [x] **Step 8: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test -- flight-layer motion-stage`
 Expected: PASS (7 tests).
 
-- [ ] **Step 9: Run the web suite, typecheck and commit**
+- [x] **Step 9: Run the web suite, typecheck and commit**
 
 Run: `pnpm --filter @deal-city/web test && pnpm --filter @deal-city/web typecheck`
 Expected: PASS.
@@ -2762,7 +2764,7 @@ git commit -m "feat: draw flights over the table from a motion stage" -m "Co-Aut
   - `PayTray`, `DiscardTray`, `RespondTray`, `CounterTray` gain `busy?: boolean`: their sending buttons get `aria-disabled` while scenes play.
   - `Tabletop` = `InspectProvider` › `MotionStage` › the staged table. `TableScene` reads its payload from the stage and calls `stage.committed(game)` after every render.
 
-- [ ] **Step 1: Write the failing integration tests**
+- [x] **Step 1: Write the failing integration tests**
 
 Create `apps/web/test/tabletop-motion.test.tsx`:
 ```tsx
@@ -2871,12 +2873,12 @@ describe('the table on the motion stage', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- tabletop-motion`
 Expected: FAIL. The table still reads the store directly: nothing is hidden, and End turn has no `aria-disabled`.
 
-- [ ] **Step 3: Gate the table's interaction**
+- [x] **Step 3: Gate the table's interaction**
 
 In `apps/web/src/tabletop/interaction.ts`, add to `CardInteraction`:
 ```ts
@@ -2908,7 +2910,7 @@ export function gateInteraction(inner: TableInteraction, busy: boolean): TableIn
 }
 ```
 
-- [ ] **Step 4: Hide arriving cards and honour `busy` on the card**
+- [x] **Step 4: Hide arriving cards and honour `busy` on the card**
 
 `apps/web/src/tabletop/TableCard.tsx`: import `useHidden` from `'../motion/stage-context'` and change the component body to:
 ```tsx
@@ -2945,7 +2947,7 @@ export function TableCard({ id, zone, owner, activeColor, style, rotation = 0 }:
 }
 ```
 
-- [ ] **Step 5: Count toward the truth**
+- [x] **Step 5: Count toward the truth**
 
 `apps/web/src/tabletop/Seat.tsx`: import `useCountUp` from `'../motion/stage-context'`. Add the prop:
 ```ts
@@ -2986,11 +2988,11 @@ Use `looksComplete` for the `is-complete` class and the `.set-stamp`; keep `comp
 ```
 Render `{deckCount > 0 ? <CardBack className="card-svg" /> : <span className="pile-empty" />}` and `{deckCount}` in `.count-badge`; the deck's `aria-label` keeps `view.deckCount`.
 
-- [ ] **Step 6: Gate the trays**
+- [x] **Step 6: Gate the trays**
 
 Add `busy?: boolean` to the props of `PayTray`, `DiscardTray`, `RespondTray` and `CounterTray`, with the doc comment `/** Scenes are playing: answers wait (spec §7.3). */`. Put `aria-disabled={busy || undefined}` on every button that sends: Pay (`PayTray`), Discard (`DiscardTray`), "Just Say No!" and Accept (`RespondTray`), "Just Say No!" and "Let it go" (`CounterTray`). The Auto button in `PayTray` only changes my picks, so it stays live.
 
-- [ ] **Step 7: Put the table on the stage**
+- [x] **Step 7: Put the table on the stage**
 
 `apps/web/src/tabletop/Tabletop.tsx`:
 
@@ -3073,12 +3075,12 @@ function StagedTable() {
           })}
 ```
 
-- [ ] **Step 8: Run the new tests and the whole web suite**
+- [x] **Step 8: Run the new tests and the whole web suite**
 
 Run: `pnpm --filter @deal-city/web test`
 Expected: PASS, including the 6 new tests. The Plan 6 tests pass unchanged, because jsdom has no `animate` and the stage runs in `'instant'` mode there.
 
-- [ ] **Step 9: Typecheck, lint and commit**
+- [x] **Step 9: Typecheck, lint and commit**
 
 Run: `pnpm --filter @deal-city/web typecheck && pnpm lint`
 Expected: PASS.
@@ -3113,7 +3115,7 @@ What each peak does (spec §6.2, §6.3, §4.7):
 - **A player leaves:** their seat is drawn once more where it was, greys and fades.
 - **Winning:** the winner's sets fly into the banner, the banner drops in, and confetti fires.
 
-- [ ] **Step 1: Add the confetti dependency**
+- [x] **Step 1: Add the confetti dependency**
 
 This downloads `canvas-confetti` from npm: the one new dependency the spec allows (§9.4).
 ```bash
@@ -3122,7 +3124,7 @@ pnpm --filter @deal-city/web add -D @types/canvas-confetti
 ```
 Expected: `apps/web/package.json` lists `canvas-confetti` in `dependencies` and `@types/canvas-confetti` in `devDependencies`, and `pnpm-lock.yaml` changes.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `apps/web/test/peaks.test.tsx`:
 ```tsx
@@ -3271,12 +3273,12 @@ describe('peak moments', () => {
 });
 ```
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- peaks`
 Expected: FAIL. The peak classes and elements are missing, and `../src/motion/confetti` does not exist yet.
 
-- [ ] **Step 4: Write the confetti loader**
+- [x] **Step 4: Write the confetti loader**
 
 Create `apps/web/src/motion/confetti.ts`:
 ```ts
@@ -3290,7 +3292,7 @@ export async function celebrate(): Promise<void> {
 }
 ```
 
-- [ ] **Step 5: Draw the leaving seat and fire the confetti from the flight layer**
+- [x] **Step 5: Draw the leaving seat and fire the confetti from the flight layer**
 
 `apps/web/src/motion/FlightLayer.tsx`: import `useEffect` next to `useLayoutEffect` and `useRef`; add `import { useAnchorRegistry } from './anchor-context';`, `import { celebrate } from './confetti';` and `import type { Pose } from './pose';`. Replace `FlightLayer` with:
 ```tsx
@@ -3334,7 +3336,7 @@ function SeatGhost({ playerId, pose }: { playerId: string; pose: Pose | null }) 
 }
 ```
 
-- [ ] **Step 6: Wire the peaks into the table**
+- [x] **Step 6: Wire the peaks into the table**
 
 `apps/web/src/tabletop/Tabletop.tsx`: add `useStageEffect` to the `stage-context` import. In `TableScene`, add `const turnPulse = useStageEffect('turn');`, and right after `<Narrator … />` render:
 ```tsx
@@ -3414,7 +3416,7 @@ function WinCard({ id, color }: { id: string; color: Color }) {
 .gameover-card + .gameover-card { margin-left: -32px; }
 ```
 
-- [ ] **Step 7: Style the peaks**
+- [x] **Step 7: Style the peaks**
 
 Append to `apps/web/src/motion/motion.css`:
 ```css
@@ -3506,12 +3508,12 @@ Append to `apps/web/src/motion/motion.css`:
 }
 ```
 
-- [ ] **Step 8: Run the tests to verify they pass**
+- [x] **Step 8: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test -- peaks`
 Expected: PASS (6 tests).
 
-- [ ] **Step 9: Run the web suite, typecheck, lint, build and commit**
+- [x] **Step 9: Run the web suite, typecheck, lint, build and commit**
 
 Run: `pnpm --filter @deal-city/web test && pnpm --filter @deal-city/web typecheck && pnpm lint && pnpm --filter @deal-city/web build`
 Expected: PASS. The build emits `canvas-confetti` as a separate chunk that is loaded only on a win.
@@ -3535,7 +3537,7 @@ git commit -m "feat: stage the peak moments: turns, sets, Just Say No, rent, win
 
 The rule the test enforces: in `motion.css`, every `animation`, `transition` and `@keyframes` sits inside `@media (prefers-reduced-motion: no-preference)`, except the reduced-motion fade, which sits inside `@media (prefers-reduced-motion: reduce)`, only touches opacity and lasts ≤150 ms.
 
-- [ ] **Step 1: Write the failing CSS test**
+- [x] **Step 1: Write the failing CSS test**
 
 Create `apps/web/test/motion-css.test.ts`:
 ```ts
@@ -3586,12 +3588,12 @@ describe('motion.css', () => {
 });
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm --filter @deal-city/web test -- motion-css`
 Expected: FAIL on "only fades cards in": there is no reduced-motion block yet. The other two tests pass, because Tasks 5 and 7 kept every animation behind `no-preference`.
 
-- [ ] **Step 3: Add the micro-interactions and the reduced-motion fade**
+- [x] **Step 3: Add the micro-interactions and the reduced-motion fade**
 
 Append to `apps/web/src/motion/motion.css`:
 ```css
@@ -3638,12 +3640,12 @@ Append to `apps/web/src/motion/motion.css`:
 ```
 `motion.css` is imported after `tabletop.css` (Task 6), so its turn-ring transition wins over the Plan 6 one, and the Plan 6 reduced-motion rules still switch that transition off.
 
-- [ ] **Step 4: Run it to verify it passes, then the web suite**
+- [x] **Step 4: Run it to verify it passes, then the web suite**
 
 Run: `pnpm --filter @deal-city/web test`
 Expected: PASS (the 3 CSS tests and everything else).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/motion/motion.css apps/web/test/motion-css.test.ts
@@ -3680,7 +3682,7 @@ How a drag goes (spec §5.2, decision 8):
   - No play → the ghost springs back to the hand.
 - **Always:** the click that ends a drag opens nothing. Escape, an empty-table click and any table change end a held drag.
 
-- [ ] **Step 1: Write the failing drop-mapping tests**
+- [x] **Step 1: Write the failing drop-mapping tests**
 
 Create `apps/web/test/drop.test.ts`:
 ```ts
@@ -3757,12 +3759,12 @@ describe('drop zones', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- drop`
 Expected: FAIL. `../src/tabletop/drop` does not exist.
 
-- [ ] **Step 3: Implement the drop mapping**
+- [x] **Step 3: Implement the drop mapping**
 
 Create `apps/web/src/tabletop/drop.ts`:
 ```ts
@@ -3845,12 +3847,12 @@ export function resolveDrop(legal: readonly Intent[], card: string, zone: string
 }
 ```
 
-- [ ] **Step 4: Run the drop tests to verify they pass**
+- [x] **Step 4: Run the drop tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test -- drop`
 Expected: PASS (7 tests).
 
-- [ ] **Step 5: Write the failing drag tests**
+- [x] **Step 5: Write the failing drag tests**
 
 Create `apps/web/test/drag.test.tsx`:
 ```tsx
@@ -3955,12 +3957,12 @@ describe('drag and drop', () => {
 });
 ```
 
-- [ ] **Step 6: Run them to verify they fail**
+- [x] **Step 6: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- drag`
 Expected: FAIL. `../src/tabletop/drag` does not exist.
 
-- [ ] **Step 7: Implement the drag controller and the ghost**
+- [x] **Step 7: Implement the drag controller and the ghost**
 
 Create `apps/web/src/tabletop/drag.tsx`:
 ```tsx
@@ -4183,7 +4185,7 @@ export function DragGhost({ drag }: { drag: DragApi }) {
 }
 ```
 
-- [ ] **Step 8: Make the table's zones droppable and the hand cards draggable**
+- [x] **Step 8: Make the table's zones droppable and the hand cards draggable**
 
 `apps/web/src/tabletop/TableCard.tsx`: import `useEffect` from React and `dropClass`, `useDrag`, `useDropState` from `'./drag'`. Add the prop:
 ```ts
@@ -4235,7 +4237,7 @@ with `data-drop={\`group:${group.id}\`}` and `dropClass(dropState)` on its `<div
 
 `apps/web/src/tabletop/Seat.tsx`: import `dropClass`, `useDropState` from `'./drag'`; add `const dropState = useDropState(isMe ? null : \`player:${playerId}\`);`, `dropClass(dropState)` to the seat's class list and `data-drop={isMe ? undefined : \`player:${playerId}\`}` to its `<div role="group">`.
 
-- [ ] **Step 9: Let the popover sit at a point, and open on a given option**
+- [x] **Step 9: Let the popover sit at a point, and open on a given option**
 
 `apps/web/src/tabletop/anchored.ts`: add
 ```ts
@@ -4260,7 +4262,7 @@ and change `useAnchoredPosition(anchor: Element | null, …)` to `useAnchoredPos
 ```
 and start the state with `useState<PlayKind | null>(initialOpen ?? null)`.
 
-- [ ] **Step 10: Wire drag and drop into the table**
+- [x] **Step 10: Wire drag and drop into the table**
 
 `apps/web/src/tabletop/Tabletop.tsx`:
 
@@ -4323,7 +4325,7 @@ In the hand popover, use `onChoose={(option) => startOption(option, { send, aimA
 
 6. Provide the controller around the table and draw the ghost: wrap `<ProjectionProvider …>` in `<DragProvider value={drag}>…</DragProvider>` (inside `TableInteractionProvider`), and render `{drag.state && <DragGhost key={drag.state.card} drag={drag} />}` right after `{popover}`.
 
-- [ ] **Step 11: Style the drag**
+- [x] **Step 11: Style the drag**
 
 Append to `apps/web/src/motion/motion.css`:
 ```css
@@ -4349,12 +4351,12 @@ Append to `apps/web/src/motion/motion.css`:
 }
 ```
 
-- [ ] **Step 12: Run the tests, the web suite, typecheck and lint**
+- [x] **Step 12: Run the tests, the web suite, typecheck and lint**
 
 Run: `pnpm --filter @deal-city/web test && pnpm --filter @deal-city/web typecheck && pnpm lint`
 Expected: PASS, including the 7 drop tests, the 6 drag tests and the motion CSS test.
 
-- [ ] **Step 13: Commit**
+- [x] **Step 13: Commit**
 
 ```bash
 git add apps/web/src apps/web/test/drop.test.ts apps/web/test/drag.test.tsx
@@ -4375,7 +4377,7 @@ git commit -m "feat: drag hand cards onto the table to play them" -m "Co-Authore
 
 `game.spec.ts` stays as it is and now runs with full motion. Playwright waits for `aria-disabled` controls and for hidden cards, so it needs no changes. If it does, record why in the ledger.
 
-- [ ] **Step 1: Add the helpers**
+- [x] **Step 1: Add the helpers**
 
 Append to `apps/e2e/tests/players.ts`:
 ```ts
@@ -4410,7 +4412,7 @@ export async function flightsSeen(page: Page): Promise<number> {
 }
 ```
 
-- [ ] **Step 2: Write the full-motion spec**
+- [x] **Step 2: Write the full-motion spec**
 
 Create `apps/e2e/tests/motion.spec.ts`:
 ```ts
@@ -4453,7 +4455,7 @@ test('cards fly across the table, and a card dragged onto the bank is banked', a
 });
 ```
 
-- [ ] **Step 3: Add the reduced-motion check**
+- [x] **Step 3: Add the reduced-motion check**
 
 In `apps/e2e/tests/table.spec.ts` (which already sets `reducedMotion: 'reduce'` for the file), import `flightsSeen` and `watchFlights` too, and add:
 ```ts
@@ -4480,12 +4482,12 @@ test('nothing flies when the OS asks for less motion', async ({ browser, baseURL
 });
 ```
 
-- [ ] **Step 4: Run the end-to-end suite**
+- [x] **Step 4: Run the end-to-end suite**
 
 Run: `pnpm e2e`
 Expected: PASS, 8 tests (the 6 from Plan 6, plus `motion.spec.ts` and the new reduced-motion test). The screenshots `flight-mid` and `flight-landed` are attached to the report. If a Plan 6 spec fails only because a card was still in flight, fix the spec with a Playwright wait, not a sleep, and ledger it. If the table misbehaves, write a failing web test first.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/e2e/tests
@@ -4500,7 +4502,7 @@ git commit -m "test: cover flights, drag and drop and reduced motion end to end"
 - Modify (tuning only): `apps/web/src/motion/timing.ts` (durations), `apps/web/src/motion/keyframes.ts` (lift, growth, the readable size), `apps/web/src/motion/motion.css`, `apps/web/src/motion/planner.ts` (staggers)
 - Modify: `docs/superpowers/specs/2026-09-24-table-redesign-design.md`
 
-- [ ] **Step 1: Visual review of the motion**
+- [x] **Step 1: Visual review of the motion**
 
 The in-app browser pane cannot take screenshots here (Plan 6 found this). Review with Playwright and the installed Chrome instead, from a script in the scratchpad directory, never in the repo:
 - Start the test-mode server as the e2e suite does (`node serve-test.mjs` from `apps/e2e`, with `NODE_ENV=test`, `PORT=3100`, `TURN_MS=600000`, `RESPONSE_MS=300000`), in the background.
@@ -4524,7 +4526,7 @@ git add apps/web/src/motion
 git commit -m "style: tune flight timing after visual review" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 2: Sync the spec with what was built**
+- [x] **Step 2: Sync the spec with what was built**
 
 `docs/superpowers/specs/2026-09-24-table-redesign-design.md`:
 - **Status line:** "Plans 6 (world and interaction) and 7 (motion) are implemented; Plan 8 (sound) remains."
@@ -4546,12 +4548,12 @@ git add docs/superpowers/specs
 git commit -m "docs: sync the redesign spec with the built motion" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 3: Final gates**
+- [x] **Step 3: Final gates**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint && pnpm build && pnpm e2e`
 Expected: all PASS. Record the counts in the ledger.
 
-- [ ] **Step 4: Fresh review on the most capable model**
+- [x] **Step 4: Fresh review on the most capable model**
 
 Dispatch one fresh reviewer (a new agent on the most capable model, with no context from this session) over `git diff main...feat/table-motion`. Give it:
 - this plan and the redesign spec;
@@ -4560,7 +4562,7 @@ Dispatch one fresh reviewer (a new agent on the most capable model, with no cont
 
 Ask it for correctness bugs (hidden cards that never show, a stage stuck busy, leaked timers, stale poses), spec gaps, accessibility regressions and dead code. Fix every confirmed Critical or Important finding test-first, each in its own commit. Re-run the gates, and record the rulings and deferred minors in the ledger.
 
-- [ ] **Step 5: Push and open the PR**
+- [x] **Step 5: Push and open the PR**
 
 Ask the user before pushing, unless they have already asked for the PR. Then:
 ```bash

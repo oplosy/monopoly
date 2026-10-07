@@ -1,5 +1,7 @@
 # Deal City — Plan 5: End-to-End Tests and Deployment Implementation Plan
 
+> **Status: completed and merged to `main`.** Every step below is ticked as done; the per-task commits, tests and rulings live in the git history (the git-ignored `.superpowers/sdd/` ledger was the working record).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Prove the whole product works in real browsers and ship it: Playwright end-to-end tests (a seeded 3-player game, the `/gallery` sheet, a deploy smoke test), a production-ready server process, a Docker image, docker-compose with Caddy for HTTPS, and a README.
@@ -79,7 +81,7 @@ docs/superpowers/specs/2026-09-24-deal-city-design.md   §4.3, §6 sync
 - Consumes: `room:start` payload `StartPayload = { seed?: number }` (protocol, `StartSchema`: integer 0 … 2³²−1).
 - Produces: `AppState.start(seed?: number): Promise<Ack>`; `/room/:code?seed=<n>` makes the host's Start button send `{ seed: n }`. Task 3 relies on `?seed=18`.
 
-- [ ] **Step 1: Write the failing store test**
+- [x] **Step 1: Write the failing store test**
 
 In `apps/web/test/game-store.test.ts`, inside `describe('game store: intents', …)`, add:
 
@@ -92,7 +94,7 @@ In `apps/web/test/game-store.test.ts`, inside `describe('game store: intents', �
   });
 ```
 
-- [ ] **Step 2: Write the failing lobby tests**
+- [x] **Step 2: Write the failing lobby tests**
 
 In `apps/web/test/pages.test.tsx`, inside `describe('Lobby', …)`, add (the file's `lobby(ids)` helper renders `/room/ABCDEF` as `p1`; these tests render directly because they need a query string):
 
@@ -112,12 +114,12 @@ In `apps/web/test/pages.test.tsx`, inside `describe('Lobby', …)`, add (the fil
   });
 ```
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web exec vitest run test/game-store.test.ts test/pages.test.tsx`
 Expected: FAIL: 3 tests. The store test receives `[{}, {}]`; the first lobby test receives `[{}]`. The "ignores" test may already pass, which is fine: it pins the behaviour.
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 `apps/web/src/store/game-store.ts`: change the interface line to `start(seed?: number): Promise<Ack>;` and the action to:
 
@@ -141,12 +143,12 @@ function seedFrom(params: URLSearchParams): number | undefined {
 
 Inside the component, add `const [params] = useSearchParams();` and change the Start button's handler from `start()` to `start(seedFrom(params))` (keep its existing `void`/error handling as it is).
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/web test`
 Expected: PASS: all web tests (121 + 3).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/web/src/store/game-store.ts apps/web/src/pages/Lobby.tsx apps/web/test/game-store.test.ts apps/web/test/pages.test.tsx
@@ -165,7 +167,7 @@ git commit -m "feat(web): forward a test seed from the lobby address"
 **Interfaces:**
 - Produces: `closeOnSignals(close: () => Promise<void>, exit: (code: number) => void, signals?: Signals): void` and `interface Signals { once(signal: 'SIGTERM' | 'SIGINT', listener: () => void): unknown }`; `export const MAX_MESSAGE_BYTES = 16 * 1024` in `app.ts`. Task 4 relies on the server exiting on `SIGTERM`.
 
-- [ ] **Step 1: Write the failing shutdown tests**
+- [x] **Step 1: Write the failing shutdown tests**
 
 `apps/server/test/shutdown.test.ts`:
 
@@ -203,7 +205,7 @@ describe('closeOnSignals', () => {
 });
 ```
 
-- [ ] **Step 2: Write the failing integration tests**
+- [x] **Step 2: Write the failing integration tests**
 
 In `apps/server/test/server.integration.test.ts`, inside `describe('server', …)`, add:
 
@@ -239,12 +241,12 @@ In `apps/server/test/server.integration.test.ts`, inside `describe('server', …
   });
 ```
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/server exec vitest run test/shutdown.test.ts test/server.integration.test.ts`
 Expected: FAIL. `shutdown.test.ts` cannot import `../src/shutdown`. "drops a client that sends an oversized message" times out, because the 1 MB default accepts 20 KB. "ignores client seeds outside test mode" PASSES: it pins existing behaviour (Review Focus 4).
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 `apps/server/src/shutdown.ts`:
 
@@ -293,17 +295,17 @@ export const MAX_MESSAGE_BYTES = 16 * 1024;
 
 and create the Socket.IO server with `new Server(app.server, { serveClient: false, maxHttpBufferSize: MAX_MESSAGE_BYTES })`.
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pnpm --filter @deal-city/server test`
 Expected: PASS: 39 + 4 tests.
 
-- [ ] **Step 6: Check it by hand**
+- [x] **Step 6: Check it by hand**
 
 Run: `pnpm --filter @deal-city/server build`, then start `node apps/server/dist/main.js` in the background and stop it with Ctrl+C (on Windows: send `SIGINT` through the terminal, or use `taskkill` without `/F` in Git Bash via `kill -INT <pid>`).
 Expected: the process exits by itself within a second with code 0.
 
-- [ ] **Step 7: Commit (two commits, one concern each)**
+- [x] **Step 7: Commit (two commits, one concern each)**
 
 ```bash
 git add apps/server/src/shutdown.ts apps/server/src/main.ts apps/server/test/shutdown.test.ts
@@ -335,7 +337,7 @@ git commit -m "fix(server): cap socket messages at 16 KiB"
 | Cy | `wild-lightBlue-brown-1`, `money-4-2`, `money-2-5`, `money-2-2`, `act-doubleRent-1`, `wild-pink-orange-1`, `act-dealBreaker-1` | reload the page (seat resumes), bank 4M, end turn |
 | Ann | | Bob and Cy leave from the home page. Ann is the last player and wins; she starts a rematch and is back in the lobby |
 
-- [ ] **Step 1: Create the package**
+- [x] **Step 1: Create the package**
 
 `apps/e2e/package.json`:
 
@@ -376,7 +378,7 @@ Root `package.json` scripts: add `"e2e": "pnpm --filter @deal-city/e2e e2e"`.
 Run: `pnpm install`
 Expected: `@playwright/test` is added to the lockfile. No browser is downloaded, because the package no longer downloads browsers on install.
 
-- [ ] **Step 2: Write the configs**
+- [x] **Step 2: Write the configs**
 
 `apps/e2e/playwright.config.ts`:
 
@@ -427,7 +429,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 3: Write the helpers**
+- [x] **Step 3: Write the helpers**
 
 `apps/e2e/tests/players.ts`:
 
@@ -464,7 +466,7 @@ export async function joinRoom(page: Page, link: string, nickname: string): Prom
 }
 ```
 
-- [ ] **Step 4: Write the gallery spec**
+- [x] **Step 4: Write the gallery spec**
 
 `apps/e2e/tests/gallery.spec.ts`:
 
@@ -483,7 +485,7 @@ test('the card sheet shows every card', async ({ page }, testInfo) => {
 });
 ```
 
-- [ ] **Step 5: Write the smoke spec**
+- [x] **Step 5: Write the smoke spec**
 
 `apps/e2e/tests/smoke.spec.ts` (no seed, so it works on any deployment):
 
@@ -507,7 +509,7 @@ test('two players can meet and start a game', async ({ browser, baseURL, request
 });
 ```
 
-- [ ] **Step 6: Write the game spec**
+- [x] **Step 6: Write the game spec**
 
 `apps/e2e/tests/game.spec.ts`:
 
@@ -567,19 +569,19 @@ test('three players play a seeded game through to a rematch', async ({ browser, 
 });
 ```
 
-- [ ] **Step 7: Run the suite**
+- [x] **Step 7: Run the suite**
 
 Run: `pnpm e2e`
 Expected: PASS: 3 tests (gallery, game, smoke). The web and server builds run first, inside `webServer`. If a locator fails because a UI name differs from the Interfaces list, the UI is the source of truth: fix the spec, not the app, and ledger a ruling. If Chrome is missing, the error names `channel: 'chrome'`. Stop and ask; do not download browsers.
 
 Then open the attached `gallery.png` (path printed under `test-results/`) and look at it: all 111 figures should be drawn, with no empty frames.
 
-- [ ] **Step 8: Prove the game spec can fail**
+- [x] **Step 8: Prove the game spec can fail**
 
 Temporarily change `?seed=18` to `?seed=19` in `game.spec.ts` and run `pnpm e2e -- game`.
 Expected: FAIL at the first `playFromHand` (Ann no longer holds Gull Street, or is not first). Revert the change.
 
-- [ ] **Step 9: Gates and commit**
+- [x] **Step 9: Gates and commit**
 
 Run: `pnpm lint && pnpm typecheck`
 Expected: both clean (the new package typechecks through `pnpm -r typecheck`).
@@ -602,7 +604,7 @@ git commit -m "test(e2e): play a seeded 3-player game in real browsers"
 
 **Precondition:** the Docker daemon must be running (`docker info` succeeds). On this machine that means Docker Desktop is started. If it is not running, stop and ask the user to start it. Do not start it yourself.
 
-- [ ] **Step 1: Write `.dockerignore`**
+- [x] **Step 1: Write `.dockerignore`**
 
 ```
 **/node_modules
@@ -617,7 +619,7 @@ docs
 .env
 ```
 
-- [ ] **Step 2: Write the `Dockerfile`**
+- [x] **Step 2: Write the `Dockerfile`**
 
 ```dockerfile
 # syntax=docker/dockerfile:1
@@ -652,12 +654,12 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
 CMD ["node", "dist/main.js"]
 ```
 
-- [ ] **Step 3: Build it**
+- [x] **Step 3: Build it**
 
 Run: `docker build -t deal-city .`
 Expected: the build succeeds. If the runtime `pnpm install --filter` rejects the lockfile, rule on the smallest fix (for example dropping `--filter` and keeping `--prod`), ledger it, and continue.
 
-- [ ] **Step 4: Run it and check health, the app and the seed rule**
+- [x] **Step 4: Run it and check health, the app and the seed rule**
 
 ```bash
 docker run -d --name deal-city-check -p 3000:3000 deal-city
@@ -672,12 +674,12 @@ Then run the smoke spec against the container:
 Run: `E2E_BASE_URL=http://localhost:3000 pnpm --filter @deal-city/e2e smoke`
 Expected: PASS: 1 test.
 
-- [ ] **Step 5: `docker stop` returns quickly**
+- [x] **Step 5: `docker stop` returns quickly**
 
 Run: `time docker stop deal-city-check && docker logs deal-city-check | tail -3 && docker inspect --format '{{.State.ExitCode}}' deal-city-check && docker rm deal-city-check`
 Expected: under 5 s (not the 10 s kill), exit code `0`.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add Dockerfile .dockerignore
@@ -697,7 +699,7 @@ git commit -m "build: add a multi-stage Docker image with a health check"
 
 **Precondition:** Docker running (see Task 4).
 
-- [ ] **Step 1: Write `Caddyfile`**
+- [x] **Step 1: Write `Caddyfile`**
 
 ```
 # DOMAIN is a real host name in production (Caddy fetches a certificate for it);
@@ -709,7 +711,7 @@ git commit -m "build: add a multi-stage Docker image with a health check"
 }
 ```
 
-- [ ] **Step 2: Write `docker-compose.yml`**
+- [x] **Step 2: Write `docker-compose.yml`**
 
 ```yaml
 services:
@@ -743,12 +745,12 @@ volumes:
   caddy_config:
 ```
 
-- [ ] **Step 3: Bring it up on local ports**
+- [x] **Step 3: Bring it up on local ports**
 
 Run: `HTTP_PORT=8080 HTTPS_PORT=8443 docker compose up -d --build`
 Expected: both services start, and `docker compose ps` shows `app` as `healthy`.
 
-- [ ] **Step 4: Check HTTPS and WebSockets through Caddy**
+- [x] **Step 4: Check HTTPS and WebSockets through Caddy**
 
 ```bash
 curl -sk https://localhost:8443/healthz
@@ -757,16 +759,16 @@ E2E_BASE_URL=https://localhost:8443 pnpm --filter @deal-city/e2e smoke
 
 Expected: `{"ok":true}`, then PASS: 1 test. The smoke spec creates, joins and starts a game over Socket.IO through the proxy (Review Focus 2).
 
-- [ ] **Step 5: Manual 3-tab game (spec §6)**
+- [x] **Step 5: Manual 3-tab game (spec §6)**
 
 Open `https://localhost:8443` in three tabs of the browser pane. Accept the local certificate if the pane lets you. Create a room, join from the other two tabs, start, and play a few turns, including one payment. If the pane refuses Caddy's local certificate, ledger that as a ruling. Then list this check in the final message as one for the user to do in their own browser, and do not bypass certificate checks in any other way.
 
-- [ ] **Step 6: Tear down**
+- [x] **Step 6: Tear down**
 
 Run: `docker compose down`
 Expected: both containers stop within a few seconds (the app exits on `SIGTERM`).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add docker-compose.yml Caddyfile
@@ -785,7 +787,7 @@ git commit -m "build: serve the app behind Caddy with docker compose"
 - Consumes: every earlier task's commands and variables.
 - Produces: documentation only; no runtime change.
 
-- [ ] **Step 1: Root scripts**
+- [x] **Step 1: Root scripts**
 
 Add to root `package.json` scripts:
 
@@ -797,7 +799,7 @@ Add to root `package.json` scripts:
 Run: `pnpm build`
 Expected: both builds succeed.
 
-- [ ] **Step 2: Write `README.md`**
+- [x] **Step 2: Write `README.md`**
 
 Sections, in this order, with the exact commands:
 
@@ -808,7 +810,7 @@ Sections, in this order, with the exact commands:
 5. **Configuration**: a table of the server's environment variables with defaults, copied from `apps/server/src/config.ts`: `PORT` 3000, `TURN_MS` 60000, `RESPONSE_MS` 20000, `GRACE_MS` 120000, `EMPTY_ROOM_MS` 600000, `RATE_LIMIT` 20 (messages/s per socket), `MAX_ROOMS` 1000, `WEB_DIST` (built web app; set in the image), `NODE_ENV` (`test` enables client seeds; never set it in production). Also the compose variables `DOMAIN`, `HTTP_PORT` and `HTTPS_PORT`.
 6. **Project layout**: the five workspace packages, one line each (`packages/engine`, `packages/protocol`, `apps/server`, `apps/web`, `apps/e2e`), and a pointer to the design spec for the rules and decisions.
 
-- [ ] **Step 3: Sync the spec**
+- [x] **Step 3: Sync the spec**
 
 In `docs/superpowers/specs/2026-09-24-deal-city-design.md`:
 - §4.3 **Hardening**: add the bullet "Socket messages are capped at 16 KiB." Add a bullet "**Shutdown:** `SIGTERM`/`SIGINT` close the server cleanly (rooms, timers and sockets), so `docker stop` returns at once."
@@ -818,7 +820,7 @@ In `docs/superpowers/specs/2026-09-24-deal-city-design.md`:
   - "A smoke spec (health, create, join, start) runs against any deployment through `E2E_BASE_URL`."
 - §6 **Docker**: add "`docker stop` returns in under 5 s."
 
-- [ ] **Step 4: Gates and commit**
+- [x] **Step 4: Gates and commit**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint`
 Expected: all green.

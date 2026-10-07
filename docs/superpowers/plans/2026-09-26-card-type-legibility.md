@@ -1,5 +1,7 @@
 # Card Type Legibility Implementation Plan
 
+> **Status: completed and merged to `main`.** Every step below is ticked as done; the per-task commits, tests and rulings live in the git history (the git-ignored `.superpowers/sdd/` ledger was the working record).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (this repo runs plans natively) to
 > implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -106,7 +108,7 @@ commits and tests and every ruling.
   - `RULE_WRAP = 30`, `TITLE_WRAP = 9`.
   - `ICON_SIZE = 84`, `ICON_SCALE: Record<ActionKind, number>`.
 
-- [ ] **Step 1: Write the failing contrast tests**
+- [x] **Step 1: Write the failing contrast tests**
 
 In `apps/web/test/card-contrast.test.tsx`:
 - replace the import of `ACTION_FAMILY, contrast, FAMILY_COLORS, PAPER` with the import below;
@@ -169,7 +171,7 @@ The new cases go inside `describe('card text contrast (WCAG AA)', …)`, in plac
 
 Add `rentRuleText` to the engine import.
 
-- [ ] **Step 2: Write the failing face tests**
+- [x] **Step 2: Write the failing face tests**
 
 In `apps/web/test/card-faces.test.tsx`, change the text import to
 `import { NAME_WRAP, RULE_WRAP, TITLE_WRAP, wrapLines } from '../src/cards/text';`. Then:
@@ -231,7 +233,7 @@ c) In `'all generated text fits its line budget'`, replace the action and rent l
 
 d) In `'prints the engine rule text on rent cards'`, replace `RENT_WRAP` with `RULE_WRAP`.
 
-- [ ] **Step 3: Drop the action families from the band check**
+- [x] **Step 3: Drop the action families from the band check**
 
 In `apps/web/test/cards-basics.test.ts`:
 - the import becomes `import { INK, PAPER, contrast, inkOn } from '../src/cards/theme';`;
@@ -243,14 +245,14 @@ In `apps/web/test/cards-basics.test.ts`:
 
 Action families no longer carry a band. Their text is now checked in `card-contrast.test.tsx`.
 
-- [ ] **Step 4: Run the tests and see them fail**
+- [x] **Step 4: Run the tests and see them fail**
 
 Run: `cd apps/web && npx vitest run test/card-contrast.test.tsx test/card-faces.test.tsx test/cards-basics.test.ts`
 
 Expected: FAIL, first on the imports: `mixHex`, `RENT_COLOR` and `RULE_WRAP` are not exported. Once those exist,
 the tests should fail on the old face: the `ACTION` label, missing uppercase name lines, and missing gradients.
 
-- [ ] **Step 5: Theme, text budgets and the title font**
+- [x] **Step 5: Theme, text budgets and the title font**
 
 `apps/web/src/cards/theme.ts`:
 - add after `FONT_NUM`:
@@ -303,7 +305,7 @@ export const RULE_WRAP = 30;
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=IBM+Plex+Mono:wght@500;700&family=Kode+Mono:wght@700&display=swap"
 ```
 
-- [ ] **Step 6: The frame in `parts.tsx`**
+- [x] **Step 6: The frame in `parts.tsx`**
 
 Change `CardSvg` so that a face can paint its own background and border (the defaults keep every other face as it
 is):
@@ -401,7 +403,7 @@ export function PlayCard({ label, className, color, value, name, rule, children 
 
 `round2` comes from `./text`, so add it to that import.
 
-- [ ] **Step 7: Icon size table and the new `ActionFace`**
+- [x] **Step 7: Icon size table and the new `ActionFace`**
 
 In `apps/web/src/cards/icons.tsx`, after `IconProps`:
 
@@ -446,14 +448,14 @@ export function ActionFace({ card, label, className }: FaceProps<'action'>) {
 }
 ```
 
-- [ ] **Step 8: Run the tests and see them pass**
+- [x] **Step 8: Run the tests and see them pass**
 
 Run: `cd apps/web && npx vitest run test/card-contrast.test.tsx test/card-faces.test.tsx test/cards-basics.test.ts test/peaks.test.tsx`
 
 Expected: PASS. Rent is not yet in `playCards`, so the old `RentFace` is only checked by its existing tests, which
 still pass.
 
-- [ ] **Step 9: Gates and commit**
+- [x] **Step 9: Gates and commit**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint` from the repo root. Expected: all green.
 
@@ -474,7 +476,7 @@ git commit -m "feat: paint action cards in one color, value and name on top" -m 
 - Consumes: `PlayCard`, `MEDALLION` (`parts.tsx`), `RENT_COLOR`, `PAPER`, `INK`, `FONT_NUM` (`theme.ts`),
   `slicePath` (kept, exported from `RentFace.tsx`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `describe('RentFace', …)` in `apps/web/test/card-faces.test.tsx`:
 
@@ -500,14 +502,14 @@ cases cover them:
     ['any-color rent', firstCard((c) => c.type === 'rent' && c.any), RENT_COLOR, 'Rent'],
 ```
 
-- [ ] **Step 2: Run it and see it fail**
+- [x] **Step 2: Run it and see it fail**
 
 Run: `cd apps/web && npx vitest run test/card-faces.test.tsx test/card-contrast.test.tsx -t "rent"`
 
 Expected: FAIL. The current face has no graphite gradient, and its rule is drawn as `<tspan>`s, so the rent rule
 contrast cases find no line.
 
-- [ ] **Step 3: Rewrite `RentFace`**
+- [x] **Step 3: Rewrite `RentFace`**
 
 ```tsx
 import { COLORS, rentRuleText } from '@deal-city/engine';
@@ -545,14 +547,14 @@ export function RentFace({ card, label, className }: FaceProps<'rent'>) {
 }
 ```
 
-- [ ] **Step 4: Run the rent, contrast and peaks tests**
+- [x] **Step 4: Run the rent, contrast and peaks tests**
 
 Run: `cd apps/web && npx vitest run test/card-faces.test.tsx test/card-contrast.test.tsx test/peaks.test.tsx`
 
 Expected: PASS. That includes the rent name, rule and value contrast cases from Task 1, and the peaks
 `.rent-wheel [data-slice]` check.
 
-- [ ] **Step 5: Gates and commit**
+- [x] **Step 5: Gates and commit**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint`. Expected: green.
 
@@ -574,7 +576,7 @@ git commit -m "feat: draw rent cards as graphite play cards with a wheel" -m "Co
 This task has no unit test. It only changes numbers in a table that the type system already forces to be
 complete, and "reads at one size" is a visual judgement.
 
-- [ ] **Step 1: Look at the ten icons side by side**
+- [x] **Step 1: Look at the ten icons side by side**
 
 Start the `web-cards` preview (`preview_start` with name `web-cards`, port 5181) and open `/gallery`. Screenshot the
 action cards.
@@ -582,7 +584,7 @@ action cards.
 On the approved mockup the cake (`birthday`) and the hotel read small next to the others, because they are narrow in
 their 100×100 box.
 
-- [ ] **Step 2: Tune the scales**
+- [x] **Step 2: Tune the scales**
 
 Starting values:
 
@@ -596,19 +598,19 @@ Starting values:
 Re-screenshot and adjust in steps of 0.05 until the ten read as one size. No icon may leave the medallion:
 `84 × scale ≤ 110` keeps a 13px margin inside r 68. Record the final table in the ledger.
 
-- [ ] **Step 3: Check the fallback font**
+- [x] **Step 3: Check the fallback font**
 
 Block `fonts.gstatic.com` in the preview. With `javascript_tool`, remove the Google Fonts `<link>` and reload the
 gallery. Every 9-character line (`COLLECTOR`, `BIRTHDAY`, `BREAKER`) must stay inside the card with the fallback
 `ui-monospace`. Restore the font and screenshot again for the record.
 
-- [ ] **Step 4: Compare with the approved mockup**
+- [x] **Step 4: Compare with the approved mockup**
 
 Put the gallery screenshot next to `.superpowers/brainstorm/63-1790407165/content/others.html` (screenshot it with
 the companion server, or open the file). The layout, colors and sizes must match D2–D4. Send the gallery screenshot
 to the user.
 
-- [ ] **Step 5: Gates and commit**
+- [x] **Step 5: Gates and commit**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint`. Expected: green.
 
@@ -627,17 +629,17 @@ git commit -m "style: even out action icon sizes in the medallion" -m "Co-Author
 - Modify: `docs/superpowers/specs/2026-09-26-card-type-legibility-design.md` (add a short *As built* section:
   final `ICON_SCALE`, and any value the tests moved).
 
-- [ ] **Step 1: The full gates**
+- [x] **Step 1: The full gates**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint && pnpm build && pnpm e2e`. Expected: all green. The e2e suite
 uses `channel: 'chrome'` and seed 18. Do not start Docker Desktop.
 
-- [ ] **Step 2: One fresh reviewer on the whole branch**
+- [x] **Step 2: One fresh reviewer on the whole branch**
 
 Dispatch one reviewer on the most capable model over `git diff main...feat/card-type-legibility`, with the spec and
 this plan. Fix what it confirms, one commit per fix, with a test first where the fix changes behavior.
 
-- [ ] **Step 3: Notes and *As built***
+- [x] **Step 3: Notes and *As built***
 
 Write the notes file. Add *As built* to the spec. Commit:
 
@@ -646,7 +648,7 @@ git add docs/superpowers/handoff/2026-09-26-card-type-legibility-notes.md docs/s
 git commit -m "docs: record the card type legibility work and its rulings" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 4: Push and PR, when the user says so**
+- [x] **Step 4: Push and PR, when the user says so**
 
 When the user asks:
 - push `feat/card-type-legibility`;

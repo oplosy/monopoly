@@ -1,5 +1,7 @@
 # Deal City — Plan 6: Table World and Interaction Implementation Plan
 
+> **Status: completed and merged to `main`.** Every step below is ticked as done; the per-task commits, tests and rulings live in the git history (the git-ignored `.superpowers/sdd/` ledger was the working record).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the dashboard-style table with the picnic world: a 2.5D round table with seats, avatars, a fanned hand, card actions attached to the card, targeting and decisions on the table, a narrator and a log drawer. Restyle Home, Lobby and Game over into the same world, so the whole game is playable in it with mouse and keyboard.
@@ -126,7 +128,7 @@ docs/superpowers/specs/*.md               sync (Task 13)
   - Server: `defaultAvatar(playerId: string, taken: ReadonlySet<number>): number`; `Room.setAvatar(playerId: string, avatar: number): Ack`.
   - New error codes: `avatarTaken`, `notInLobby`.
 
-- [ ] **Step 1: Create the branch and the ledger**
+- [x] **Step 1: Create the branch and the ledger**
 
 Run:
 ```bash
@@ -151,7 +153,7 @@ Branch: feat/table-world
 - `room:avatar` outside the lobby answers `notInLobby` (the spec names only `avatarTaken` and `badRequest`).
 ```
 
-- [ ] **Step 2: Write the failing protocol test**
+- [x] **Step 2: Write the failing protocol test**
 
 Append to `packages/protocol/test/protocol.test.ts`, and add `AvatarSchema` and `AVATAR_COUNT` to its import from `'../src/index'`:
 ```ts
@@ -166,12 +168,12 @@ describe('AvatarSchema', () => {
 });
 ```
 
-- [ ] **Step 3: Run it to verify it fails**
+- [x] **Step 3: Run it to verify it fails**
 
 Run: `pnpm --filter @deal-city/protocol test`
 Expected: FAIL — `AvatarSchema` / `AVATAR_COUNT` is not exported.
 
-- [ ] **Step 4: Add the constant, the schema and the event**
+- [x] **Step 4: Add the constant, the schema and the event**
 
 `packages/protocol/src/constants.ts`:
 ```ts
@@ -212,12 +214,12 @@ export interface SeatInfo {
   'room:avatar': (payload: AvatarPayload, ack: (res: Ack) => void) => void;
 ```
 
-- [ ] **Step 5: Run the protocol tests**
+- [x] **Step 5: Run the protocol tests**
 
 Run: `pnpm --filter @deal-city/protocol test`
 Expected: PASS.
 
-- [ ] **Step 6: Write the failing server tests**
+- [x] **Step 6: Write the failing server tests**
 
 `apps/server/test/avatar.test.ts`:
 ```ts
@@ -334,12 +336,12 @@ Append inside the `describe('server', …)` block of `apps/server/test/server.in
   });
 ```
 
-- [ ] **Step 7: Run them to verify they fail**
+- [x] **Step 7: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/server test`
 Expected: FAIL — `../src/avatar` does not exist, `room.setAvatar is not a function`, and the socket test gets no ack for `room:avatar`.
 
-- [ ] **Step 8: Implement default avatars and `setAvatar`**
+- [x] **Step 8: Implement default avatars and `setAvatar`**
 
 `apps/server/src/avatar.ts`:
 ```ts
@@ -404,12 +406,12 @@ export function defaultAvatar(playerId: string, taken: ReadonlySet<number>): num
   socket.on('room:avatar', withSession(AvatarSchema, (s, { avatar }) => s.room.setAvatar(s.playerId, avatar)));
 ```
 
-- [ ] **Step 9: Run the tests and typechecks**
+- [x] **Step 9: Run the tests and typechecks**
 
 Run: `pnpm --filter @deal-city/protocol test && pnpm --filter @deal-city/server test && pnpm typecheck`
 Expected: PASS. The web source never builds a `SeatInfo`, so the new required field does not break its typecheck.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add packages/protocol apps/server
@@ -436,7 +438,7 @@ Update the ledger: Task 1 done, with the commit hash.
   - After a successful create or join, the store asks once for `preferredAvatar` if it is set, the room is in the lobby and no seat has it.
   - Test helpers: `RenderOptions.avatar?: number | null`; `roomOf` seats carry `avatar: <seat index>` (p1 Fox 0, p2 Bear 1, p3 Cat 2).
 
-- [ ] **Step 1: Update the test fixtures**
+- [x] **Step 1: Update the test fixtures**
 
 `apps/web/test/fixtures.ts` — `roomOf` becomes:
 ```ts
@@ -453,7 +455,7 @@ export function roomOf(ids: readonly string[], status: RoomStatus = 'playing'): 
 
 `apps/web/test/dom.tsx` — `RenderOptions` gains `avatar?: number | null;`, and `renderApp` builds its storage with `memoryStorage(opts.saved ?? null, opts.nickname ?? '', opts.avatar ?? null)`.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Append inside `describe('browserStorage', …)` in `apps/web/test/storage.test.ts`:
 ```ts
@@ -537,12 +539,12 @@ describe('game store: characters', () => {
 });
 ```
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- storage game-store`
 Expected: FAIL — `loadAvatar`, `saveAvatar` and `setAvatar` are not functions.
 
-- [ ] **Step 4: Implement storage and store support**
+- [x] **Step 4: Implement storage and store support**
 
 `apps/web/src/store/storage.ts`:
 - Add at the top: `import { AVATAR_COUNT } from '@deal-city/protocol/constants';`
@@ -656,12 +658,12 @@ The server pushes `room:state` before it acks a join, so `get().room` already ho
   notInLobby: 'You can only change your character in the lobby.',
 ```
 
-- [ ] **Step 5: Run the web tests and typecheck**
+- [x] **Step 5: Run the web tests and typecheck**
 
 Run: `pnpm --filter @deal-city/web test && pnpm --filter @deal-city/web typecheck`
 Expected: PASS. `errors.test.ts` scans the server sources, finds `avatarTaken` and `notInLobby`, and now has wording for both.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/src/store apps/web/src/ui/errors.ts apps/web/test
@@ -689,7 +691,7 @@ git commit -m "feat: pick a character from the store and remember it" -m "Co-Aut
   - `discardJitter(cardId: string): { rotate: number; dx: number; dy: number }`: `rotate` is in degrees (−15..15); `dx`/`dy` are in percent of the card size (−6..6 and −4..4).
   - `fanLayout(count: number, index: number): { rotate: number; drop: number }`: `rotate` is in degrees; `drop` is in px at the base hand-card size.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `apps/web/test/geometry.test.ts`:
 ```ts
@@ -794,12 +796,12 @@ describe('fanLayout', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- geometry`
 Expected: FAIL — cannot resolve `../src/scene/geometry`.
 
-- [ ] **Step 3: Implement the geometry**
+- [x] **Step 3: Implement the geometry**
 
 `apps/web/src/scene/geometry.ts`:
 ```ts
@@ -911,12 +913,12 @@ export function fanLayout(count: number, index: number): { rotate: number; drop:
 }
 ```
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `pnpm --filter @deal-city/web test -- geometry`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/scene/geometry.ts apps/web/test/geometry.test.ts
@@ -940,7 +942,7 @@ git commit -m "feat: add the picnic table geometry" -m "Co-Authored-By: Claude O
   - `<Avatar index className? label? />`: an `<svg viewBox="0 0 100 100">` that is `role="img"` with `aria-label={label}` when `label` is given, and `aria-hidden` otherwise.
   - `<AvatarPicker seats me onPick />`: a fieldset "Your character" with 12 buttons. Mine has `aria-pressed="true"`. A button taken by someone else is disabled and named "<Name>, taken by <nickname>".
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `apps/web/test/avatars.test.tsx`:
 ```tsx
@@ -1007,12 +1009,12 @@ describe('AvatarPicker', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- avatars`
 Expected: FAIL — cannot resolve `../src/avatars/Avatar`.
 
-- [ ] **Step 3: Draw the characters**
+- [x] **Step 3: Draw the characters**
 
 `apps/web/src/avatars/characters.tsx`:
 ```tsx
@@ -1244,7 +1246,7 @@ export const CHARACTERS: readonly Character[] = [
 ];
 ```
 
-- [ ] **Step 4: Add the avatar tile and the picker**
+- [x] **Step 4: Add the avatar tile and the picker**
 
 `apps/web/src/avatars/Avatar.tsx`:
 ```tsx
@@ -1372,7 +1374,7 @@ export function AvatarPicker({ seats, me, onPick }: Props) {
 }
 ```
 
-- [ ] **Step 5: Show the characters on the card sheet**
+- [x] **Step 5: Show the characters on the card sheet**
 
 `apps/web/src/cards/Gallery.tsx` — add `import { Avatar } from '../avatars/Avatar';` and `import { CHARACTERS } from '../avatars/characters';`, and append inside `<main>` after the "Wildcards on the table" grid:
 ```tsx
@@ -1394,16 +1396,16 @@ Update the page's lead paragraph to `{`${CARDS.length} cards plus the back, the 
   await expect(page.locator('figure')).toHaveCount(123);
 ```
 
-- [ ] **Step 6: Run the tests and typecheck**
+- [x] **Step 6: Run the tests and typecheck**
 
 Run: `pnpm --filter @deal-city/web test -- avatars && pnpm --filter @deal-city/web typecheck`
 Expected: PASS.
 
-- [ ] **Step 7: Visual check**
+- [x] **Step 7: Visual check**
 
 Start the web preview (`preview_start` with `{ name: "web" }`) and open `/gallery`. Scroll to "Characters". Check that each character reads at 48 px (`resize_window` to `mobile` and back to `desktop`), that no two silhouettes look alike, and that the strokes are consistent with the card art. Fix any shape that looks off, and record the review in the ledger.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add apps/web/src/avatars apps/web/src/cards/Gallery.tsx apps/web/test/avatars.test.tsx apps/e2e/tests/gallery.spec.ts
@@ -1428,7 +1430,7 @@ git commit -m "feat: draw the twelve player characters and the picker" -m "Co-Au
   - CSS tokens on `:root`: `--cream --gingham --wood-1 --wood-2 --wood-3 --wood-rim --wood-dark --grass-1 --grass-2 --grass-3 --ribbon-1 --ribbon-2 --gold`, plus a global `.sr-only`.
   - Scene CSS variables: `--plane` (plane width), `--tilt` (rotateX), `--card-w` (the table-card width inside the plane).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `apps/web/test/scene.test.tsx`:
 ```tsx
@@ -1517,12 +1519,12 @@ describe('projection', () => {
 ```
 (`<output>` has the implicit role `status`.)
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- scene`
 Expected: FAIL — cannot resolve `../src/scene/PicnicScene`.
 
-- [ ] **Step 3: Draw the props**
+- [x] **Step 3: Draw the props**
 
 `apps/web/src/scenery/props.tsx`:
 ```tsx
@@ -1618,7 +1620,7 @@ export const PROP_ART: Record<PropKind, ComponentType<PropArtProps>> = {
 };
 ```
 
-- [ ] **Step 4: Build the scene and the projection anchors**
+- [x] **Step 4: Build the scene and the projection anchors**
 
 `apps/web/src/scene/PicnicScene.tsx`:
 ```tsx
@@ -1909,7 +1911,7 @@ The gingham pattern uses percentages so its squares scale with the plane. The ta
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 ```
 
-- [ ] **Step 5: Show the props on the card sheet**
+- [x] **Step 5: Show the props on the card sheet**
 
 `apps/web/src/cards/Gallery.tsx` — add `import { PROP_KINDS } from '../scene/geometry';` and `import { PROP_ART } from '../scenery/props';`, and append after the "Characters" grid:
 ```tsx
@@ -1933,12 +1935,12 @@ The gingham pattern uses percentages so its squares scale with the plane. The ta
   await expect(page.locator('figure')).toHaveCount(127);
 ```
 
-- [ ] **Step 6: Run the tests and typecheck**
+- [x] **Step 6: Run the tests and typecheck**
 
 Run: `pnpm --filter @deal-city/web test -- scene && pnpm --filter @deal-city/web typecheck`
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/web/src/scene apps/web/src/scenery apps/web/src/index.css apps/web/src/cards/Gallery.tsx apps/web/test/scene.test.tsx apps/e2e/tests/gallery.spec.ts
@@ -1961,7 +1963,7 @@ git commit -m "feat: draw the picnic table scene and its projection anchors" -m 
   - The Lobby: the table seen from the table angle with three chairs; a `<ul aria-label="Players">` in seat order, where each item is a chair with an avatar, the nickname and the "you" / "host" / "offline" tags; aria-hidden empty chairs saying "Waiting…"; a panel with the room code, "Invite link", the "Players (n/3)" heading, the `AvatarPicker`, and Start game or the waiting text.
   - A shared `.ribbon` class (the cyan name ribbon) in `index.css`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `apps/web/test/pages.test.tsx`:
 ```tsx
@@ -1999,12 +2001,12 @@ and, inside `describe('Lobby', …)`:
   });
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- pages`
 Expected: FAIL — no "Your character" image or group, and no "Waiting…" chairs.
 
-- [ ] **Step 3: Add the paper page and the page styles**
+- [x] **Step 3: Add the paper page and the page styles**
 
 `apps/web/src/pages/PaperPage.tsx`:
 ```tsx
@@ -2158,7 +2160,7 @@ export function PaperPage({ children, className }: { children: ReactNode; classN
 }
 ```
 
-- [ ] **Step 4: Move the pages onto paper**
+- [x] **Step 4: Move the pages onto paper**
 
 `apps/web/src/pages/Home.tsx` (whole file):
 ```tsx
@@ -2293,7 +2295,7 @@ export function NotFound() {
 
 `apps/web/src/pages/Shell.tsx`: add `import { PaperPage } from './PaperPage';`, and replace the replaced-tab `<main className="center-message">` … `</main>` with `<PaperPage className="center-message">` … `</PaperPage>`.
 
-- [ ] **Step 5: Seat the lobby at the table**
+- [x] **Step 5: Seat the lobby at the table**
 
 `apps/web/src/pages/Lobby.tsx` (whole file):
 ```tsx
@@ -2434,16 +2436,16 @@ function EmptyChair({ anchor }: { anchor: string }) {
 ```
 The list stays in seat order, so screen readers and the existing tests read Ann before Bob. Only the chair positions start from the viewer.
 
-- [ ] **Step 6: Run the tests and typecheck**
+- [x] **Step 6: Run the tests and typecheck**
 
 Run: `pnpm --filter @deal-city/web test && pnpm --filter @deal-city/web typecheck && pnpm lint`
 Expected: PASS. Every existing Home, JoinForm, RoomPage, Lobby and Shell test still passes, because labels and texts are unchanged.
 
-- [ ] **Step 7: Visual check**
+- [x] **Step 7: Visual check**
 
 Start `server` and `web` (`preview_start` for each). Open `/`, type a nickname and create a room. In a second tab (`tabs_create`, then `navigate` to the invite link), join as another player. In both tabs check that the backdrop is blurred and drifting, that the chairs sit just outside the table rim at 270°/150°/30° seen from each player, that the empty chair says "Waiting…", and that picking a character updates the other tab at once. Check `resize_window` `mobile` too. Take a screenshot for the ledger.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add apps/web/src/pages apps/web/src/index.css apps/web/test/pages.test.tsx
@@ -2473,7 +2475,7 @@ git commit -m "feat: set home, lobby and message pages in the picnic world" -m "
   - `<HandFan cards me />`: `<ul aria-label="Your hand, n cards">` of `TableCard`s in `zone="hand"`, or "Your hand is empty".
   - `<TimerRing deadline drainKey kind label />` and `LOW_SECONDS = 10`; `<Countdown deadline label? />`.
 
-- [ ] **Step 1: Move the clock hook**
+- [x] **Step 1: Move the clock hook**
 
 Run:
 ```bash
@@ -2484,7 +2486,7 @@ Then change the import in `apps/web/src/table/CenterStrip.tsx` to `import { seco
 Run: `pnpm --filter @deal-city/web typecheck`
 Expected: PASS.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 `apps/web/test/table-pieces.test.tsx`:
 ```tsx
@@ -2719,12 +2721,12 @@ describe('TimerRing', () => {
 });
 ```
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- table-pieces`
 Expected: FAIL — cannot resolve `../src/tabletop/CenterPiles`.
 
-- [ ] **Step 4: Add the drain to the clock**
+- [x] **Step 4: Add the drain to the clock**
 
 `apps/web/src/ui/clock.ts` — add `useRef` to the React import, and append:
 ```ts
@@ -2744,7 +2746,7 @@ export function useDrain(deadline: number | null, key: string, now: number): num
 }
 ```
 
-- [ ] **Step 5: Add the interaction context and card inspection**
+- [x] **Step 5: Add the interaction context and card inspection**
 
 `apps/web/src/tabletop/interaction.ts`:
 ```ts
@@ -2929,7 +2931,7 @@ function InspectPreview({ shown }: { shown: Shown }) {
 }
 ```
 
-- [ ] **Step 6: Add the cards, tableaus and center piles**
+- [x] **Step 6: Add the cards, tableaus and center piles**
 
 `apps/web/src/tabletop/TableCard.tsx`:
 ```tsx
@@ -3092,7 +3094,7 @@ export function CenterPiles({ view, activeAngle }: { view: GameView; activeAngle
 }
 ```
 
-- [ ] **Step 7: Add the seats, the hand fan and the timers**
+- [x] **Step 7: Add the seats, the hand fan and the timers**
 
 `apps/web/src/tabletop/Seat.tsx`:
 ```tsx
@@ -3266,7 +3268,7 @@ export function Countdown({ deadline, label = 'Time left' }: { deadline: number 
 }
 ```
 
-- [ ] **Step 8: Style the pieces**
+- [x] **Step 8: Style the pieces**
 
 `apps/web/src/tabletop/tabletop.css` (new file; Tasks 8–11 append to it):
 ```css
@@ -3542,12 +3544,12 @@ export function Countdown({ deadline, label = 'Time left' }: { deadline: number 
 ```
 `--card-w` comes from `.scene` (Task 5). `--hand-w` is set on `.tabletop` in Task 8; the hand overrides the card width with it. Nothing imports this file yet: `Tabletop.tsx` does in Task 8.
 
-- [ ] **Step 9: Run the tests, typecheck and lint**
+- [x] **Step 9: Run the tests, typecheck and lint**
 
 Run: `pnpm --filter @deal-city/web test -- table-pieces && pnpm --filter @deal-city/web typecheck && pnpm lint`
 Expected: PASS.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add apps/web/src/ui/clock.ts apps/web/src/table apps/web/src/tabletop apps/web/test/table-pieces.test.tsx
@@ -3577,7 +3579,7 @@ The room page keeps showing the old table until Task 11, so every existing test 
   - `LeaveButton` gains an optional `after?: () => void`, run after leaving.
   - Test helper `renderTabletop(opts)`, with the same options and return value as `renderApp`.
 
-- [ ] **Step 1: Add the test helper**
+- [x] **Step 1: Add the test helper**
 
 `apps/web/test/dom.tsx` (whole file):
 ```tsx
@@ -3645,7 +3647,7 @@ export function sentIntents(socket: FakeSocket): unknown[] {
 }
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 `apps/web/test/tabletop.test.tsx`:
 ```tsx
@@ -3813,12 +3815,12 @@ describe('the narrator', () => {
 });
 ```
 
-- [ ] **Step 3: Run them to verify they fail**
+- [x] **Step 3: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- tabletop`
 Expected: FAIL — cannot resolve `../src/tabletop/Tabletop`. (`test/dom.tsx` imports it, so every jsdom test fails until Step 5 is done; that is expected.)
 
-- [ ] **Step 4: Add the narrator, pending stage, HUD and log drawer**
+- [x] **Step 4: Add the narrator, pending stage, HUD and log drawer**
 
 `apps/web/src/tabletop/narration.ts`:
 ```ts
@@ -4036,7 +4038,7 @@ export function LogDrawer({ entries, names, onClose }: Props) {
 }
 ```
 
-- [ ] **Step 5: Assemble the table**
+- [x] **Step 5: Assemble the table**
 
 `apps/web/src/tabletop/Tabletop.tsx`:
 ```tsx
@@ -4171,7 +4173,7 @@ function TableScene({ game }: { game: GameStatePayload }) {
 }
 ```
 
-- [ ] **Step 6: Style the table screen**
+- [x] **Step 6: Style the table screen**
 
 Append to `apps/web/src/tabletop/tabletop.css`:
 ```css
@@ -4311,16 +4313,16 @@ Append to `apps/web/src/tabletop/tabletop.css`:
 }
 ```
 
-- [ ] **Step 7: Run the tests, typecheck and lint**
+- [x] **Step 7: Run the tests, typecheck and lint**
 
 Run: `pnpm --filter @deal-city/web test && pnpm --filter @deal-city/web typecheck && pnpm lint`
 Expected: PASS. The whole web suite runs, because `dom.tsx` changed.
 
-- [ ] **Step 8: Visual check**
+- [x] **Step 8: Visual check**
 
 With `server` and `web` running, temporarily point `RoomPage` at `<Tabletop />` (do not commit this). Start a 2-player and then a 3-player game in browser-pane tabs. Screenshot both next to `docs/superpowers/specs/table-redesign/mockups/png/03-perspective-2_5d.png`. Check that the seats sit just outside the rim, the far tableau faces the viewer, the hand overlaps the near rim, and the narrator does not cover a seat. Note the tuning ideas in the ledger for Task 13, then revert `RoomPage`.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add apps/web/src/tabletop apps/web/src/pages/LeaveButton.tsx apps/web/test/dom.tsx apps/web/test/tabletop.test.tsx
@@ -4348,7 +4350,7 @@ git commit -m "feat: assemble the picnic table with seats, narrator and log" -m 
   - `resolveInteraction(input: ResolveInput): TableInteraction`, where `ResolveInput = { view, legal, role, aim, selected, payPicked, discardPicked, actions: { select, cancel, togglePay, toggleDiscard } }`.
   - `Tabletop` now keeps the `selected`/`aim` state, the pay and discard selections (keyed), the resolver, the popover, Escape handling, and "click the empty table to cancel".
 
-- [ ] **Step 1: Write the failing pure tests**
+- [x] **Step 1: Write the failing pure tests**
 
 Append to `apps/web/test/game-helpers.test.ts` (add `playBlocker` to the `../src/game/choices` import):
 ```ts
@@ -4509,12 +4511,12 @@ describe('resolveInteraction: answering', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- game-helpers anchored resolve`
 Expected: FAIL — `playBlocker` is not exported, and `../src/tabletop/anchored` and `../src/tabletop/resolve` do not exist.
 
-- [ ] **Step 3: Implement the pure pieces**
+- [x] **Step 3: Implement the pure pieces**
 
 `apps/web/src/game/choices.ts` — add `type GameView` to the `@deal-city/engine` import, and append:
 ```ts
@@ -4718,12 +4720,12 @@ export function resolveInteraction({ view, legal, role, aim, selected, payPicked
 }
 ```
 
-- [ ] **Step 4: Run the pure tests**
+- [x] **Step 4: Run the pure tests**
 
 Run: `pnpm --filter @deal-city/web test -- game-helpers anchored resolve`
 Expected: PASS.
 
-- [ ] **Step 5: Write the failing table tests**
+- [x] **Step 5: Write the failing table tests**
 
 `apps/web/test/card-actions.test.tsx`:
 ```tsx
@@ -4923,12 +4925,12 @@ describe('targeting on the table', () => {
 });
 ```
 
-- [ ] **Step 6: Run them to verify they fail**
+- [x] **Step 6: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- card-actions`
 Expected: FAIL — clicking a hand card opens no dialog (the table is still read-only).
 
-- [ ] **Step 7: Add the popover and its contents**
+- [x] **Step 7: Add the popover and its contents**
 
 `apps/web/src/tabletop/Popover.tsx`:
 ```tsx
@@ -5192,7 +5194,7 @@ export function startOption(option: PlayOption, act: FlowActions): boolean {
 }
 ```
 
-- [ ] **Step 8: Wire interaction into the table**
+- [x] **Step 8: Wire interaction into the table**
 
 `apps/web/src/tabletop/Tabletop.tsx` (whole file):
 ```tsx
@@ -5423,7 +5425,7 @@ function TableScene({ game }: { game: GameStatePayload }) {
 ```
 While the player owes a payment or a discard, their cards on the table and in the hand already respond to clicks (the selection is live). Task 10 adds the trays that send them.
 
-- [ ] **Step 9: Style the popover**
+- [x] **Step 9: Style the popover**
 
 Append to `apps/web/src/tabletop/tabletop.css`:
 ```css
@@ -5482,12 +5484,12 @@ Append to `apps/web/src/tabletop/tabletop.css`:
 }
 ```
 
-- [ ] **Step 10: Run the tests, typecheck and lint**
+- [x] **Step 10: Run the tests, typecheck and lint**
 
 Run: `pnpm --filter @deal-city/web test && pnpm --filter @deal-city/web typecheck && pnpm lint`
 Expected: PASS.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add apps/web/src/game/choices.ts apps/web/src/tabletop apps/web/test/game-helpers.test.ts apps/web/test/anchored.test.ts apps/web/test/resolve.test.ts apps/web/test/card-actions.test.tsx
@@ -5512,7 +5514,7 @@ git commit -m "feat: play cards from a popover on the card and aim on the table"
   - `<CounterTray pending targets legal name deadline anchor onSend />`: `<section aria-label="Answer Just Say No">`, with one `role="group"` per countering target ("<Name> said Just Say No to your <Action>") holding "Just Say No!" and/or "Let it go".
   - None of them is a modal: my table and hand stay reachable.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `apps/web/test/decisions.test.tsx`:
 ```tsx
@@ -5667,12 +5669,12 @@ describe('discarding', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- decisions`
 Expected: FAIL — no region "You owe Ann 5M", "Ann wants 5M (Debt Collector)", "Answer Just Say No" or "Discard 2 cards".
 
-- [ ] **Step 3: Add the trays**
+- [x] **Step 3: Add the trays**
 
 `apps/web/src/tabletop/PayTray.tsx`:
 ```tsx
@@ -5873,7 +5875,7 @@ export function CounterTray({ pending, targets, legal, name, deadline, anchor, o
 }
 ```
 
-- [ ] **Step 4: Put the trays on the table**
+- [x] **Step 4: Put the trays on the table**
 
 Three edits to `apps/web/src/tabletop/Tabletop.tsx`:
 
@@ -5921,7 +5923,7 @@ import { RespondTray } from './RespondTray';
 ```
 The trays come after the hand and before the scene in the DOM, so Tab goes from the tray's buttons straight to my table's cards.
 
-- [ ] **Step 5: Style the trays**
+- [x] **Step 5: Style the trays**
 
 Append to `apps/web/src/tabletop/tabletop.css`:
 ```css
@@ -5959,12 +5961,12 @@ Append to `apps/web/src/tabletop/tabletop.css`:
 }
 ```
 
-- [ ] **Step 6: Run the tests, typecheck and lint**
+- [x] **Step 6: Run the tests, typecheck and lint**
 
 Run: `pnpm --filter @deal-city/web test && pnpm --filter @deal-city/web typecheck && pnpm lint`
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/web/src/tabletop apps/web/test/decisions.test.tsx
@@ -5984,7 +5986,7 @@ git commit -m "feat: pay, discard and answer Just Say No on the table" -m "Co-Au
 **Interfaces:**
 - Produces: `<GameOverStage view winner name avatarOf isHost />`: a `role="dialog"` (`aria-modal`, focus trapped) named "You win!" or "<Name> wins!". It shows the winner's character (decorative), their complete sets as card faces, and "Play again" (host) or "Waiting for the host to start a rematch.", plus "Leave". The room page renders `<Tabletop />` for `playing` and `finished` rooms.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `apps/web/test/tabletop.test.tsx` (add `renderApp` to the `./dom` import):
 ```tsx
@@ -6027,12 +6029,12 @@ describe('game over', () => {
 });
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter @deal-city/web test -- tabletop`
 Expected: FAIL — no "You win!" dialog on the new table, and the room page still shows the old table (it has no level-1 "Your turn" heading).
 
-- [ ] **Step 3: Add the game-over stage**
+- [x] **Step 3: Add the game-over stage**
 
 `apps/web/src/tabletop/GameOverStage.tsx`:
 ```tsx
@@ -6151,7 +6153,7 @@ Append to `apps/web/src/tabletop/tabletop.css`:
 .gameover-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; align-items: center; }
 ```
 
-- [ ] **Step 4: Run the game-over test and commit it**
+- [x] **Step 4: Run the game-over test and commit it**
 
 Run: `pnpm --filter @deal-city/web test -- tabletop`
 Expected: only "is what the room page shows once the game has started" still fails.
@@ -6162,7 +6164,7 @@ git add apps/web/src/tabletop/GameOverStage.tsx apps/web/src/tabletop/Tabletop.t
 git commit -m "feat: celebrate the winner on the picnic table" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 5: Switch the room page and delete the old table**
+- [x] **Step 5: Switch the room page and delete the old table**
 
 `apps/web/src/pages/RoomPage.tsx`: replace `import { Table } from '../table/Table';` with `import { Tabletop } from '../tabletop/Tabletop';`, and `return <Table />;` with `return <Tabletop />;`.
 
@@ -6174,7 +6176,7 @@ git rm -r apps/web/src/table apps/web/test/table.test.tsx apps/web/test/play.tes
 ```
 Every case in the deleted tests has a successor: `table.test` → `tabletop.test` / `table-pieces.test`; `play.test` → `card-actions.test`; `modals.test` → `decisions.test`. Keyboard focus for the old dialogs is now covered by the popover focus test, the tray focus tests and the game-over focus trap.
 
-- [ ] **Step 6: Check that nothing old is left**
+- [x] **Step 6: Check that nothing old is left**
 
 Run:
 ```bash
@@ -6182,12 +6184,12 @@ git grep -n -e "src/table/" -e "'../table/" -e "layoutId" -e "LayoutGroup" -- ap
 ```
 Expected: no output.
 
-- [ ] **Step 7: Run every gate**
+- [x] **Step 7: Run every gate**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint`
 Expected: PASS, including the unchanged `shell.test.tsx` game-over tests ("You win!" with 7 card images, "Ann wins!" with Leave), which now run against the new table.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A apps/web
@@ -6206,7 +6208,7 @@ git commit -m "refactor: replace the old table with the picnic table" -m "Co-Aut
 **Interfaces:**
 - Produces (`players.ts`): `expectLog(page, text)`, which opens the log drawer, waits for `text` and closes the drawer again; `attachScreenshot(page, testInfo, name)`. The helpers `newPlayer`, `hand`, `playFromHand`, `createRoom`, `joinRoom` and `leaveRoom` are unchanged. `log()` is removed.
 
-- [ ] **Step 1: Update the helpers**
+- [x] **Step 1: Update the helpers**
 
 `apps/e2e/tests/players.ts` (whole file):
 ```ts
@@ -6269,7 +6271,7 @@ export async function leaveRoom(page: Page): Promise<void> {
 }
 ```
 
-- [ ] **Step 2: Update the seeded 3-player game**
+- [x] **Step 2: Update the seeded 3-player game**
 
 `apps/e2e/tests/game.spec.ts` (whole file):
 ```ts
@@ -6324,7 +6326,7 @@ test('three players play a seeded game through to a rematch', async ({ browser, 
 });
 ```
 
-- [ ] **Step 3: Add the 2-player table test (with motion reduced)**
+- [x] **Step 3: Add the 2-player table test (with motion reduced)**
 
 `apps/e2e/tests/table.spec.ts`:
 ```ts
@@ -6366,12 +6368,12 @@ test('two players pick characters and meet at the picnic table', async ({ browse
 });
 ```
 
-- [ ] **Step 4: Run the end-to-end suite**
+- [x] **Step 4: Run the end-to-end suite**
 
 Run: `pnpm e2e`
 Expected: PASS for `bundle`, `fallback`, `gallery` (127 figures), `game`, `smoke` and `table`. Open the report's attachments (`table-3p`, `table-2p`, `lobby`) and look at them. If a click fails because another element intercepts it, fix the layering in `tabletop.css` (the flat UI must not cover hand cards or buttons it does not own); do not add `force: true`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/e2e/tests
@@ -6386,7 +6388,7 @@ git commit -m "test: drive the picnic table end to end" -m "Co-Authored-By: Clau
 - Modify (tuning only): `apps/web/src/scene/scene.css`, `apps/web/src/tabletop/tabletop.css`, `apps/web/src/pages/pages.css`, `apps/web/src/scene/geometry.ts` (prop positions only, if needed)
 - Modify: `docs/superpowers/specs/2026-09-24-table-redesign-design.md`, `docs/superpowers/specs/2026-09-24-deal-city-design.md`
 
-- [ ] **Step 1: Visual review against the mockups**
+- [x] **Step 1: Visual review against the mockups**
 
 Start `server` and `web` with `preview_start`. Open three browser-pane tabs (each tab is its own player, because the seat lives in `sessionStorage`). Play a 3-player game, then a 2-player one. For each, compare with `docs/superpowers/specs/table-redesign/mockups/png/01-layout.png`, `02-seating.png`, `03-perspective-2_5d.png`, `04-play-card.png` and `05-decisions.png`, and check:
 - The tilt reads as a table seen at an angle, not a wall and not a floor. Tune `--tilt` in `scene.css` within 52–58° and record the final value.
@@ -6408,7 +6410,7 @@ git add apps/web/src
 git commit -m "style: tune the picnic table after visual review" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 2: Sync the specs with what was built**
+- [x] **Step 2: Sync the specs with what was built**
 
 `docs/superpowers/specs/2026-09-24-table-redesign-design.md`:
 - Status line: "Plan 6 (world and interaction) is implemented on `feat/table-world`; Plans 7 and 8 remain."
@@ -6428,16 +6430,16 @@ git add docs/superpowers/specs
 git commit -m "docs: sync the specs with the built picnic table" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 3: Final gates**
+- [x] **Step 3: Final gates**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint && pnpm build && pnpm e2e`
 Expected: all PASS. Record the counts in the ledger.
 
-- [ ] **Step 4: Fresh review on the most capable model**
+- [x] **Step 4: Fresh review on the most capable model**
 
 Dispatch one fresh reviewer (a new agent on the most capable model, with no context from this session) over `git diff feat/table-redesign...feat/table-world`. Give it this plan, the redesign spec, and the Review Focus list above. Ask it for correctness bugs, spec gaps, accessibility regressions and dead code. Fix every confirmed finding test-first, each in its own commit, re-run the gates, and record the rulings in the ledger.
 
-- [ ] **Step 5: Push and open the PR**
+- [x] **Step 5: Push and open the PR**
 
 Ask the user before pushing, unless they have already asked for the PR. Then:
 ```bash
