@@ -2,8 +2,8 @@
 
 **Date:** 2026-09-25
 **Superseded in part:** the tilted table, its perspective and the per-window layout modes (§3–5) are replaced by the 1920×1080 video stage, `2026-09-26-video-stage-design.md`.
-**Status:** Approved in conversation; written spec awaiting the user's review.
-**Parent spec:** `2026-09-24-table-redesign-design.md` (Plans 6–8, merged). This spec is an addendum: where the two disagree, this one wins for the sections it names in §11. The painted-scene addendum `2026-09-25-scene-art-design.md` (Plan 9, PR #10) is **on hold**: its art returns in a later phase, after this spec's plans.
+**Status:** Implemented and merged (Plans 10–12). Partly superseded: the tilted table and its per-window layout modes were replaced by the video stage.
+**Parent spec:** `2026-09-24-table-redesign-design.md` (Plans 6–8, merged). This spec is an addendum: where the two disagree, this one wins for the sections it names in §11. The painted-scene addendum `2026-09-25-scene-art-design.md` (Plan 9, PR #10) was **never merged**: the video stage replaced the painted scene, and the branch is kept as the tag `archive/plan-9-scene-art`.
 
 ---
 
@@ -343,7 +343,7 @@ For each animation, a CDP screencast is recorded and a strip of frames is shown 
 - **Kept:**
   - the plane, the projection anchors, the seats, tableaus, piles, flights and sound;
   - the geometry functions, which Plan 11 replaces or wraps.
-- **On hold:** the painted art of Plan 9 (PR #10, unmerged). The art phase will build on this spec's camera and layout.
+- **Archived:** the painted art of Plan 9 (PR #10) was never merged; it is kept as the tag `archive/plan-9-scene-art`.
 
 ---
 
@@ -394,4 +394,4 @@ Each plan is executed natively with a ledger, test-first, with one fresh final r
 - **§4.5:** the props are removed. The picnic palette stays only where the UI uses it.
 - **§6.4:** reduced motion is replaced by the in-game motion switch (§6.1).
 - **§9.4:** sizes come from the layout model; the 60 fps budget stands.
-- **§13:** Plans 10–12 from this spec. Plan 9 (the painted scene) is on hold until after Plan 12.
+- **§13:** Plans 10–12 from this spec. Plan 9 (the painted scene) was archived instead of merged.

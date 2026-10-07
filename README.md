@@ -2,6 +2,14 @@
 
 Deal City is an online card game for 2–3 players, played in the browser. It follows the rules of a well-known property-trading card game, with original names and art: collect three full property sets of different colors before anyone else, and charge rent, make deals and steal sets along the way. Deal City is not affiliated with or endorsed by any publisher.
 
+What is in it:
+
+- the full rules, played by a pure engine (`packages/engine`) that the server runs;
+- a table drawn over a looping video backdrop, with drag-and-drop play, card flights and other animation, and sound (animation and sound can be switched off in settings);
+- original SVG card art, with a `/gallery` page that shows every card;
+- text chat and voice chat in the room, for friends who are not in the same place;
+- phones and tablets as well as desktops.
+
 Players join as guests with a nickname and a 6-character room code or an invite link. There are no accounts and no database.
 
 ## Play locally
@@ -84,7 +92,7 @@ TURN_MS=90000
 - `packages/engine`: the rules engine. It is pure and deterministic, with no IO.
 - `packages/protocol`: socket message schemas (zod) and shared types.
 - `apps/server`: Fastify and Socket.IO. It runs rooms, timers and reconnects, and serves the web app.
-- `apps/web`: React and Vite. It holds the game UI and the SVG card art.
+- `apps/web`: React and Vite. It holds the game UI, the table, motion, sound, chat, voice and the SVG card art. `/gallery` lists the cards; `/lab` is a developer page for table scenarios.
 - `apps/e2e`: Playwright end-to-end and smoke tests.
 
-The rules, the decisions made where the official rules are unclear, and the architecture are in [the design spec](docs/superpowers/specs/2026-09-24-deal-city-design.md).
+The rules, the decisions made where the official rules are unclear, and the architecture are in [the design spec](docs/superpowers/specs/2026-09-24-deal-city-design.md). The other specs, the plans and the review notes are mapped in [docs/superpowers/README.md](docs/superpowers/README.md). Sound and ambience credits are in [CREDITS.md](CREDITS.md).

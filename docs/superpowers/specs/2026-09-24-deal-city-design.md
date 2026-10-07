@@ -1,6 +1,6 @@
 # Deal City — Design Spec
 
-**Status:** Draft for review
+**Status:** Implemented and merged (Plans 1–5). The look, layout and motion of the table were later replaced by the table redesign specs listed in `docs/superpowers/README.md`; the rules, engine, protocol and server in this spec are current.
 **Date:** 2026-09-24
 **Summary:** Deal City is an online multiplayer web card game that follows the rules of the Monopoly Deal card game. It uses an original theme, names and card art, and no Hasbro branding.
 

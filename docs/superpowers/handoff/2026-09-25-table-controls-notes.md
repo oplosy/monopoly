@@ -1,5 +1,7 @@
 # Table controls — notes
 
+> **Historical.** Table controls were done and merged (PR #13). Kept as a record; the project has no open work queue.
+
 Plan: `docs/superpowers/plans/2026-09-25-table-controls.md`; spec: `docs/superpowers/specs/2026-09-25-table-controls-design.md`.
 Branch `feat/table-controls`, from `main` after PR #11. Executed natively in a cloud session, test-first; e2e through
 the scratch Chromium config (`apps/e2e/playwright.config.ts` unchanged).

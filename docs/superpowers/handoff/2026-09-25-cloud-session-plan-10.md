@@ -1,5 +1,7 @@
 # Cloud session handoff: Plan 10 (2026-09-25)
 
+> **Historical.** Plan 10 was done and merged (PR #11), followed by Plans 11 and 12 (PRs #12, #15). Kept as a record; the project has no open work queue.
+
 This is the newest work queue. Read the repo's `CLAUDE.md` first: it holds the standing rules. Answer the user in Turkish; everything written into the repo is in English.
 
 ## 0. Where things stand

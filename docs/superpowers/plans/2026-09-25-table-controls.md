@@ -1,5 +1,7 @@
 # Table controls — plan
 
+> **Status: completed and merged to `main` (PR #13).** The tasks below were all done.
+
 Spec: `docs/superpowers/specs/2026-09-25-table-controls-design.md` (decisions D1–D6). Branch `feat/table-controls`.
 Executed natively, test-first; each task ends with the gates green and one commit. After the last task, one fresh
 reviewer on the most capable model reviews the branch. Notes and rulings:

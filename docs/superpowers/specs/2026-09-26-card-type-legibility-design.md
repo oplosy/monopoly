@@ -1,6 +1,6 @@
 # Card type legibility: play cards that read at a glance — design
 
-**Status:** asked by the user on 2026-09-26. It re-opens the action and rent faces of the card art (parent spec
+**Status:** implemented and merged. Asked by the user on 2026-09-26. It re-opens the action and rent faces of the card art (parent spec
 `2026-09-24-deal-city-design.md`, card faces in `apps/web/src/cards/`) at the user's request. The mockups were made
 in the brainstorming companion (`.superpowers/brainstorm/`, git-ignored). The approved screen is `others.html` there,
 built on `medallion-v3.html`.
