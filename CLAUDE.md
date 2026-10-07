@@ -1,6 +1,6 @@
 # Deal City: working rules for agents
 
-These are the project's standing rules. Every session, local or cloud, follows them. The current work queue is in `docs/superpowers/handoff/` (read the newest file first).
+These are the project's standing rules. Every session, local or cloud, follows them. All planned work (Plans 1–14 and the follow-ups) is finished and merged, so there is no open work queue. `docs/superpowers/README.md` maps the specs, plans, handoffs and reviews; the handoff notes are a historical record.
 
 ## Talking to the user
 
@@ -12,7 +12,7 @@ These are the project's standing rules. Every session, local or cloud, follows t
 - **Never edit or commit on `main`.** Branch first: `<type>/<short-description>`, where `<type>` is one of `feat`, `fix`, `refactor`, `test`, `docs` or `chore`.
 - One task, one branch. Integrate through a PR to `main`.
 - **Merge only when the user asks, as a merge commit.** Do not merge `main` back into a feature branch; rebase instead.
-- Push and open PRs when the handoff or the user says so.
+- Push and open PRs when the user says so.
 
 ## Commits
 
@@ -44,7 +44,7 @@ A pnpm monorepo:
 - `packages/engine`: the rules;
 - `packages/protocol`: the socket contract;
 - `apps/server`: Fastify and Socket.IO;
-- `apps/web`: React 19 with a Zustand store; the picnic table is in `src/tabletop/`, `src/scene/`, `src/motion/` and `src/audio/`;
+- `apps/web`: React 19 with a Zustand store; the table is a 1920×1080 video stage (`src/scene/`, `src/tabletop/`), with `src/motion/`, `src/audio/`, `src/chat/` and `src/voice/` beside it;
 - `apps/e2e`: Playwright, with `channel: 'chrome'` and seed 18 in test mode.
 
 Gates:

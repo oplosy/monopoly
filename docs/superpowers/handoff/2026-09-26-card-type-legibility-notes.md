@@ -1,5 +1,7 @@
 # Card type legibility: notes
 
+> **Historical.** Card type legibility was done and merged. Kept as a record; the project has no open work queue.
+
 Spec: `docs/superpowers/specs/2026-09-26-card-type-legibility-design.md`.
 Plan: `docs/superpowers/plans/2026-09-26-card-type-legibility.md`.
 Branch: `feat/card-type-legibility`. The work was executed natively, test-first.

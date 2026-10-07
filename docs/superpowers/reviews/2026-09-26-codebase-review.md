@@ -1,5 +1,7 @@
 # Codebase review and optimisation (2026-09-26)
 
+> **Historical.** Its changes were merged (PR #19). Kept as a record; the project has no open work queue.
+
 Branch `refactor/codebase-review`, from main at 7f6e155. Scope: the whole repository. The engine, protocol, server, web app, e2e suite, build and deployment configuration were checked for dead code, unused dependencies, duplication, network and runtime cost, leaks, error handling and races. Items that do not apply here were skipped: there is no database (so no N+1 queries or pooling), and no goroutines or worker threads.
 
 ## Method

@@ -1,5 +1,7 @@
 # Cloud session notes (2026-09-25)
 
+> **Historical.** The queue these notes track is finished and merged. Kept as a record; the project has no open work queue.
+
 Running notes of the cloud session that works the queue in `2026-09-25-cloud-session.md`. The cloud
 container is ephemeral and `.superpowers/` is git-ignored, so this file mirrors the ledgers and is
 committed as the work goes. Newest state at the bottom of each section.

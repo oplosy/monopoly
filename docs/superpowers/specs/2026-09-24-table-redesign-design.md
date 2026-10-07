@@ -1,6 +1,6 @@
 # Deal City: Game Table Redesign (UI, UX, Motion, Sound)
 
-**Status:** design approved on 2026-09-24. Plans 6 (world and interaction), 7 (motion) and 8 (sound) are implemented; the redesign is complete. Plan 8's CC0 sample files are still to be added in a local session (see §8, *As built*).
+**Status:** design approved on 2026-09-24. Plans 6 (world and interaction), 7 (motion) and 8 (sound) are implemented; the redesign is complete. Plan 8's CC0 sample files have since been added (see `CREDITS.md`). The tilted-table layout in §4–5 was later replaced by the video stage (`2026-09-26-video-stage-design.md`).
 **Parent spec:** `docs/superpowers/specs/2026-09-24-deal-city-design.md` covers the rules, engine, protocol and server. This document **supersedes its §4.4 (web client) for everything about the look, layout, interaction and motion of the game**. Engine rules are unchanged.
 **Mockups:** `docs/superpowers/specs/table-redesign/mockups/` holds standalone HTML files that open in any browser. §14 lists what each one shows.
 **Reference images:** `for_table/` in the repo root. These are the user's local screenshots of UNO games. They are **not committed**, because they are third-party art. §2.3 describes them in words.

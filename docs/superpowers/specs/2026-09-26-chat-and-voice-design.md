@@ -1,6 +1,6 @@
 # In-room text chat and voice chat
 
-Date: 2026-09-26. Status: design approved in conversation, awaiting review of this written spec.
+Date: 2026-09-26. Status: implemented and merged (text chat in PR #20, voice controls in PR #21).
 
 ## 1. Purpose
 

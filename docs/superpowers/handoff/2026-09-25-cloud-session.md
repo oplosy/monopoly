@@ -1,5 +1,7 @@
 # Handoff: the cloud session (from 2026-09-25)
 
+> **Historical.** Job 1 (Plan 8, sound) and Job 2 (the polish audit) were done and merged (PRs #8, #9). Plan 9 was archived, not merged. Kept as a record; the project has no open work queue.
+
 This document is the work queue for the next session, which runs in the cloud on the GitHub repo. Read it top to bottom before doing anything. The standing rules are in `CLAUDE.md` at the repo root; this file adds what is specific to now.
 
 **Order of work**

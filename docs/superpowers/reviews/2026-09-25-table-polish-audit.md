@@ -1,5 +1,7 @@
 # Table polish audit: animation, UI/UX and frontend, phones first (2026-09-25)
 
+> **Historical.** Its fixes were merged (PR #9); the deferred minors were fixed later (PR #16). Kept as a record; the project has no open work queue.
+
 Job 2 of `docs/superpowers/handoff/2026-09-25-cloud-session.md`, on `fix/table-polish` (branched from
 `feat/table-sound`, so it includes Plan 8). Nothing here re-opens the approved decisions (spec §3,
 D1–D13, the plans' "Decisions"); every proposed fix polishes them.

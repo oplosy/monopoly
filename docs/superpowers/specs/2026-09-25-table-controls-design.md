@@ -1,6 +1,6 @@
 # Table controls: settings, End turn, a spent hand — design
 
-**Status:** asked by the user on 2026-09-25 after playing `main` (Plan 10 merged). This re-opens the HUD and End turn
+**Status:** implemented and merged (PR #13). Asked by the user on 2026-09-25 after playing `main` (Plan 10 merged). This re-opens the HUD and End turn
 of the parent spec (§4.4, §8) at the user's request. The plan is `docs/superpowers/plans/2026-09-25-table-controls.md`.
 
 ## 1. What the user reported
