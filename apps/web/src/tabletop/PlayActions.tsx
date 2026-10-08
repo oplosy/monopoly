@@ -1,7 +1,8 @@
 import type { GameView, Intent, IntentOf } from '@deal-city/engine';
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { PlayKind, PlayOption } from '../game/choices';
 import type { Names } from '../game/log';
+import { PlayBadge, playBadge } from './PlayBadge';
 import { ColorChoice, RentForm } from './PlayForms';
 
 interface Props {
@@ -20,30 +21,44 @@ interface Props {
 /** A hand card's legal plays as pills, the card's own effect first; sub-choices open in place. */
 export function PlayActions({ options, reason, view, name, onChoose, onSend, initialOpen }: Props) {
   const [open, setOpen] = useState<PlayKind | null>(initialOpen ?? null);
+  // Which way the last step went: a step slides in, Back slides the pills back (spec 2026-10-08-play-menu-motion D6).
+  const [moved, setMoved] = useState<'forward' | 'back' | null>(null);
   const opened = options.find((o) => o.kind === open);
   if (reason) return <p className="popover-reason">{reason}</p>;
+  const step = moved ? `play-step step-${moved}` : 'play-step';
   if (opened) {
     return (
-      <>
+      <div key={opened.kind} className={step}>
         {opened.kind === 'property' && <ColorChoice intents={opened.intents as IntentOf<'playProperty'>[]} onSend={onSend} />}
         {opened.kind === 'rent' && <RentForm intents={opened.intents as IntentOf<'playRent'>[]} view={view} name={name} onSend={onSend} />}
-        <button type="button" className="pill-back" onClick={() => setOpen(null)}>
+        <button
+          type="button"
+          className="pill-back"
+          onClick={() => {
+            setMoved('back');
+            setOpen(null);
+          }}
+        >
           Back
         </button>
-      </>
+      </div>
     );
   }
   return (
-    <div className="pills">
+    <div key="pills" className={`pills ${step}`}>
       {options.map((o, i) => (
         <button
           key={o.kind}
           type="button"
           className={i === 0 ? 'pill primary' : 'pill'}
+          style={{ '--i': i } as CSSProperties}
           onClick={() => {
-            if (!onChoose(o)) setOpen(o.kind);
+            if (onChoose(o)) return;
+            setMoved('forward');
+            setOpen(o.kind);
           }}
         >
+          <PlayBadge badge={playBadge(o)} />
           {o.label}
         </button>
       ))}

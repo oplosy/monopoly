@@ -40,6 +40,17 @@ describe('interface sounds', () => {
     expect(audio.played).toEqual(['hover']);
   });
 
+  it('ticks softly on each pick in the rent form, and not on the pick already made', () => {
+    const audio = recordingAudio();
+    const players = [{ id: 'p1', hand: ['rent-red-yellow-1', 'act-doubleRent-1'], groups: [{ color: 'red' as const, cards: ['prop-red-1'] }] }, { id: 'p2' }];
+    renderTabletop({ audio, state: atTable(play({ players }), 'p1') });
+    fireEvent.click(within(screen.getByRole('list', { name: /^Your hand/ })).getByRole('button', { name: /^Rent, Red or Yellow/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Charge rent' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'None' }));
+    fireEvent.click(screen.getByRole('radio', { name: '×2' }));
+    expect(audio.played).toEqual(['hover']);
+  });
+
   it("ticks my clock each second from 10 s, twice a second from 3 s, and never while paused or on someone else's clock", () => {
     vi.useFakeTimers();
     const audio = recordingAudio();

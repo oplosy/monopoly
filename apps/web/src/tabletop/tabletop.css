@@ -566,14 +566,44 @@
 .popover-body { display: grid; gap: 0.45rem; }
 .pills { display: grid; gap: 0.45rem; }
 .pill {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   border-radius: 999px;
-  padding: 0.55rem 1.1rem;
+  padding: 0.35rem 1.1rem 0.35rem 0.35rem;
   text-align: left;
   background: #fffaf0;
   box-shadow: 0 4px 10px rgb(0 0 0 / 0.25);
   transition: transform 0.1s ease;
 }
 .pill.primary { background: #3b2a10; border-color: #3b2a10; color: #fff8ec; }
+/* What the choice does, in the card art's own signs (spec 2026-10-08-play-menu-motion D3). */
+.pill-badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid rgb(0 0 0 / 0.25);
+  background: var(--disc, var(--paper));
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.18);
+  font: 800 1rem var(--font-num);
+}
+.pill-badge svg { display: block; width: 100%; height: 100%; }
+.pill-badge.is-rent { border-width: 3px; }
+.pill.primary .pill-badge { border-color: rgb(255 248 236 / 0.7); }
+/* The primary pill's shine; it sweeps across only with animations on (motion.css). */
+.pill.primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 216 74 / 0.45) 50%, transparent 70%);
+}
 .pill:active,
 .pill-back:active,
 .popover-close:active { transform: scale(0.97); }
@@ -601,14 +631,42 @@
   padding: 0.35rem 0.6rem;
   border-radius: 10px;
   font-weight: 600;
-  background: var(--paper);
+  /* Its color fills it from the left when it is pointed at or picked. */
+  background: linear-gradient(var(--chip), var(--chip)) 0 0 / 0% 100% no-repeat, var(--paper);
+  color: var(--ink);
   cursor: pointer;
+}
+.chip.is-on { background-size: 100% 100%; color: var(--chip-ink, var(--ink)); }
+@media (hover: hover) {
+  .chip:hover { background-size: 100% 100%; color: var(--chip-ink, var(--ink)); }
 }
 .rent-form { display: grid; gap: 0.6rem; }
 .rent-form fieldset { border: none; padding: 0; margin: 0; display: grid; gap: 0.3rem; }
 .rent-form legend { font-weight: 700; margin-bottom: 0.2rem; }
-.rent-form label { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 500; }
-.rent-form input { width: auto; }
+/* Rent choices are toggle chips over native radios (spec 2026-10-08-play-menu-motion D7). */
+.toggles { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.8rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+.toggle:not(.chip) { background: var(--paper); }
+.toggle.chip { border-color: var(--chip); border-radius: 10px; padding-left: 0.6rem; }
+.toggle-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
+.toggle:has(.toggle-input:focus-visible) { outline: 3px solid #1f4e9a; outline-offset: 2px; }
+.toggle.is-on:not(.chip) { background: var(--ink); color: var(--paper); }
+.toggle.is-double.is-on { background: #d93a2b; border-color: #d93a2b; color: #fff; }
+.toggle-check { display: none; font-weight: 800; }
+.toggle.is-on .toggle-check { display: inline; }
+.charge-total { display: inline-block; }
+.charge.is-doubled { box-shadow: 0 0 0 3px var(--gold), 0 0 18px rgb(255 216 74 / 0.75); }
 :root[data-motion='off'] .pill,
 :root[data-motion='off'] .pill-back,
 :root[data-motion='off'] .popover-close { transition: none; }
@@ -714,6 +772,7 @@
   .pill-back,
   .popover-close,
   .chip,
+  .toggle,
   .narrator button,
   .log-close,
   .gameover-actions button { min-height: 44px; }

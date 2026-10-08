@@ -187,3 +187,63 @@
 .drop-hot { outline-style: solid; box-shadow: 0 0 0 4px rgb(255 216 74 / 0.35), 0 0 26px rgb(255 216 74 / 0.9); }
 
 :root[data-motion='on'] .drop-ok { animation: breathe 1.6s ease-in-out infinite; }
+
+/* ---------- Play menu (spec 2026-10-08-play-menu-motion) ---------- */
+/* The menu deals itself out: pills and chips rise one after another once the popover has sprung (D4). Only
+   `backwards` fill, so nothing is held after the entrance and hover and press keep their own transforms. */
+:root[data-motion='on'] .popover .pill,
+:root[data-motion='on'] .popover .chip { animation: deal-in 0.3s cubic-bezier(0.3, 1.4, 0.5, 1) calc(0.06s + var(--i, 0) * 0.04s) backwards; }
+:root[data-motion='on'] .popover .pill.primary::after { animation: pill-shine 0.9s ease-out 0.3s; }
+/* Pills answer the pointer: they lift, their badge turns, the primary one shines again (D5). */
+:root[data-motion='on'] .pill { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+:root[data-motion='on'] .pill-badge { transition: rotate 0.25s cubic-bezier(0.3, 1.6, 0.5, 1), scale 0.25s cubic-bezier(0.3, 1.6, 0.5, 1); }
+:root[data-motion='on'] .chip { transition: background-size 0.2s ease-out, color 0.2s ease-out, transform 0.15s ease; }
+:root[data-motion='on'] .chip:active { transform: scale(0.95); }
+@media (hover: hover) {
+  :root[data-motion='on'] .pill:hover { transform: translateY(-2px); box-shadow: 0 9px 18px rgb(0 0 0 / 0.32); }
+  :root[data-motion='on'] .pill:hover:active { transform: translateY(0) scale(0.97); box-shadow: 0 3px 8px rgb(0 0 0 / 0.25); }
+  :root[data-motion='on'] .pill:hover .pill-badge { rotate: -14deg; scale: 1.12; }
+  :root[data-motion='on'] .popover .pill.primary:hover::after { animation: pill-shine-again 0.8s ease-out; }
+  :root[data-motion='on'] .chip:hover { transform: translateY(-2px); }
+  :root[data-motion='on'] .chip:hover:active { transform: scale(0.95); }
+}
+/* Steps slide: a sub-choice comes in from the right, Back brings the pills in from the left (D6). */
+:root[data-motion='on'] .play-step.step-forward { animation: step-forward 0.24s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+:root[data-motion='on'] .play-step.step-back { animation: step-back 0.24s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+/* Rent toggles: a pick pops, a Double The Rent slams like the x2 stamp, the total bumps and, doubled, glows (D7). */
+:root[data-motion='on'] .toggle { transition: background-color 0.15s ease, color 0.15s ease, background-size 0.2s ease-out; }
+:root[data-motion='on'] .toggle.is-on { animation: toggle-pop 0.28s cubic-bezier(0.3, 1.6, 0.5, 1); }
+:root[data-motion='on'] .toggle.is-double.is-on { animation: double-slam 0.4s cubic-bezier(0.2, 1.6, 0.4, 1); }
+:root[data-motion='on'] .toggle.is-on .toggle-check { animation: check-pop 0.3s cubic-bezier(0.3, 1.8, 0.5, 1) 0.05s backwards; }
+:root[data-motion='on'] .charge-total { animation: total-bump 0.35s cubic-bezier(0.3, 1.6, 0.5, 1); }
+:root[data-motion='on'] .charge.is-doubled { animation: charge-glow 1.4s ease-in-out infinite; }
+/* Tray answers lift under the pointer, like the pills (D9). */
+:root[data-motion='on'] .tray-actions button { transition: scale 0.1s ease, translate 0.15s ease, box-shadow 0.15s ease; }
+@media (hover: hover) {
+  :root[data-motion='on'] .tray-actions button:hover:not(:disabled):not([aria-disabled='true']) { translate: 0 -2px; box-shadow: 0 8px 16px rgb(0 0 0 / 0.28); }
+}
+@keyframes deal-in { from { opacity: 0; translate: 0 10px; scale: 0.92; } }
+@keyframes pill-shine {
+    0% { opacity: 0; translate: -100% 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; translate: 100% 0; }
+  }
+@keyframes pill-shine-again {
+    0% { opacity: 0; translate: -100% 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; translate: 100% 0; }
+  }
+@keyframes step-forward { from { opacity: 0; translate: 28px 0; } }
+@keyframes step-back { from { opacity: 0; translate: -28px 0; } }
+@keyframes toggle-pop {
+    0% { scale: 0.86; }
+    60% { scale: 1.07; }
+  }
+@keyframes double-slam {
+    0% { scale: 1.9; rotate: -10deg; opacity: 0.4; }
+    60% { scale: 0.92; rotate: 2deg; opacity: 1; }
+    100% { scale: 1; rotate: 0deg; }
+  }
+@keyframes check-pop { from { scale: 0; rotate: -45deg; } }
+@keyframes total-bump { from { scale: 1.4; } }
+@keyframes charge-glow { 50% { box-shadow: 0 0 0 3px var(--gold), 0 0 30px rgb(255 216 74 / 1); } }
