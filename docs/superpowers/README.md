@@ -13,6 +13,7 @@ Deal City is finished: every plan below is implemented and merged to `main`. The
 | `2026-09-26-card-type-legibility-design.md` | Action and rent card faces | Implemented |
 | `2026-09-26-video-stage-design.md` | The 1920×1080 video stage | Current |
 | `2026-09-26-chat-and-voice-design.md` | Text chat and voice chat (Plans 13–14) | Implemented |
+| `2026-10-08-play-menu-motion-design.md` | Badges and animation in the card play menu and rent form | Implemented |
 
 ## Plans (`plans/`)
 
