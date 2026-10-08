@@ -564,7 +564,8 @@
 /* ---------- Card popover ---------- */
 .popover { position: fixed; z-index: 30; width: max-content; max-width: min(22rem, calc(100vw - 16px)); }
 .popover-body { display: grid; gap: 0.45rem; }
-.pills { display: grid; gap: 0.45rem; }
+.pills,
+.play-step { display: grid; gap: 0.45rem; }
 .pill {
   position: relative;
   overflow: hidden;
@@ -639,6 +640,8 @@
 .chip.is-on { background-size: 100% 100%; color: var(--chip-ink, var(--ink)); }
 @media (hover: hover) {
   .chip:hover { background-size: 100% 100%; color: var(--chip-ink, var(--ink)); }
+  /* A rent color only hints under the pointer, so it never looks picked beside the picked one. */
+  .toggle.chip:not(.is-on):hover { background-size: 30% 100%; color: var(--ink); }
 }
 .rent-form { display: grid; gap: 0.6rem; }
 .rent-form fieldset { border: none; padding: 0; margin: 0; display: grid; gap: 0.3rem; }

@@ -192,7 +192,8 @@
 /* The menu deals itself out: pills and chips rise one after another once the popover has sprung (D4). Only
    `backwards` fill, so nothing is held after the entrance and hover and press keep their own transforms. */
 :root[data-motion='on'] .popover .pill,
-:root[data-motion='on'] .popover .chip { animation: deal-in 0.3s cubic-bezier(0.3, 1.4, 0.5, 1) calc(0.06s + var(--i, 0) * 0.04s) backwards; }
+:root[data-motion='on'] .popover .chip:not(.toggle),
+:root[data-motion='on'] .popover .rent-form fieldset { animation: deal-in 0.3s cubic-bezier(0.3, 1.4, 0.5, 1) calc(0.06s + var(--i, 0) * 0.04s) backwards; }
 :root[data-motion='on'] .popover .pill.primary::after { animation: pill-shine 0.9s ease-out 0.3s; }
 /* Pills answer the pointer: they lift, their badge turns, the primary one shines again (D5). */
 :root[data-motion='on'] .pill { transition: transform 0.15s ease, box-shadow 0.15s ease; }
@@ -203,7 +204,8 @@
   :root[data-motion='on'] .pill:hover { transform: translateY(-2px); box-shadow: 0 9px 18px rgb(0 0 0 / 0.32); }
   :root[data-motion='on'] .pill:hover:active { transform: translateY(0) scale(0.97); box-shadow: 0 3px 8px rgb(0 0 0 / 0.25); }
   :root[data-motion='on'] .pill:hover .pill-badge { rotate: -14deg; scale: 1.12; }
-  :root[data-motion='on'] .popover .pill.primary:hover::after { animation: pill-shine-again 0.8s ease-out; }
+    /* The entrance shine stays first in the list, so leaving the pill does not replay it. */
+  :root[data-motion='on'] .popover .pill.primary:hover::after { animation: pill-shine 0.9s ease-out 0.3s, pill-shine-again 0.8s ease-out; }
   :root[data-motion='on'] .chip:hover { transform: translateY(-2px); }
   :root[data-motion='on'] .chip:hover:active { transform: scale(0.95); }
 }
@@ -211,7 +213,7 @@
 :root[data-motion='on'] .play-step.step-forward { animation: step-forward 0.24s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
 :root[data-motion='on'] .play-step.step-back { animation: step-back 0.24s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
 /* Rent toggles: a pick pops, a Double The Rent slams like the x2 stamp, the total bumps and, doubled, glows (D7). */
-:root[data-motion='on'] .toggle { transition: background-color 0.15s ease, color 0.15s ease, background-size 0.2s ease-out; }
+:root[data-motion='on'] .toggle { transition: background-color 0.15s ease, color 0.15s ease, background-size 0.2s ease-out, transform 0.15s ease; }
 :root[data-motion='on'] .toggle.is-on { animation: toggle-pop 0.28s cubic-bezier(0.3, 1.6, 0.5, 1); }
 :root[data-motion='on'] .toggle.is-double.is-on { animation: double-slam 0.4s cubic-bezier(0.2, 1.6, 0.4, 1); }
 :root[data-motion='on'] .toggle.is-on .toggle-check { animation: check-pop 0.3s cubic-bezier(0.3, 1.8, 0.5, 1) 0.05s backwards; }

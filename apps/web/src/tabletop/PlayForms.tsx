@@ -75,7 +75,7 @@ export function RentForm({ intents, view, name, onSend }: RentProps) {
         if (pick) onSend(pick);
       }}
     >
-      <fieldset>
+      <fieldset style={{ '--i': 0 } as CSSProperties}>
         <legend>Color</legend>
         <div className="chips">
           {colors.map((c, n) => (
@@ -96,7 +96,7 @@ export function RentForm({ intents, view, name, onSend }: RentProps) {
         </div>
       </fieldset>
       {targets.length > 0 && (
-        <fieldset>
+        <fieldset style={{ '--i': 1 } as CSSProperties}>
           <legend>Who pays</legend>
           <div className="toggles">
             {targets.map((t) => (
@@ -108,7 +108,7 @@ export function RentForm({ intents, view, name, onSend }: RentProps) {
         </fieldset>
       )}
       {max > 0 && (
-        <fieldset>
+        <fieldset style={{ '--i': 2 } as CSSProperties}>
           <legend>Double The Rent</legend>
           <div className="toggles">
             {Array.from({ length: max + 1 }, (_, n) => (
